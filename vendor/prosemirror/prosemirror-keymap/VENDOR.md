@@ -5,7 +5,7 @@
 - SHA tag: ea367f60104f622776829ea25323e6cf344d1e98
 - SHA commit: 081f24f65b6a394174a4bdf07b9a55a00361f1b7
 - Tanggal impor: 2026-10-28
-- Patches: none
+- Patches: 0001-prosemirror-keymap-adjust-stale-shift-test.patch (terapkan dengan `pnpm vendor:patch`)
 - Pemilik: markpiw maintainers
 - SLA sinkronisasi: ≤ 3 bulan setelah rilis minor upstream
 

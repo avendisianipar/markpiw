@@ -2,7 +2,15 @@
 // Impor satu paket ProseMirror dari tag kanonik ke vendor/prosemirror/<pkg>/.
 // Usage: node tooling/vendor/import.mjs <pkg>
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +50,14 @@ if (tagSha !== entry.tagSha) {
   fail(
     `SHA tag ${entry.version} di upstream (${tagSha}) tidak cocok dengan packages.json (${entry.tagSha})`,
   );
+}
+
+function patchList(pkg) {
+  const dir = join(root, 'vendor/prosemirror/patches');
+  const own = readdirSync(dir).filter((f) => f.endsWith('.patch') && f.includes(`-${pkg}-`));
+  return own.length === 0
+    ? 'none'
+    : own.sort().join(', ') + ' (terapkan dengan `pnpm vendor:patch`)';
 }
 
 const tmp = mkdtempSync(join(tmpdir(), `markpiw-vendor-${name}-`));
@@ -91,7 +107,7 @@ try {
 - SHA tag: ${tagSha}
 - SHA commit: ${commitSha}
 - Tanggal impor: ${today}
-- Patches: none
+- Patches: ${patchList(name)}
 - Pemilik: markpiw maintainers
 - SLA sinkronisasi: ≤ 3 bulan setelah rilis minor upstream
 

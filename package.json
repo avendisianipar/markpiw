@@ -12,7 +12,9 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
+    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "vendor:patch": "node tooling/vendor/apply-patches.mjs",
+    "vendor:drift": "node tooling/vendor/check-drift.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

@@ -1,0 +1,24 @@
+Description: Sesuaikan test "tries both shifted key and base with shift modifier"
+ dengan perilaku 1.2.3. Commit 9da0f9d (masuk 1.2.3) hanya mencoba keyCode jika
+ Alt/Meta/Ctrl ditekan, tetapi test-nya baru disesuaikan setelah tag 1.2.3
+ dirilis. Hanya file test yang diubah; source tidak berubah.
+Origin: upstream, https://code.haverbeke.berlin/prosemirror/prosemirror-keymap/commit/c2eebe83ea2be747ade21bd9c3992a0ed98b5f64
+Author: Marijn Haverbeke <marijn@haverbeke.berlin>
+Applied-Upstream: c2eebe83ea2be747ade21bd9c3992a0ed98b5f64 (setelah 1.2.3; hapus patch ini saat impor versi berikutnya)
+Last-Update: 2026-10-28
+---
+diff --git a/vendor/prosemirror/prosemirror-keymap/test/test-keymap.ts b/vendor/prosemirror/prosemirror-keymap/test/test-keymap.ts
+--- a/vendor/prosemirror/prosemirror-keymap/test/test-keymap.ts
++++ b/vendor/prosemirror/prosemirror-keymap/test/test-keymap.ts
+@@ -47,9 +47,9 @@ describe("keymap", () => {
+ 
+   it("tries both shifted key and base with shift modifier", () => {
+     let percent = counter(), shift5 = counter()
+-    dispatch(keymap({"%": percent}), "%", {shiftKey: true, keyCode: 53})
++    dispatch(keymap({"Ctrl-%": percent}), "%", {shiftKey: true, ctrlKey: true, keyCode: 53})
+     ist(percent.count, 1)
+-    dispatch(keymap({"Shift-5": shift5}), "%", {shiftKey: true, keyCode: 53})
++    dispatch(keymap({"Ctrl-Shift-5": shift5}), "%", {shiftKey: true, ctrlKey: true, keyCode: 53})
+     ist(shift5.count, 1)
+   })
+ 
