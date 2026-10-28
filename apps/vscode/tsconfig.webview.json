@@ -9,9 +9,18 @@
   },
   "include": ["webview", "test/unit", "src/protocol.ts"],
   "references": [
-    { "path": "../../packages/host" },
-    { "path": "../../packages/markdown" },
-    { "path": "../../packages/editor" },
-    { "path": "../../packages/ui" }
-  ]
+    {
+      "path": "../../packages/host"
+    },
+    {
+      "path": "../../packages/markdown"
+    },
+    {
+      "path": "../../packages/editor"
+    },
+    {
+      "path": "../../packages/ui"
+    }
+  ],
+  "exclude": ["test/unit/manifest.test.ts"]
 }

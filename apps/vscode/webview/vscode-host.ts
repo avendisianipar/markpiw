@@ -16,6 +16,8 @@ function toBase64(bytes: Uint8Array): string {
 export class VsCodeFileHost implements FileHost {
   readonly historyMode = 'host' as const;
   private nextId = 1;
+  /** Dipanggil sebelum undo/redo agar ketikan yang tertunda ikut terkirim lebih dulu. */
+  beforeHistory: () => void = () => {};
   private readonly waiting = new Map<number, (reply: Reply) => void>();
 
   constructor(
@@ -91,10 +93,12 @@ export class VsCodeFileHost implements FileHost {
   }
 
   undo(): void {
+    this.beforeHistory();
     this.post({ type: 'undo' });
   }
 
   redo(): void {
+    this.beforeHistory();
     this.post({ type: 'redo' });
   }
 }

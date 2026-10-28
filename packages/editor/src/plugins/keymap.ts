@@ -58,6 +58,7 @@ const inTable: Command = (state) => tableCommands.goToCell(1)(state);
 
 export function editorKeymap(controller: EditorController): Plugin {
   const c = controller.commands;
+  const hostHistory = controller.host.historyMode === 'host';
   const mark =
     (name: 'strong' | 'em' | 'strike' | 'code'): Command =>
     () =>
@@ -100,9 +101,12 @@ export function editorKeymap(controller: EditorController): Plugin {
       liftListItem(schema.nodes.list_item),
     ),
     Backspace: undoInputRule,
-    'Mod-z': () => c.undo(),
-    'Mod-Shift-z': () => c.redo(),
-    'Mod-y': () => c.redo(),
+    // Mode host (VS Code): webview meneruskan setiap keydown ke workbench, yang sudah menjalankan
+    // undo/redo native untuk custom editor. Tombol ini hanya ditelan agar contenteditable tidak
+    // menjalankan undo bawaan browser; meneruskannya lagi akan meng-undo dua kali.
+    'Mod-z': () => (hostHistory ? true : c.undo()),
+    'Mod-Shift-z': () => (hostHistory ? true : c.redo()),
+    'Mod-y': () => (hostHistory ? true : c.redo()),
   });
 }
 

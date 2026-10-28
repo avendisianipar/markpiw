@@ -169,8 +169,7 @@ export function Workspace(props: {
               type="button"
               className="web-primary"
               onClick={() => {
-                session.controller.applyExternalText(draft.text);
-                void session.resolveConflict('mine');
+                void session.restoreDraft(draft);
                 void clearDraft(props.root.name, session.path.join('/'));
                 setDraft(null);
               }}

@@ -93,8 +93,17 @@ export class WebFileHost implements FileHost {
   async readText(): Promise<Result<string, HostError>> {
     try {
       const snapshot = await this.file.getFile();
+      const bytes = new Uint8Array(await snapshot.arrayBuffer());
+      let text: string;
+      try {
+        // Ketat: file non-UTF-8 tidak dibuka (menyimpannya akan merusak karakter). BOM dipertahankan
+        // di teks agar parser mencatatnya dan serializer menulisnya kembali.
+        text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+      } catch {
+        return err('io', 'File bukan UTF-8; markpiw tidak membukanya agar isinya tidak rusak.');
+      }
       this.meta = { lastModified: snapshot.lastModified, size: snapshot.size };
-      return { ok: true, value: await snapshot.text() };
+      return { ok: true, value: text };
     } catch (error) {
       return this.failure(error);
     }

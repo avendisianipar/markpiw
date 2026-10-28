@@ -82,3 +82,54 @@ describe('WebviewSync', () => {
     expect(controller.getSnapshot().readOnly?.reason).toBe('guard');
   });
 });
+
+describe('WebviewSync review fixes', () => {
+  it('re-applies unsent local typing on top of a non-overlapping external change', async () => {
+    const { controller, sent, sync, append } = setup('# T\n\nbody\n');
+    append('!'); // "# T!" belum terkirim (timer 200 ms)
+    sync.onExternalChange('# T\n\nbody changed\n', 2);
+    expect(controller.serialize()).toEqual({ ok: true, value: '# T!\n\nbody changed\n' });
+    expect(sent).toEqual([
+      { type: 'edits', baseVersion: 2, changes: [{ from: 3, to: 3, insert: '!' }] },
+    ]);
+  });
+
+  it('keeps the external text and warns when local typing overlaps it', async () => {
+    const { controller, sync, append } = setup('abc\n');
+    append('X');
+    sync.onExternalChange('abZ\n', 2);
+    expect(controller.serialize()).toEqual({ ok: true, value: 'abZ\n' });
+    expect(controller.getSnapshot().notice?.kind).toBe('error');
+  });
+
+  it('flushNow sends pending typing immediately (blur, hide, save)', () => {
+    const { sent, sync, append } = setup('a\n');
+    append('!');
+    sync.flushNow();
+    expect(sent).toHaveLength(1);
+  });
+
+  it('waits for pending image uploads before sending', async () => {
+    const { controller, sent } = setup('a\n');
+    let finish: (v: { ok: true; value: string }) => void = () => {};
+    controller.host.saveAsset = () => new Promise((r) => (finish = r));
+    controller.dispatch(
+      controller.state.tr.setSelection(TextSelection.create(controller.state.doc, 2)),
+    );
+    const done = controller.commands.insertImageFile(
+      new File([new Uint8Array([1])], 'x.png', { type: 'image/png' }),
+    );
+    await vi.advanceTimersByTimeAsync(400);
+    expect(sent).toEqual([]);
+    finish({ ok: true, value: './assets/x.png' });
+    await done;
+    await vi.advanceTimersByTimeAsync(200);
+    expect(sent).toEqual([
+      {
+        type: 'edits',
+        baseVersion: 1,
+        changes: [{ from: 1, to: 1, insert: '![](./assets/x.png)' }],
+      },
+    ]);
+  });
+});

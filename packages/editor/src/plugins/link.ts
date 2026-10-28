@@ -7,6 +7,14 @@ import type { EditorController } from '../controller';
 export function linkClicks(controller: EditorController): Plugin {
   return new Plugin({
     props: {
+      handleDOMEvents: {
+        // Link di dokumen tidak pernah bernavigasi lewat klik biasa (juga saat read-only, ketika
+        // contenteditable mati): membuka link hanya lewat Mod+klik atau popover.
+        click(_view, event) {
+          if ((event.target as Element | null)?.closest?.('a')) event.preventDefault();
+          return false;
+        },
+      },
       handleClick(view, pos, event) {
         if (!(event.metaKey || event.ctrlKey)) return false;
         const $pos = view.state.doc.resolve(pos);

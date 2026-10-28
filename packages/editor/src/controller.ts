@@ -63,6 +63,7 @@ export class EditorController {
   private noticeValue: Notice | null = null;
   private noticeId = 0;
   private linkEditorOpen = false;
+  private uploads = 0;
   private readonly uiListeners = new Set<(request: UiRequest) => void>();
   private readonly imageCache = new Map<string, Promise<string | null>>();
 
@@ -78,6 +79,13 @@ export class EditorController {
       dispatch: (tr) => this.dispatch(tr),
       setZoom: (zoom) => this.setZoom(zoom),
       notify: (kind, message) => this.notify(kind, message),
+      uploadStarted: () => {
+        this.uploads++;
+      },
+      uploadFinished: () => {
+        this.uploads--;
+        for (const listener of [...this.docListeners]) listener();
+      },
       imageSaveFailedMessage: this.strings.imageSaveFailed,
     });
     this.editorState = EditorState.create({
@@ -93,6 +101,14 @@ export class EditorController {
   /** Hasil parse yang menjadi dasar preservasi source. */
   get parsed(): ParsedDoc {
     return this.parsedDoc;
+  }
+
+  /**
+   * Jumlah upload gambar yang belum selesai. Selama > 0, dokumen memuat URL `blob:` sementara
+   * dan host tidak boleh menyimpan/mengirimnya.
+   */
+  get pendingUploads(): number {
+    return this.uploads;
   }
 
   get editorView(): EditorView | null {

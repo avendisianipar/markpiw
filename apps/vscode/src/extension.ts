@@ -8,6 +8,9 @@ export function activate(context: vscode.ExtensionContext): void {
       supportsMultipleEditorsPerDocument: false,
       webviewOptions: { retainContextWhenHidden: false },
     }),
+    // Shortcut format (Cmd+B, Cmd+K, …) ditangani editor di webview; perintah ini hanya
+    // "mengklaim" tombolnya saat markpiw aktif agar shortcut VS Code yang sama tidak ikut berjalan.
+    vscode.commands.registerCommand('markpiw.claimShortcut', () => undefined),
     vscode.commands.registerCommand('markpiw.openInMarkpiw', async (uri?: vscode.Uri) => {
       const target = uri ?? vscode.window.activeTextEditor?.document.uri;
       if (!target) {

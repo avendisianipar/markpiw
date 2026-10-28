@@ -3,8 +3,12 @@
 // diffText → `edits`. Hanya satu batch yang dikirim sampai dikonfirmasi, sehingga baseVersion
 // selalu versi terakhir yang dikenal extension.
 import type { EditorController } from '@markpiw/editor';
+import type { TextChange } from '@markpiw/host';
 import { diffText } from '@markpiw/markdown';
-import type { WebviewMessage } from '../src/protocol';
+import { applyChanges, type WebviewMessage } from '../src/protocol';
+
+export const CONFLICT_MESSAGE =
+  'Ketikan terakhir bentrok dengan perubahan dari luar (undo, format, atau editor lain) dan tidak diterapkan.';
 
 export const SYNC_DELAY = 200;
 
@@ -39,9 +43,21 @@ export class WebviewSync {
     }, SYNC_DELAY);
   }
 
+  /** Kirim ketikan yang tertunda sekarang (blur, tab disembunyikan, simpan, undo). */
+  flushNow(): void {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    this.flush();
+  }
+
   flush(): void {
     if (this.inFlight !== null) {
       this.again = true;
+      return;
+    }
+    if (this.controller.pendingUploads > 0) {
+      // Gambar masih diunggah (src berupa blob: sementara); kirim setelah selesai.
+      this.schedule();
       return;
     }
     const out = this.controller.serialize();
@@ -68,16 +84,47 @@ export class WebviewSync {
     }
   }
 
-  /** Undo native, git, editor lain, atau penolakan baseVersion usang. */
+  /**
+   * Undo native, git, editor lain, atau penolakan baseVersion usang. Ketikan lokal yang belum
+   * dikonfirmasi diterapkan ulang di atas teks baru jika tidak bersinggungan dengan perubahan
+   * dari luar; jika bersinggungan, teks dari luar menang dan pengguna diberi tahu.
+   */
   onExternalChange(text: string, version: number): void {
+    const base = this.text;
+    const unsent =
+      this.timer !== null ||
+      this.inFlight !== null ||
+      this.again ||
+      this.controller.getSnapshot().dirty;
+    let local: TextChange[] = [];
+    if (unsent && this.controller.getSnapshot().readOnly === null) {
+      const out = this.controller.serialize();
+      if (out.ok) local = diffText(base, out.value);
+    }
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
     this.inFlight = null;
     this.again = false;
     this.text = text;
     this.version = version;
+
+    let merged: string | null = null;
+    const mine = local[0];
+    if (mine) {
+      const theirs = diffText(base, text)[0];
+      if (!theirs) {
+        merged = applyChanges(text, [mine]);
+      } else if (mine.to < theirs.from || mine.from > theirs.to) {
+        const delta = mine.from > theirs.to ? theirs.insert.length - (theirs.to - theirs.from) : 0;
+        merged = applyChanges(text, [
+          { from: mine.from + delta, to: mine.to + delta, insert: mine.insert },
+        ]);
+      }
+    }
     this.controller.clearReadOnly();
-    this.controller.applyExternalText(text);
+    this.controller.applyExternalText(merged ?? text);
+    if (mine && merged === null) this.controller.notify('error', CONFLICT_MESSAGE);
+    if (merged !== null && merged !== text) this.flush();
   }
 
   /** Pemulihan dari guard gagal: kembali ke teks terakhir yang dikonfirmasi. */

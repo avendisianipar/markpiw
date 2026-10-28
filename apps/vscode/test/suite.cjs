@@ -159,6 +159,15 @@ exports.run = async function run() {
     assert.equal(reply.urls['missing.png'], null);
   });
 
+  await test('format shortcuts are claimed while markpiw is active', async () => {
+    await vscode.commands.executeCommand('vscode.openWith', uri, 'markpiw.editor');
+    const before = vscode.workspace.getConfiguration('workbench').get('sideBar.location');
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(commands.includes('markpiw.claimShortcut'));
+    assert.equal(await vscode.commands.executeCommand('markpiw.claimShortcut'), undefined);
+    assert.equal(vscode.workspace.getConfiguration('workbench').get('sideBar.location'), before);
+  });
+
   await test('invalid messages are ignored', async () => {
     const before = doc.getText();
     await send({ type: 'edits', baseVersion: 'nope', changes: 'x' });

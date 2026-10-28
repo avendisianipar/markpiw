@@ -114,11 +114,15 @@ Panel **Extensions** → markpiw → **Uninstall**.
 | 12 | Blok HTML / frontmatter YAML | Tampil sebagai kotak "Markdown mentah" dan tetap utuh |
 | 13 | Centang checkbox task | `[ ]` ↔ `[x]` di file |
 | 14 | Zoom −/+ di toolbar | Ukuran teks berubah, file tidak berubah |
+| 15 | VS Code: ketik dua kata dengan jeda, tekan Cmd/Ctrl+Z sekali | Hanya satu langkah yang diurungkan |
+| 16 | VS Code: Cmd/Ctrl+B, Cmd/Ctrl+K, Cmd/Ctrl+Shift+X di markpiw | Hanya format teks yang berubah; sidebar/panel VS Code tidak ikut bereaksi |
+| 17 | Tempel gambar besar lalu langsung Cmd/Ctrl+S | File tidak pernah berisi `blob:`; markdown gambar muncul setelah upload selesai |
 
 ### Batas yang sudah diketahui (bukan bug)
 
 - **Mode baca-saja.** Beberapa bentuk format tidak bisa ditulis sebagai markdown tanpa mengubah isi, misalnya miring tepat di `mple.` di dalam `example.com`. Jika itu terjadi, muncul banner merah, file **tidak ditulis**, dan editor menjadi baca-saja. Klik **Urungkan perubahan terakhir** (web) atau **Muat ulang dari file** (VS Code) untuk melanjutkan.
 - **List yang induknya dikosongkan.** Mengosongkan baris induk sebuah list yang punya sub-item bisa memicu mode baca-saja. Urungkan, lalu hapus induknya dengan Backspace di awal baris.
+- **File non-UTF-8 (web).** File dengan encoding lain (mis. Windows-1252) tidak dibuka agar karakternya tidak rusak. Simpan ulang sebagai UTF-8 terlebih dahulu.
 - **Web hanya di Chromium.** Versi web butuh Chrome/Edge desktop dan HTTPS (atau localhost).
 
 Jika menemukan masalah, catat: langkah, isi file sebelum dan sesudah (`git diff`), dan pesan di banner (tombol **Salin info diagnostik**).

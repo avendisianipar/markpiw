@@ -37,6 +37,11 @@
         "title": "Buka dengan markpiw",
         "category": "markpiw",
         "icon": "$(edit)"
+      },
+      {
+        "command": "markpiw.claimShortcut",
+        "title": "Shortcut format markpiw",
+        "category": "markpiw"
       }
     ],
     "menus": {
@@ -53,6 +58,12 @@
           "when": "resourceExtname == .md",
           "group": "navigation"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "markpiw.claimShortcut",
+          "when": "false"
+        }
       ]
     },
     "configuration": {
@@ -64,7 +75,99 @@
           "description": "Folder (relatif terhadap file .md) tempat gambar yang ditempel disimpan."
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "key": "ctrl+b",
+        "mac": "cmd+b",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+e",
+        "mac": "cmd+e",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+alt+0",
+        "mac": "cmd+alt+0",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+alt+1",
+        "mac": "cmd+alt+1",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+alt+2",
+        "mac": "cmd+alt+2",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+alt+3",
+        "mac": "cmd+alt+3",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+alt+4",
+        "mac": "cmd+alt+4",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+alt+5",
+        "mac": "cmd+alt+5",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+alt+6",
+        "mac": "cmd+alt+6",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+shift+7",
+        "mac": "cmd+shift+7",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+shift+8",
+        "mac": "cmd+shift+8",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+shift+9",
+        "mac": "cmd+shift+9",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      }
+    ]
   },
   "scripts": {
     "build": "node esbuild.mjs && vite build && node notices.mjs",

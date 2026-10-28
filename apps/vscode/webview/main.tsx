@@ -25,6 +25,7 @@ function start(init: Extract<ExtensionMessage, { type: 'init' }>): void {
     init.version,
   );
   const currentSync = sync;
+  currentHost.beforeHistory = () => currentSync.flushNow();
 
   // Simpan zoom (state UI) setiap kali berubah.
   let zoom = controller.getSnapshot().zoom;
@@ -72,5 +73,21 @@ window.addEventListener('message', (event: MessageEvent) => {
       break;
   }
 });
+
+// Kirim ketikan tertunda sebelum webview disembunyikan/ditutup (retainContextWhenHidden: false)
+// atau sebelum VS Code menyimpan (Ctrl/⌘+S diteruskan ke workbench).
+const flushNow = () => sync?.flushNow();
+window.addEventListener('blur', flushNow);
+window.addEventListener('pagehide', flushNow);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushNow();
+});
+window.addEventListener(
+  'keydown',
+  (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') flushNow();
+  },
+  true,
+);
 
 api.postMessage({ type: 'ready' });

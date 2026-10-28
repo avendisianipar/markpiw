@@ -100,6 +100,11 @@ export class FileSession {
       this.setStatus('saved');
       return;
     }
+    if (this.controller.pendingUploads > 0) {
+      // Gambar masih diunggah (src berupa blob: sementara); simpan setelah selesai.
+      this.setStatus('dirty');
+      return;
+    }
     const version = this.changes;
     const out = this.controller.serialize();
     if (!out.ok) {
@@ -151,7 +156,7 @@ export class FileSession {
       this.setStatus('conflict');
       return;
     }
-    await this.loadFromDisk();
+    await this.loadFromDisk({ onlyIfUnchangedSince: this.changes });
   }
 
   async resolveConflict(choice: 'mine' | 'disk'): Promise<void> {
@@ -164,11 +169,22 @@ export class FileSession {
     await this.queue;
   }
 
-  private async loadFromDisk(): Promise<void> {
+  /**
+   * Muat isi disk ke editor. Dengan `onlyIfUnchangedSince`, pengguna yang mengetik selama
+   * pembacaan membuat status menjadi konflik alih-alih ketikannya hilang.
+   */
+  private async loadFromDisk(options?: { onlyIfUnchangedSince: number }): Promise<void> {
     const read = await this.host.readText();
     if (!read.ok) {
       this.errorMessage = read.error.message;
       this.setStatus('error');
+      return;
+    }
+    if (
+      options &&
+      (this.changes !== options.onlyIfUnchangedSince || this.controller.getSnapshot().dirty)
+    ) {
+      this.setStatus('conflict');
       return;
     }
     if (this.timer) clearTimeout(this.timer);
@@ -176,6 +192,24 @@ export class FileSession {
     this.controller.applyExternalText(read.value);
     this.lastText = read.value;
     this.setStatus('saved');
+  }
+
+  /**
+   * Pulihkan draf darurat. Jika file di disk berubah setelah draf disimpan (mis. `git pull`),
+   * tampilkan konflik; jangan menimpa versi terbaru tanpa bertanya.
+   */
+  async restoreDraft(draft: { readonly text: string; readonly savedAt: number }): Promise<void> {
+    await this.queue;
+    const meta = await this.host.diskMeta();
+    if (this.timer) clearTimeout(this.timer);
+    this.controller.clearReadOnly();
+    this.controller.applyExternalText(draft.text);
+    if (meta.lastModified > draft.savedAt) {
+      this.setStatus('conflict');
+      return;
+    }
+    this.queue = this.queue.then(() => this.saveNow({ force: true }));
+    await this.queue;
   }
 
   /** Pemulihan dari guard gagal: urungkan langkah terakhir lalu izinkan edit lagi. */

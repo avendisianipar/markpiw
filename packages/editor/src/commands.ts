@@ -26,6 +26,9 @@ export interface CommandContext {
   dispatch(tr: Transaction): void;
   setZoom(zoom: number): void;
   notify(kind: 'error' | 'info', message: string): void;
+  /** Tandai upload gambar yang sedang berjalan (host menunda simpan selama ada). */
+  uploadStarted(): void;
+  uploadFinished(): void;
   readonly imageSaveFailedMessage: string;
 }
 
@@ -253,6 +256,15 @@ export class EditorCommands {
    */
   async insertImageFile(file: Blob, at?: number): Promise<boolean> {
     if (!IMAGE_MIMES.has(file.type)) return false;
+    this.ctx.uploadStarted();
+    try {
+      return await this.uploadImage(file, at);
+    } finally {
+      this.ctx.uploadFinished();
+    }
+  }
+
+  private async uploadImage(file: Blob, at?: number): Promise<boolean> {
     const temp =
       typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : 'blob:pending';
     const marker = `${temp}#${Math.random().toString(36).slice(2)}`;
