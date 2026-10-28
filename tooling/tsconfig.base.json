@@ -13,6 +13,20 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
-    "types": []
+    "types": [],
+    "paths": {
+      "prosemirror-model": ["../vendor/prosemirror/prosemirror-model/src/index.ts"],
+      "prosemirror-transform": ["../vendor/prosemirror/prosemirror-transform/src/index.ts"],
+      "prosemirror-state": ["../vendor/prosemirror/prosemirror-state/src/index.ts"],
+      "prosemirror-view": ["../vendor/prosemirror/prosemirror-view/src/index.ts"],
+      "prosemirror-history": ["../vendor/prosemirror/prosemirror-history/src/history.ts"],
+      "prosemirror-inputrules": ["../vendor/prosemirror/prosemirror-inputrules/src/index.ts"],
+      "prosemirror-keymap": ["../vendor/prosemirror/prosemirror-keymap/src/keymap.ts"],
+      "prosemirror-commands": ["../vendor/prosemirror/prosemirror-commands/src/commands.ts"],
+      "prosemirror-schema-list": [
+        "../vendor/prosemirror/prosemirror-schema-list/src/schema-list.ts"
+      ],
+      "prosemirror-gapcursor": ["../vendor/prosemirror/prosemirror-gapcursor/src/index.ts"]
+    }
   }
 }

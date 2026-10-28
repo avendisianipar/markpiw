@@ -1,4 +1,11 @@
 {
   "files": [],
-  "references": [{ "path": "packages/host" }]
+  "references": [
+    {
+      "path": "vendor/prosemirror"
+    },
+    {
+      "path": "packages/host"
+    }
+  ]
 }

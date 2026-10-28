@@ -1,0 +1,62 @@
+[
+  {
+    "name": "prosemirror-model",
+    "version": "1.25.12",
+    "tagSha": "f08d53472df626b42d7127410a6d5e582b132106",
+    "entry": "src/index.ts"
+  },
+  {
+    "name": "prosemirror-transform",
+    "version": "1.12.4",
+    "tagSha": "f508fe75e2ba3fd0d781d02c44c4b05921b20f0e",
+    "entry": "src/index.ts"
+  },
+  {
+    "name": "prosemirror-state",
+    "version": "1.4.4",
+    "tagSha": "74c661d5d6b9223b59f2bb8bd7adf7b81743178d",
+    "entry": "src/index.ts"
+  },
+  {
+    "name": "prosemirror-view",
+    "version": "1.42.8",
+    "tagSha": "debcf76357a3a269174e497a4d5b893a56ade0e5",
+    "entry": "src/index.ts"
+  },
+  {
+    "name": "prosemirror-history",
+    "version": "1.5.1",
+    "tagSha": "5df04abacd82c874d76561581d6e7c5114573fc3",
+    "entry": "src/history.ts"
+  },
+  {
+    "name": "prosemirror-inputrules",
+    "version": "1.5.1",
+    "tagSha": "68eaa84fff2d75f0e779d2bb030f8ca23903b379",
+    "entry": "src/index.ts"
+  },
+  {
+    "name": "prosemirror-keymap",
+    "version": "1.2.3",
+    "tagSha": "ea367f60104f622776829ea25323e6cf344d1e98",
+    "entry": "src/keymap.ts"
+  },
+  {
+    "name": "prosemirror-commands",
+    "version": "1.7.2",
+    "tagSha": "8bc82f806639b30dd7b6d87b49a72a168a79dc80",
+    "entry": "src/commands.ts"
+  },
+  {
+    "name": "prosemirror-schema-list",
+    "version": "1.5.1",
+    "tagSha": "2dbb7b05c806a3d71f689f989d03a685e1197caa",
+    "entry": "src/schema-list.ts"
+  },
+  {
+    "name": "prosemirror-gapcursor",
+    "version": "1.4.1",
+    "tagSha": "c70905345ff9fe64c0d1f28563c076137108ce9f",
+    "entry": "src/index.ts"
+  }
+]
