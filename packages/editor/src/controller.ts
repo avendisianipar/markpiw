@@ -16,6 +16,8 @@ import { EditorCommands } from './commands';
 import { applyExternalText } from './external';
 import { createNodeViews } from './nodeviews';
 import { createPlugins, slashKey } from './plugins';
+import { filterItems, runSlashItem } from './plugins/slash';
+import { isRelativePath } from './safety';
 import {
   activeMarks,
   blockTypeOf,
@@ -26,9 +28,12 @@ import {
   listKindOf,
   type Notice,
   type ReadOnlyState,
+  type SlashState,
   stabilize,
 } from './snapshot';
-import { DEFAULT_EDITOR_STRINGS, type EditorStrings } from './strings';
+import { DEFAULT_EDITOR_STRINGS, type EditorStrings, type SlashItemId } from './strings';
+
+export type UiRequest = 'image';
 
 export interface EditorControllerOptions {
   /** Isi file markdown. */
@@ -58,6 +63,8 @@ export class EditorController {
   private noticeValue: Notice | null = null;
   private noticeId = 0;
   private linkEditorOpen = false;
+  private readonly uiListeners = new Set<(request: UiRequest) => void>();
+  private readonly imageCache = new Map<string, Promise<string | null>>();
 
   constructor(options: EditorControllerOptions) {
     this.host = options.host;
@@ -212,6 +219,55 @@ export class EditorController {
     for (const listener of [...this.listeners]) listener();
   }
 
+  private slashSnapshot(): SlashState | null {
+    const s = slashKey.getState(this.editorState);
+    if (!s?.match) return null;
+    let anchorRect: SlashState['anchorRect'] = null;
+    try {
+      const coords = this.view?.coordsAtPos(s.match.from);
+      if (coords) anchorRect = { left: coords.left, top: coords.top, bottom: coords.bottom };
+    } catch {
+      anchorRect = null;
+    }
+    return {
+      query: s.match.query,
+      items: filterItems(s.match.query, this.strings),
+      selectedIndex: s.selectedIndex,
+      anchorRect,
+    };
+  }
+
+  /** Jalankan item slash menu (dipanggil keyboard atau klik di UI). */
+  runSlashItem(id: SlashItemId): void {
+    runSlashItem(this, id);
+    this.view?.focus();
+  }
+
+  /** Tutup slash menu tanpa menjalankan apa pun. */
+  closeSlash(): void {
+    this.dispatch(this.editorState.tr.setMeta(slashKey, { type: 'close' }));
+  }
+
+  /** Minta UI melakukan sesuatu yang butuh dialog (mis. memilih file gambar). */
+  requestUi(request: UiRequest): void {
+    for (const listener of [...this.uiListeners]) listener(request);
+  }
+
+  onUiRequest(listener: (request: UiRequest) => void): Disposable {
+    this.uiListeners.add(listener);
+    return { dispose: () => this.uiListeners.delete(listener) };
+  }
+
+  /** URL tampilan untuk `src` gambar (relatif di-resolve lewat host, dengan cache). */
+  resolveImage(src: string): Promise<string | null> {
+    let cached = this.imageCache.get(src);
+    if (!cached) {
+      cached = isRelativePath(src) ? this.host.resolveImageUrl(src) : Promise.resolve(src);
+      this.imageCache.set(src, cached);
+    }
+    return cached;
+  }
+
   private computeSnapshot(): EditorSnapshot {
     const state = this.editorState;
     const editorHistory = this.host.historyMode === 'editor';
@@ -223,7 +279,7 @@ export class EditorController {
       inTable: hasAncestor(state, 'table'),
       canUndo: editorHistory ? undoDepth(state) > 0 : true,
       canRedo: editorHistory ? redoDepth(state) > 0 : true,
-      slash: slashKey.getState(state)?.active ?? null,
+      slash: this.slashSnapshot(),
       link: linkAt(state),
       linkEditor: this.linkEditorOpen,
       image: imageAt(state),
