@@ -19,13 +19,23 @@ export function escapeMinimal(
 ): string {
   if (candidates.length === 0) return blockMarkdown;
   const target = JSON.stringify(normalizeForCompare(node));
+  const same = (md: string) => {
+    const block = reparse(md);
+    return block !== null && JSON.stringify(normalizeForCompare(block)) === target;
+  };
+  // Jalur cepat: jika semua escape bisa dihapus sekaligus, cukup satu kali parse.
+  let all = blockMarkdown;
+  for (let k = candidates.length - 1; k >= 0; k--) {
+    const at = candidates[k] as number;
+    all = all.slice(0, at) + all.slice(at + 1);
+  }
+  if (same(all)) return all;
   let md = blockMarkdown;
   let removed = 0;
   for (const offset of candidates) {
     const at = offset - removed;
     const trial = md.slice(0, at) + md.slice(at + 1);
-    const block = reparse(trial);
-    if (block !== null && JSON.stringify(normalizeForCompare(block)) === target) {
+    if (same(trial)) {
       md = trial;
       removed++;
     }
@@ -45,11 +55,18 @@ export function reparseBlock(md: string): Node | null {
  * Seperti `reparseBlock`, tetapi definisi link dokumen (`definitions`, markdown) ikut di-parse
  * supaya link referensi di blok ter-resolve sama seperti di dokumen utuh.
  */
-export function makeReparse(definitions: string): (md: string) => Node | null {
-  if (definitions === '') return reparseBlock;
-  const defBlocks = parseDoc(definitions).childCount;
+export function makeReparse(definitions: readonly string[]): (md: string) => Node | null {
+  if (definitions.length === 0) return reparseBlock;
+  const labelled = definitions.map((text) => ({
+    text,
+    label: (/^\[([^\]]*)\]/.exec(text)?.[1] ?? '').toLowerCase(),
+  }));
   return (md) => {
-    const doc = parseDoc(md + '\n\n' + definitions);
-    return doc.childCount === defBlocks + 1 ? doc.child(0) : null;
+    // Hanya definisi yang labelnya muncul di blok yang bisa memengaruhi parse-nya.
+    const lower = md.toLowerCase();
+    const used = md.includes('[') ? labelled.filter((d) => lower.includes(d.label)) : [];
+    if (used.length === 0) return reparseBlock(md);
+    const doc = parseDoc([md, ...used.map((d) => d.text)].join('\n\n'));
+    return doc.childCount === used.length + 1 ? doc.child(0) : null;
   };
 }

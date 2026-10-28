@@ -41,7 +41,8 @@ describe('inline serialization', () => {
     expect(para(t('a'), schema.node('hard_break'), t('b'))).toBe('a\\\nb');
     expect(para(t('a'), schema.node('soft_break'), t('b'))).toBe('a\nb');
     expect(para(schema.node('image', { src: 'assets/x.png', alt: 'a [b]', title: null }))).toBe(
-      '![a \\[b\\]](assets/x.png)',
+      // Kurung seimbang boleh di teks gambar; jalur cepat escapeMinimal menghapus semuanya.
+      '![a [b]](assets/x.png)',
     );
   });
 });

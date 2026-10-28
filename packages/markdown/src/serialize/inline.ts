@@ -48,8 +48,11 @@ const hasMark = (marks: readonly Mark[], mark: Mark) => mark.isInSet(marks);
 function flatten(block: Node): Seg[] {
   const segs: Seg[] = [];
   block.forEach((child) => {
-    if (child.isText) {
-      (child.text ?? '').split('\n').forEach((part, i) => {
+    if (child.isText && isCode(child.marks)) {
+      // Code span boleh membungkus ke baris berikutnya; newline-nya bagian dari span.
+      segs.push({ kind: 'text', text: child.text ?? '', marks: child.marks });
+    } else if (child.isText) {
+      (child.text ?? '').split(/\r\n|\r|\n/).forEach((part, i) => {
         if (i > 0) segs.push({ kind: 'break', node: null, marks: child.marks });
         if (part !== '') segs.push({ kind: 'text', text: part, marks: child.marks });
       });
@@ -482,7 +485,8 @@ export function inlineWithCandidates(
           content += s.text;
           j++;
         }
-        w.raw(codeSpan(opts.inTable ? content.replace(/\|/g, '\\|') : content));
+        const lines = content.replace(/\r\n|\r|\n/g, singleLine ? ' ' : eol);
+        w.raw(codeSpan(opts.inTable ? lines.replace(/\|/g, '\\|') : lines));
         i = j;
         consumed = true;
         break;
@@ -536,7 +540,8 @@ export function inlineWithCandidates(
       w.plain(alt);
       w.raw(`](${linkDestination(src)}${linkTitle(title)})`);
     } else {
-      w.raw((seg.node.attrs.source as string | undefined) ?? '');
+      const source = (seg.node.attrs.source as string | undefined) ?? '';
+      w.raw(source.replace(/\r\n|\r|\n/g, singleLine ? ' ' : eol));
     }
     i++;
   }

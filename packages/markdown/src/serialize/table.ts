@@ -46,25 +46,43 @@ function alignedDelimiter(align: Align, width: number): string {
   return '-'.repeat(width);
 }
 
+/** Pad sel sesuai perataan kolomnya (kanan, tengah, atau kiri/default). */
+function pad(cell: string, width: number, align: Align): string {
+  const gap = Math.max(0, width - cell.length);
+  if (align === 'right') return ' '.repeat(gap) + cell;
+  if (align === 'center') {
+    const left = Math.floor(gap / 2);
+    return ' '.repeat(left) + cell + ' '.repeat(gap - left);
+  }
+  return cell + ' '.repeat(gap);
+}
+
 const sameAlign = (a: readonly Align[], b: readonly Align[]) =>
   a.length === b.length && a.every((x, i) => x === b[i]);
 
 export function serializeTable(node: Node, ctx: Ctx, s: SerializerState): string {
   const e = entryOf(node, s.index);
   const align = node.attrs.align as Align[];
-  const rows: string[][] = [];
-  node.forEach((row) => {
-    const cells: string[] = [];
-    row.forEach((cell) => cells.push(cellMarkdown(cell, s)));
-    rows.push(cells);
-  });
+  // Sel diserialisasi saat dibutuhkan: di mode compact, baris yang dipakai ulang tidak perlu.
+  const cache: (string[] | undefined)[] = [];
+  const cellsOf = (r: number): string[] => {
+    let cells = cache[r];
+    if (!cells) {
+      cells = [];
+      node.child(r).forEach((cell) => (cells as string[]).push(cellMarkdown(cell, s)));
+      cache[r] = cells;
+    }
+    return cells;
+  };
+  const rowCount = node.childCount;
   // Baris delimiter harus selebar header; baris body boleh punya sel berlebih (diabaikan GFM).
   const columns = node.firstChild?.childCount ?? align.length;
-  const widest = Math.max(columns, ...rows.map((r) => r.length));
   const aligned = e ? e.tableAligned : s.profile.tablePadding === 'aligned';
 
   const lines: string[] = [];
   if (aligned) {
+    const rows = Array.from({ length: rowCount }, (_, r) => cellsOf(r));
+    const widest = Math.max(columns, ...rows.map((r) => r.length));
     const widths = Array.from({ length: widest }, (_, c) =>
       Math.max(3, ...rows.map((r) => (r[c] ?? '').length)),
     );
@@ -72,7 +90,7 @@ export function serializeTable(node: Node, ctx: Ctx, s: SerializerState): string
       '| ' +
       widths
         .slice(0, Math.max(columns, cells.length))
-        .map((w, c) => (cells[c] ?? '').padEnd(w))
+        .map((w, c) => pad(cells[c] ?? '', w, align[c] ?? null))
         .join(' | ') +
       ' |';
     rows.forEach((cells, r) => {
@@ -96,11 +114,13 @@ export function serializeTable(node: Node, ctx: Ctx, s: SerializerState): string
       oldLines !== null &&
       (old.firstChild?.childCount ?? -1) === (node.firstChild?.childCount ?? -2);
     const render = (cells: string[]) => '| ' + cells.join(' | ') + ' |';
-    rows.forEach((cells, r) => {
+    for (let r = 0; r < rowCount; r++) {
       const oldLine = r === 0 ? oldLines?.[0] : oldLines?.[r + 1];
       const oldRow = old !== undefined && r < old.childCount ? old.child(r) : null;
       lines.push(
-        preserve && oldLine !== undefined && oldRow?.eq(node.child(r)) ? oldLine : render(cells),
+        preserve && oldLine !== undefined && oldRow?.eq(node.child(r))
+          ? oldLine
+          : render(cellsOf(r)),
       );
       if (r === 0) {
         const oldAlign = (old?.attrs.align as Align[] | undefined) ?? [];
@@ -115,7 +135,7 @@ export function serializeTable(node: Node, ctx: Ctx, s: SerializerState): string
                 ' |',
         );
       }
-    });
+    }
   }
   return prefixLines(lines.join(s.eol), ctx, s.eol);
 }

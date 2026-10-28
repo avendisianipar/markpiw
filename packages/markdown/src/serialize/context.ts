@@ -84,6 +84,9 @@ export function freshContribution(
         : ' ';
   }
   const checked = node.attrs.checked as boolean | null;
-  const checkbox = checked === null ? '' : checked ? '[x] ' : '[ ] ';
+  let checkbox = checked === null ? '' : checked ? '[x] ' : '[ ] ';
+  // Checkbox asli (mis. `[X]`, spasi lebih) dipakai ulang jika statusnya tidak berubah.
+  const oldBox = old ? /(\[([ xX])\][ \t]*)$/.exec(old.first) : null;
+  if (checked !== null && oldBox && (oldBox[2] !== ' ') === checked) checkbox = oldBox[1] as string;
   return { first: marker + padding + checkbox, rest: ' '.repeat(marker.length) + padding };
 }

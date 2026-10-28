@@ -11,7 +11,7 @@ const root = new URL('../../../', import.meta.url);
 const corpus = globSync('fixtures/markdown-corpus/gfm/*.md', { cwd: root })
   .sort()
   .map((f) => readFileSync(new URL(f, root), 'utf8'));
-const alphabet = fc.constantFrom(...'ab *_`#[]()<>|~\\!-+=.1\n'.split(''));
+const alphabet = fc.constantFrom(...'ab *_`#[]()<>|~\\!-+=.1\n:/@w'.split(''));
 
 type Op = [kind: number, a: number, b: number, text: string];
 
@@ -69,6 +69,15 @@ function representable(doc: Node): boolean {
       if (!child.isText && child.marks.some((m) => m.type.name === 'code')) ok = false;
     });
     const text = blockText(doc, pos + 1, node);
+    // Teks polos yang berbentuk URL/email/www selalu dijadikan link oleh GFM (escape dan
+    // entitas diabaikan micromark); editor (Fase 2) wajib menjadikannya link otomatis.
+    let plain = '';
+    node.forEach((child) => {
+      const linked = child.marks.some((m) => m.type.name === 'link' || m.type.name === 'code');
+      const width = child.isText ? (child.text ?? '').length : 1;
+      plain += linked || !child.isText ? ' '.repeat(width) : (child.text ?? '');
+    });
+    if (/(https?:\/\/|www\.)\S|\S@\S/i.test(plain)) ok = false; // perkiraan konservatif
     const styles: string[] = [];
     node.forEach((child) => {
       const key = child.marks

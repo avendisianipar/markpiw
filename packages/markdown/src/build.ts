@@ -15,7 +15,7 @@ import type {
   Table,
 } from 'mdast';
 import type { Mark, Node } from 'prosemirror-model';
-import { LineIndex } from './lines';
+import { LINE_BREAK, LineIndex, countLineBreaks } from './lines';
 import { schema } from './schema';
 import { MutableSourceIndex } from './source-index';
 import type { Contribution, SourceEntry, SrcKey } from './types';
@@ -93,6 +93,8 @@ export class DocBuilder {
   private readonly lines: LineIndex;
   private readonly definitions = new Map<string, { url: string; title: string | null }>();
   private readonly index = new MutableSourceIndex();
+  /** Prefix lanjutan container untuk blok yang konten inline-nya sedang dibangun. */
+  private inlineRest = '';
 
   constructor(private readonly source: string) {
     this.lines = new LineIndex(source);
@@ -134,18 +136,18 @@ export class DocBuilder {
 
   /** Awal baris setelah baris yang memuat `offset`. */
   private nextLineStart(offset: number): number {
-    const nl = this.source.indexOf('\n', offset);
-    return nl === -1 ? this.source.length : nl + 1;
+    return this.lines.nextLineStart(offset);
   }
 
   /** Daftarkan entri indeks untuk `node` dan kembalikan node dengan `srcKey`-nya. */
   private keyed(node: Node, md: Nodes, sib: Sibling, extras: EntryExtras = {}): Node {
     const from = this.lines.lineStart(Math.max(start(md), sib.minStart));
-    const keyedNode = node.type.create(
-      { ...node.attrs, srcKey: this.index.peekKey() },
-      node.content,
-      node.marks,
-    );
+    const key = this.index.peekKey();
+    const keyedNode = node.type.create({ ...node.attrs, srcKey: key }, node.content, node.marks);
+    node.forEach((child) => {
+      const childKey = child.attrs.srcKey as SrcKey | null | undefined;
+      if (childKey != null) this.index.setParent(childKey, key);
+    });
     this.index.add({
       node: keyedNode,
       text: this.source.slice(from, this.lines.lineEnd(end(md))),
@@ -205,12 +207,13 @@ export class DocBuilder {
   /** Raw di dalam container: pakai `value` jika ada, selain itu slice tanpa prefix lanjutan. */
   private nestedRaw(kind: RawKind, node: Nodes, ctx: BuildCtx): Node {
     if ('value' in node && typeof node.value === 'string') return this.raw(kind, node.value);
-    const [first = '', ...others] = this.source.slice(start(node), end(node)).split('\n');
+    const [first = '', ...others] = this.source.slice(start(node), end(node)).split(LINE_BREAK);
     const text = [first, ...others.map((line) => stripPrefix(line, ctx.rest))].join('\n');
     return this.raw(kind, text);
   }
 
   private block(node: RootContent, ctx: BuildCtx, sib: Sibling): Node {
+    this.inlineRest = ctx.rest;
     switch (node.type) {
       case 'paragraph':
         return this.keyed(
@@ -298,7 +301,12 @@ export class DocBuilder {
     const head = this.source.slice(from, this.lines.lineEnd(from));
     let contribution: Contribution | null = null;
     if (first && this.lines.lineStart(start(first)) === this.lines.lineStart(from)) {
-      const prefix = this.source.slice(from, start(first));
+      let prefix = this.source.slice(from, start(first));
+      // Jika paragraf diawali konstruk inline (`code`, **, link), posisi mdast-nya bisa
+      // belum melewati checkbox; ambil marker + checkbox langsung dari baris source.
+      if (item.checked != null && !/\[[ xX]\]/.test(prefix)) {
+        prefix = /^(?:\d+[.)]|[-*+])[ \t]*\[[ xX]\][ \t]*/.exec(head)?.[0] ?? prefix;
+      }
       contribution = { first: prefix, rest: markerRest(prefix) };
     }
     const childCtx = { rest: ctx.rest + (contribution?.rest ?? markerRest(head)) };
@@ -341,7 +349,7 @@ export class DocBuilder {
     );
     const [first = '', ...others] = this.source
       .slice(start(node), this.lines.lineEnd(end(node)))
-      .split(/\r?\n/);
+      .split(LINE_BREAK);
     const tableLines = [first, ...others.map((line) => stripPrefix(line, ctx.rest))];
     const tableAligned =
       tableLines.length >= 2 && tableLines.every((line) => line.length === first.length);
@@ -362,8 +370,8 @@ export class DocBuilder {
     switch (node.type) {
       case 'text': {
         // Newline dari entitas (`&#10;`) bukan pindah baris; pertahankan source-nya.
-        const lineBreaks = this.source.slice(start(node), end(node)).split('\n').length;
-        if (node.value.split('\n').length !== lineBreaks) out.push(this.rawInline(node, marks));
+        const lineBreaks = countLineBreaks(this.source.slice(start(node), end(node)));
+        if (countLineBreaks(node.value) !== lineBreaks) out.push(this.rawInline(node, marks));
         else this.text(node.value, marks, out);
         return;
       }
@@ -453,18 +461,19 @@ export class DocBuilder {
   }
 
   private text(value: string, marks: readonly Mark[], out: Node[]): void {
-    value.split(/\r?\n/).forEach((segment, i) => {
+    value.split(LINE_BREAK).forEach((segment, i) => {
       if (i > 0) out.push(schema.nodes.soft_break.create(null, null, marks));
       if (segment !== '') out.push(schema.text(segment, marks));
     });
   }
 
+  /** Source mentah node inline; prefix container dibuang dari baris lanjutan. */
   private rawInline(node: PhrasingContent, marks: readonly Mark[]): Node {
-    return schema.nodes.raw_inline.create(
-      { source: this.source.slice(start(node), end(node)) },
-      null,
-      marks,
-    );
+    const parts = this.source.slice(start(node), end(node)).split(/(\r\n|\r|\n)/);
+    const source = parts
+      .map((part, i) => (i % 2 === 0 && i > 0 ? stripPrefix(part, this.inlineRest) : part))
+      .join('');
+    return schema.nodes.raw_inline.create({ source }, null, marks);
   }
 }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 // Serializer dengan preservasi source (spesifikasi 3.3–3.4; algoritma di rencana Fase 1, Task 7).
 import type { Node } from 'prosemirror-model';
-import type { ParsedDoc, Profile, SourceEntry, SourceIndex } from '../types';
+import type { ParsedDoc, Profile, SourceEntry, SourceIndex, SrcKey } from '../types';
 import { serializeFreshBlock } from './blocks';
 import { makeReparse } from './escape';
 import type { LinkDefinition } from './inline';
@@ -32,7 +32,7 @@ function linkDefinitions(markdown: string): LinkDefinition[] {
 }
 
 /** Teks semua definisi link di `doc`, untuk parse ulang blok yang memakai referensi. */
-function definitionsOf(doc: Node): string {
+function definitionsOf(doc: Node): string[] {
   const defs: string[] = [];
   doc.descendants((node) => {
     if (node.type.name === 'raw_block' && node.attrs.kind === 'definition') {
@@ -40,7 +40,7 @@ function definitionsOf(doc: Node): string {
     }
     return node.isBlock && !node.isTextblock;
   });
-  return defs.join('\n\n');
+  return defs;
 }
 
 export interface ChildrenResult {
@@ -50,6 +50,8 @@ export interface ChildrenResult {
   readonly lastEntry: SourceEntry | undefined;
   readonly emitted: number;
 }
+
+const NEW_PARENT = -1 as SrcKey;
 
 function isEmptyParagraph(node: Node): boolean {
   return node.type.name === 'paragraph' && node.content.size === 0;
@@ -72,6 +74,12 @@ export function serializeChildren(
   tightItem = false,
 ): ChildrenResult {
   const list = isList(parent) ? parent : null;
+  // Spesifikasi 3.3 aturan 1: verbatim hanya di container induk yang sama seperti di source.
+  // Container baru (tanpa srcKey) tidak pernah cocok dengan entri mana pun.
+  const parentKey =
+    parent.type.name === 'doc' ? null : ((parent.attrs.srcKey as SrcKey | null) ?? NEW_PARENT);
+  // Posisi anak pertama/lainnya hanya penting jika prefix baris pertamanya berbeda (list_item).
+  const positional = ctxFirst.first !== ctxOther.first || ctxFirst.rest !== ctxOther.rest;
   let text = '';
   let prev: Node | null = null;
   let emitted = 0;
@@ -85,7 +93,11 @@ export function serializeChildren(
     const e = entryOf(child, s.index);
     const first = emitted === 0;
     const ctx = first ? ctxFirst : ctxOther;
-    const stable = parentStable && e !== undefined && (e.prevKey === null) === first;
+    const stable =
+      parentStable &&
+      e !== undefined &&
+      e.parentKey === parentKey &&
+      (!positional || (e.prevKey === null) === first);
 
     let piece: string;
     if (
@@ -126,7 +138,7 @@ export function serializeMarkdown(parsed: ParsedDoc, doc: Node): string {
   const definitions = definitionsOf(doc);
   const s: SerializerState = {
     reparse: makeReparse(definitions),
-    definitions: linkDefinitions(definitions),
+    definitions: linkDefinitions(definitions.join('\n\n')),
     index: parsed.index,
     profile: parsed.profile,
     eol: parsed.profile.eol,
@@ -134,7 +146,13 @@ export function serializeMarkdown(parsed: ParsedDoc, doc: Node): string {
   const bom = s.profile.bom ? '\uFEFF' : '';
   const r = serializeChildren(doc, ROOT_CTX, ROOT_CTX, true, s);
   if (r.emitted === 0) return bom + (s.index.size === 0 ? s.index.trailing : '');
-  const leading = r.firstEntry?.prevKey === null ? s.index.leading : '';
-  const trailing = r.lastEntry?.isLast ? s.index.trailing : s.profile.finalNewline ? s.eol : '';
+  const atRoot = (e: SourceEntry | undefined) => e !== undefined && e.parentKey === null;
+  const leading = atRoot(r.firstEntry) && r.firstEntry?.prevKey === null ? s.index.leading : '';
+  const trailing =
+    atRoot(r.lastEntry) && r.lastEntry?.isLast
+      ? s.index.trailing
+      : s.profile.finalNewline
+        ? s.eol
+        : '';
   return bom + leading + r.text + trailing;
 }

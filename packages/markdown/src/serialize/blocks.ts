@@ -30,7 +30,7 @@ export function prefixLines(md: string, ctx: Ctx, eol: string): string {
 }
 
 /** Pecah teks (mungkin campuran CRLF/LF) menjadi baris lalu gabungkan dengan `eol`. */
-const relines = (text: string, eol: string) => text.split(/\r?\n/).join(eol);
+const relines = (text: string, eol: string) => text.split(/\r\n|\r|\n/).join(eol);
 
 function paragraph(node: Node, ctx: Ctx, s: SerializerState): string {
   if (node.content.size === 0) return ctx.first.trimEnd();
@@ -83,7 +83,7 @@ function codeBlock(node: Node, ctx: Ctx, s: SerializerState): string {
   const fenceAttr = node.attrs.fence as '```' | '~~~' | 'indented' | null;
   if (fenceAttr === 'indented' && lang === '' && content !== '') {
     const body = content
-      .split(/\r?\n/)
+      .split(/\r\n|\r|\n/)
       .map((line) => (line === '' ? '' : '    ' + line))
       .join(s.eol);
     return prefixLines(body, ctx, s.eol);

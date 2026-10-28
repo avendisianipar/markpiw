@@ -48,6 +48,8 @@ export interface SourceEntry {
   readonly node: Node;
   /** Baris-baris utuh (dengan prefix container), tanpa terminator baris terakhir. */
   readonly text: string;
+  /** Container induk di source (`null` = dokumen). Verbatim hanya di induk yang sama. */
+  readonly parentKey: SrcKey | null;
   /** Saudara sebelumnya di source; `null` jika anak pertama. */
   readonly prevKey: SrcKey | null;
   /** Teks source antara akhir `text` saudara sebelumnya dan awal `text` ini. */

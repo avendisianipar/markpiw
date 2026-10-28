@@ -54,11 +54,13 @@ function flatten(block: Node): Item[] {
   const softBreak = (): Item => ({ br: 'soft' });
   block.forEach((child) => {
     const marks = normMarks(child.marks);
-    if (child.isText) {
-      const code = child.marks.some((m) => m.type.name === 'code');
-      (child.text ?? '').split('\n').forEach((segment, i) => {
+    if (child.isText && child.marks.some((m) => m.type.name === 'code')) {
+      // CommonMark: line ending di dalam code span setara dengan spasi.
+      items.push({ text: (child.text ?? '').replace(/\r\n|\r|\n/g, ' '), marks, code: true });
+    } else if (child.isText) {
+      (child.text ?? '').split(/\r\n|\r|\n/).forEach((segment, i) => {
         if (i > 0) items.push(softBreak());
-        if (segment !== '') items.push({ text: segment, marks, code });
+        if (segment !== '') items.push({ text: segment, marks, code: false });
       });
     } else if (child.type.name === 'soft_break') {
       items.push(softBreak());
