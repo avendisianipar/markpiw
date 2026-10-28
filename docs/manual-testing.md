@@ -11,6 +11,8 @@ pnpm install
 
 Prasyarat: Node 24, pnpm 10 (lewat Corepack), Chrome/Edge versi terbaru, VS Code ≥ 1.95.
 
+> **`zsh: command not found: pnpm`?** Node 24 menyediakan pnpm lewat Corepack, tetapi Corepack harus diaktifkan sekali dengan `corepack enable`. Saat pertama kali menjalankan `pnpm`, Corepack mungkin bertanya apakah boleh mengunduh pnpm 10.8.0; jawab `Y`. Jika memakai nvm dan berpindah versi Node, jalankan `corepack enable` lagi di versi itu.
+
 ---
 
 ## A. Web
