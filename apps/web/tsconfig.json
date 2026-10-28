@@ -1,0 +1,17 @@
+{
+  "extends": "../../tooling/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".types",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "DOM.AsyncIterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"]
+  },
+  "include": ["src", "test"],
+  "references": [
+    { "path": "../../packages/host" },
+    { "path": "../../packages/markdown" },
+    { "path": "../../packages/editor" },
+    { "path": "../../packages/ui" }
+  ]
+}
