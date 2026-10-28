@@ -57,16 +57,13 @@ export class EditorController {
   private dirtyFlag = false;
   private noticeValue: Notice | null = null;
   private noticeId = 0;
+  private linkEditorOpen = false;
 
   constructor(options: EditorControllerOptions) {
     this.host = options.host;
     this.strings = options.strings ?? DEFAULT_EDITOR_STRINGS;
     this.parsedDoc = parseMarkdown(options.text);
     this.zoomValue = clampZoom(options.host.restoreUiState()?.zoom ?? 100);
-    this.editorState = EditorState.create({
-      doc: this.parsedDoc.doc,
-      plugins: createPlugins(this),
-    });
     this.commands = new EditorCommands({
       getState: () => this.editorState,
       getView: () => this.view,
@@ -75,6 +72,10 @@ export class EditorController {
       setZoom: (zoom) => this.setZoom(zoom),
       notify: (kind, message) => this.notify(kind, message),
       imageSaveFailedMessage: this.strings.imageSaveFailed,
+    });
+    this.editorState = EditorState.create({
+      doc: this.parsedDoc.doc,
+      plugins: createPlugins(this),
     });
   }
 
@@ -167,6 +168,17 @@ export class EditorController {
     this.dispatch(tr);
   }
 
+  /** Buka popover link (Mod-K atau tombol toolbar). */
+  openLinkEditor(): void {
+    this.linkEditorOpen = true;
+    this.refreshSnapshot();
+  }
+
+  closeLinkEditor(): void {
+    this.linkEditorOpen = false;
+    this.refreshSnapshot();
+  }
+
   setReadOnly(state: ReadOnlyState | null): void {
     this.readOnlyState = state;
     this.view?.setProps({});
@@ -213,6 +225,7 @@ export class EditorController {
       canRedo: editorHistory ? redoDepth(state) > 0 : true,
       slash: slashKey.getState(state)?.active ?? null,
       link: linkAt(state),
+      linkEditor: this.linkEditorOpen,
       image: imageAt(state),
       zoom: this.zoomValue,
       readOnly: this.readOnlyState,

@@ -59,6 +59,8 @@ export interface EditorSnapshot {
   readonly canRedo: boolean;
   readonly slash: SlashState | null;
   readonly link: LinkState | null;
+  /** Popover link dibuka eksplisit (Mod-K / toolbar). */
+  readonly linkEditor: boolean;
   readonly image: ImageState | null;
   readonly zoom: number;
   readonly readOnly: ReadOnlyState | null;
@@ -181,6 +183,7 @@ export function stabilize(prev: EditorSnapshot | null, next: EditorSnapshot): Ed
     prev.canRedo === next.canRedo &&
     JSON.stringify(prev.slash) === JSON.stringify(next.slash) &&
     JSON.stringify(prev.link) === JSON.stringify(next.link) &&
+    prev.linkEditor === next.linkEditor &&
     JSON.stringify(prev.image) === JSON.stringify(next.image) &&
     prev.zoom === next.zoom &&
     prev.readOnly === next.readOnly &&
