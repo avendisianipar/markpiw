@@ -1,0 +1,18 @@
+/* SPDX-License-Identifier: LicenseRef-Proprietary */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--mp-canvas);
+  color: var(--mp-fg);
+}
+
+/* Di VS Code, kanvas memakai latar editor agar menyatu dengan tema. */
+:root {
+  --mp-canvas: var(--vscode-editor-background, #ffffff);
+}

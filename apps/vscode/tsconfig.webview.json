@@ -1,0 +1,17 @@
+{
+  "extends": "../../tooling/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".types/webview",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"]
+  },
+  "include": ["webview", "test/unit", "src/protocol.ts"],
+  "references": [
+    { "path": "../../packages/host" },
+    { "path": "../../packages/markdown" },
+    { "path": "../../packages/editor" },
+    { "path": "../../packages/ui" }
+  ]
+}

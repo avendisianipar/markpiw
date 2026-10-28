@@ -1,0 +1,10 @@
+{
+  "extends": "../../tooling/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".types/extension",
+    "lib": ["ES2023"],
+    "types": ["node", "vscode"]
+  },
+  "include": ["src"]
+}

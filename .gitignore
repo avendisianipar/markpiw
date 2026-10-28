@@ -4,3 +4,5 @@ dist
 coverage
 *.tsbuildinfo
 .superpowers/
+THIRD_PARTY_NOTICES.txt
+*.vsix

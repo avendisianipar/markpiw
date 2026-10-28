@@ -15,7 +15,10 @@
     "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "vendor:patch": "node tooling/vendor/apply-patches.mjs",
     "vendor:drift": "node tooling/vendor/check-drift.mjs",
-    "test:e2e": "pnpm --filter @markpiw/web build && vitest run --config e2e/vitest.config.ts"
+    "test:e2e": "pnpm --filter @markpiw/web build && vitest run --config e2e/vitest.config.ts",
+    "test:vscode": "pnpm --filter markpiw test:integration",
+    "package:vscode": "pnpm --filter markpiw package",
+    "dev:web": "pnpm --filter @markpiw/web dev"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

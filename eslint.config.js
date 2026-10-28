@@ -59,6 +59,12 @@ export default tseslint.config(
     },
   },
   {
+    // Suite test VS Code dijalankan extension host sebagai CommonJS.
+    files: ['**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs', globals: { ...globals.node } },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: ['**/*.tsx'],
     languageOptions: { globals: { ...globals.browser } },
     plugins: { 'react-hooks': reactHooks },

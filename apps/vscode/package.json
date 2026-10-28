@@ -1,0 +1,95 @@
+{
+  "name": "markpiw",
+  "displayName": "markpiw",
+  "description": "Editor markdown WYSIWYG: edit langsung di preview, file .md tetap bersih untuk git.",
+  "version": "0.1.0",
+  "publisher": "markpiw-internal",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avendisianipar/markpiw.git"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "markpiw.editor",
+        "displayName": "markpiw",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "markpiw.openInMarkpiw",
+        "title": "Buka dengan markpiw",
+        "category": "markpiw",
+        "icon": "$(edit)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "markpiw.openInMarkpiw",
+          "when": "resourceExtname == .md && activeCustomEditorId != markpiw.editor",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "markpiw.openInMarkpiw",
+          "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "markpiw",
+      "properties": {
+        "markpiw.assetsFolder": {
+          "type": "string",
+          "default": "assets",
+          "description": "Folder (relatif terhadap file .md) tempat gambar yang ditempel disimpan."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs && vite build && node notices.mjs",
+    "package": "pnpm build && vsce package --no-dependencies --allow-missing-repository -o markpiw.vsix",
+    "test:integration": "pnpm build && node test/run.mjs"
+  },
+  "dependencies": {
+    "@markpiw/editor": "workspace:*",
+    "@markpiw/host": "workspace:*",
+    "@markpiw/markdown": "workspace:*",
+    "@markpiw/ui": "workspace:*",
+    "@markpiw/vendor-prosemirror": "workspace:*",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "valibot": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/vscode": "~1.95.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "vite": "^8.3.5"
+  }
+}
