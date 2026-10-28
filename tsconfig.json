@@ -6,6 +6,9 @@
     },
     {
       "path": "packages/host"
+    },
+    {
+      "path": "packages/markdown"
     }
   ]
 }
