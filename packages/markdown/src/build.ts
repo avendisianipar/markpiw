@@ -35,6 +35,11 @@ interface Sibling {
   readonly prevKey: SrcKey | null;
   readonly prevEnd: number | null;
   readonly isLast: boolean;
+  /**
+   * Offset awal minimum: awal baris setelah saudara sebelumnya. Posisi mdast bisa tumpang
+   * tindih dengan saudara sebelumnya (heading setext mencakup definisi link di atasnya).
+   */
+  readonly minStart: number;
 }
 
 type EntryExtras = Partial<
@@ -117,7 +122,9 @@ export class DocBuilder {
     let prevKey: SrcKey | null = null;
     let prevEnd: number | null = null;
     children.forEach((child, i) => {
-      const node = convert(child, { prevKey, prevEnd, isLast: i === children.length - 1 });
+      const minStart = prevEnd === null ? 0 : this.nextLineStart(prevEnd);
+      const isLast = i === children.length - 1;
+      const node = convert(child, { prevKey, prevEnd, isLast, minStart });
       out.push(node);
       prevKey = (node.attrs.srcKey as SrcKey | null) ?? null;
       prevEnd = end(child);
@@ -125,9 +132,15 @@ export class DocBuilder {
     return out;
   }
 
+  /** Awal baris setelah baris yang memuat `offset`. */
+  private nextLineStart(offset: number): number {
+    const nl = this.source.indexOf('\n', offset);
+    return nl === -1 ? this.source.length : nl + 1;
+  }
+
   /** Daftarkan entri indeks untuk `node` dan kembalikan node dengan `srcKey`-nya. */
   private keyed(node: Node, md: Nodes, sib: Sibling, extras: EntryExtras = {}): Node {
-    const from = this.lines.lineStart(start(md));
+    const from = this.lines.lineStart(Math.max(start(md), sib.minStart));
     const keyedNode = node.type.create(
       { ...node.attrs, srcKey: this.index.peekKey() },
       node.content,
@@ -178,7 +191,7 @@ export class DocBuilder {
     } catch {
       this.index.truncate(size);
       const text = this.source.slice(
-        this.lines.lineStart(start(node)),
+        this.lines.lineStart(Math.max(start(node), sib.minStart)),
         this.lines.lineEnd(end(node)),
       );
       return this.keyed(this.raw('unknown', text), node, sib);
@@ -373,6 +386,10 @@ export class DocBuilder {
         return;
       }
       case 'link': {
+        if (node.children.length === 0) {
+          out.push(this.rawInline(node, marks));
+          return;
+        }
         const ch = this.source[start(node)];
         const kind = ch === '<' ? 'autolink' : ch === '[' ? 'inline' : 'literal';
         const link = schema.marks.link.create({
@@ -385,6 +402,10 @@ export class DocBuilder {
         return;
       }
       case 'linkReference': {
+        if (node.children.length === 0) {
+          out.push(this.rawInline(node, marks));
+          return;
+        }
         const def = this.definitions.get(node.identifier);
         const refLabel =
           node.referenceType === 'full'

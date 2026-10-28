@@ -14,3 +14,4 @@ export type {
   Contribution,
 } from './types';
 export { parseMarkdown } from './parse';
+export { serializeMarkdown } from './serialize/serialize';

@@ -65,6 +65,9 @@ importers:
       '@types/node':
         specifier: ^24.0.0
         version: 24.19.2
+      commonmark-spec:
+        specifier: ^0.31.2
+        version: 0.31.2
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
@@ -476,6 +479,9 @@ packages:
 
   character-entities@2.0.2:
     resolution: {integrity: sha512-shx7oQ0Awen/BRIdkjkvz54PnEEI/EjwXDSIZp86/KKdbafHh1Df/RYGBhn4hbe2+uKC9FnT5UCEdyPz3ai9hQ==}
+
+  commonmark-spec@0.31.2:
+    resolution: {integrity: sha512-vXKxmclzJPymhOJYD26G0oBjVmIcKC8p5m2DvHIq1A1btr1m0r0dT/PzRA5/nwxUbCAPedMNPEoiQE+zvuOcOw==}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -1597,6 +1603,8 @@ snapshots:
   chai@6.3.0: {}
 
   character-entities@2.0.2: {}
+
+  commonmark-spec@0.31.2: {}
 
   cross-spawn@7.0.6:
     dependencies:

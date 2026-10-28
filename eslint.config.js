@@ -35,6 +35,10 @@ export default tseslint.config(
     },
     rules: {
       'no-restricted-imports': ['error', { patterns: [{ group: forbiddenPackages }] }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
   {
