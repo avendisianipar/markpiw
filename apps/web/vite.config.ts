@@ -2,6 +2,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { prosemirrorAliases } from '../../tooling/vendor-aliases.ts';
+import { prosemirrorTypeReexports } from '../../tooling/vite-prosemirror.ts';
 
 const CSP =
   "default-src 'self'; img-src 'self' blob: https:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'";
@@ -21,14 +22,11 @@ function contentSecurityPolicy(): Plugin {
 
 export default defineConfig({
   base: './',
-  plugins: [react(), contentSecurityPolicy()],
+  plugins: [prosemirrorTypeReexports(), react(), contentSecurityPolicy()],
   resolve: { alias: prosemirrorAliases },
   build: {
     target: 'es2022',
     sourcemap: true,
-    // Source ProseMirror upstream me-re-export tipe tanpa `export type`; ekspor itu hanya ada di
-    // TypeScript, jadi aman di-shim (file vendor tidak boleh diubah).
-    rolldownOptions: { shimMissingExports: true },
   },
   server: { port: 5173, strictPort: false },
   preview: { port: 4173 },

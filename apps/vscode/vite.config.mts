@@ -3,9 +3,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { prosemirrorAliases } from '../../tooling/vendor-aliases.ts';
+import { prosemirrorTypeReexports } from '../../tooling/vite-prosemirror.ts';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [prosemirrorTypeReexports(), react()],
   resolve: { alias: prosemirrorAliases },
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   build: {
@@ -16,8 +17,6 @@ export default defineConfig({
     sourcemap: false,
     rolldownOptions: {
       input: 'webview/main.tsx',
-      // Source ProseMirror upstream me-re-export tipe tanpa `export type` (lihat apps/web).
-      shimMissingExports: true,
       output: {
         entryFileNames: 'webview.js',
         assetFileNames: 'webview.[ext]',
