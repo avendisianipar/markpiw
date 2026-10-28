@@ -1,0 +1,5 @@
+vendor/prosemirror/prosemirror-*
+fixtures
+pnpm-lock.yaml
+.superpowers
+**/*.md
