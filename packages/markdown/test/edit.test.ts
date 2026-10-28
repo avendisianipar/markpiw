@@ -134,6 +134,90 @@ describe('targeted edits only touch the edited block', () => {
   it('edit: mixed line endings', () => {
     expect(edit('A\r\nwrapped\n\nB\n', replace('wrapped', 'wrapped2'))).toBe('A\nwrapped2\n\nB\n');
   });
+  it('edit: text typed against a literal URL keeps the link', () => {
+    // Ditemukan property test: `ahttps://…` tidak lagi dikenali GFM sebagai autolink.
+    expect(edit('Kunjungi https://example.com untuk\n', append('Kunjungi ', 'a'))).toBe(
+      'Kunjungi a[https://example.com](https://example.com) untuk\n',
+    );
+    expect(edit('Lihat www.x.com ya\n', append('www.x.com', 'b'))).toBe(
+      'Lihat [www.x.com](http://www.x.com)b ya\n',
+    );
+  });
+  it('edit: autolink whose text no longer matches its URL', () => {
+    // Ditemukan property test: `<href>` membuang teks yang sudah diedit.
+    expect(edit('Lihat <https://x.io> ya\n', append('https://x', '!'))).toBe(
+      'Lihat [https://x!.io](https://x.io) ya\n',
+    );
+  });
+  it('edit: mark covering part of a literal URL', () => {
+    // Ditemukan property test: bentuk literal tidak bisa membawa mark di dalam link.
+    expect(
+      edit('Lihat https://x.io ya\n', (tr, doc) => {
+        const at = posOf(doc, 'https');
+        tr.addMark(at, at + 1, schema.marks.strike.create());
+      }),
+    ).toBe('Lihat [~~h~~ttps://x.io](https://x.io) ya\n');
+  });
+  it('edit: crossing marks reopen after whitespace', () => {
+    // strong pada "a b", em pada "b c": em dibuka ulang setelah spasi, bukan sebelumnya.
+    expect(
+      edit('a b c\n', (tr, doc) => {
+        const at = posOf(doc, 'a b c');
+        tr.addMark(at, at + 3, schema.marks.strong.create());
+        tr.addMark(at + 2, at + 5, schema.marks.em.create());
+      }),
+    ).toBe('**a *b*** *c*\n');
+  });
+  it('edit: mark covering a whole literal URL', () => {
+    // Ditemukan property test: mark lain di atas URL literal hilang.
+    expect(
+      edit('Lihat https://x.io ya\n', (tr, doc) => {
+        const at = posOf(doc, 'https');
+        tr.addMark(at, at + 'https://x.io'.length, schema.marks.strike.create());
+      }),
+    ).toBe('Lihat ~~https://x.io~~ ya\n');
+  });
+  it('edit: heading with hard break uses setext', () => {
+    // Ditemukan property test: ATX tidak bisa membawa hard break.
+    expect(
+      edit('a  \nb\n', (tr) => {
+        tr.setNodeMarkup(0, schema.nodes.heading, { level: 1 });
+      }),
+    ).toBe('a  \nb\n===\n');
+  });
+  it('edit: soft breaks at block edges or in a row do not split the paragraph', () => {
+    // Ditemukan property test: baris kosong di dalam paragraf memecahnya menjadi dua.
+    expect(edit('ab\n', (tr) => insertText(tr, '\n', 1))).toBe('ab\n');
+    expect(edit('ab\n', (tr) => insertText(tr, '\n\n', 2))).toBe('a\nb\n');
+  });
+  it('edit: code mark over inline html does not hang the serializer', () => {
+    // Ditemukan property test: code pada raw_inline membuat serializer berputar tanpa henti.
+    // Code pada HTML inline tidak bisa ditulis; HTML-nya tetap mentah dan guard menolaknya.
+    expect(
+      edit('Text <!-- c --> end\n', (tr, doc) => {
+        tr.addMark(1, doc.child(0).nodeSize - 1, schema.marks.code.create());
+      }),
+    ).toBe('` Text  `<!-- c -->`  end `\n');
+  });
+  it('edit: renamed shortcut reference keeps resolving', () => {
+    // Ditemukan property test: teks `[roadmap][]` yang diedit tidak lagi cocok dengan labelnya.
+    const src = 'Lihat [roadmap][] dan [README].\n\n[roadmap]: ./r.md\n[README]: ./x.md\n';
+    expect(edit(src, replace('roadmap', 'peta jalan'))).toBe(
+      'Lihat [peta jalan][roadmap] dan [README].\n\n[roadmap]: ./r.md\n[README]: ./x.md\n',
+    );
+    expect(edit(src, replace('README', 'readme'))).toBe(
+      'Lihat [roadmap][] dan [readme].\n\n[roadmap]: ./r.md\n[README]: ./x.md\n',
+    );
+  });
+  it('edit: marked text inside a shortcut reference uses the full form', () => {
+    // Ditemukan property test: label `[`roadmap`][]` tidak lagi cocok dengan definisinya.
+    expect(
+      edit('Lihat [roadmap][].\n\n[roadmap]: ./r.md\n', (tr, doc) => {
+        const at = posOf(doc, 'roadmap');
+        tr.addMark(at, at + 7, schema.marks.code.create());
+      }),
+    ).toBe('Lihat [`roadmap`][roadmap].\n\n[roadmap]: ./r.md\n');
+  });
   it('edit: paragraph with inline html comment', () => {
     expect(edit('Text <!-- TODO --> here\n', replace('here', 'there'))).toBe(
       'Text <!-- TODO --> there\n',

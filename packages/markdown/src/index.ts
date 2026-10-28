@@ -15,3 +15,5 @@ export type {
 } from './types';
 export { parseMarkdown } from './parse';
 export { serializeMarkdown } from './serialize/serialize';
+export { verifyRoundTrip } from './guard';
+export { diffText } from './diff';

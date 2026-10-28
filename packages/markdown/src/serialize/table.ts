@@ -22,7 +22,7 @@ function cellMarkdown(cell: Node, s: SerializerState): string {
     cell,
     s.profile,
     s.eol,
-    { inTable: true, inAtxHeading: false },
+    { inTable: true, inAtxHeading: false, definitions: s.definitions },
     false,
   );
   const target = schema.nodes.paragraph.create(null, cell.content);

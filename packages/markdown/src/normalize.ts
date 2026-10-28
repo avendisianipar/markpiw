@@ -50,20 +50,18 @@ const sameMarks = (a: NormMark[], b: NormMark[]) => JSON.stringify(a) === JSON.s
 const isWs = (s: string) => /^[ \t]*$/.test(s);
 
 function flatten(block: Node): Item[] {
-  const singleLine = SINGLE_LINE.has(block.type.name);
   const items: Item[] = [];
-  const softBreak = (marks: NormMark[]): Item =>
-    singleLine ? { text: ' ', marks, code: false } : { br: 'soft' };
+  const softBreak = (): Item => ({ br: 'soft' });
   block.forEach((child) => {
     const marks = normMarks(child.marks);
     if (child.isText) {
       const code = child.marks.some((m) => m.type.name === 'code');
       (child.text ?? '').split('\n').forEach((segment, i) => {
-        if (i > 0) items.push(softBreak(marks));
+        if (i > 0) items.push(softBreak());
         if (segment !== '') items.push({ text: segment, marks, code });
       });
     } else if (child.type.name === 'soft_break') {
-      items.push(softBreak(marks));
+      items.push(softBreak());
     } else if (child.type.name === 'hard_break') {
       items.push({ br: 'hard' });
     } else {
@@ -144,13 +142,19 @@ function dropEdgeMarks(items: Item[]): Item[] {
     }
     return null;
   };
+  // Mark pada whitespace tidak selalu bisa ditulis (mis. setelah mark bersilangan), jadi
+  // bentuk kanoniknya: whitespace membawa irisan mark tetangga kiri dan kanannya (tanpa code).
   return items.map((item, i) => {
-    if (!('text' in item) || item.code || !isWs(item.text) || item.marks.length === 0) return item;
+    if (!('text' in item) || item.code || !isWs(item.text)) return item;
     const before = neighbor(i, -1);
     const after = neighbor(i, 1);
-    const has = (n: Item | null, m: NormMark) =>
-      n !== null && 'marks' in n && n.marks.some((x) => sameMarks([x], [m]));
-    return { ...item, marks: item.marks.filter((m) => has(before, m) && has(after, m)) };
+    if (before === null || after === null || !('marks' in before) || !('marks' in after)) {
+      return { ...item, marks: [] };
+    }
+    const marks = before.marks.filter(
+      (m) => m.type !== 'code' && after.marks.some((x) => sameMarks([x], [m])),
+    );
+    return { ...item, marks };
   });
 }
 
@@ -175,8 +179,32 @@ function mergeTexts(items: Item[]): Item[] {
   );
 }
 
+/** Di heading/sel tabel, soft break (setelah baris di-trim) setara dengan satu spasi. */
+function joinSoftBreaks(items: Item[], block: Node): Item[] {
+  if (!SINGLE_LINE.has(block.type.name)) return items;
+  const joined = items.map((item) =>
+    'br' in item && item.br === 'soft' ? { text: ' ', marks: [], code: false } : item,
+  );
+  return trimLines(joined);
+}
+
+/** Break di tepi blok dan soft break tepat setelah break lain tidak bermakna. */
+function collapseBreaks(items: Item[]): Item[] {
+  const out: Item[] = [];
+  for (const item of items) {
+    if ('br' in item) {
+      const prev = out[out.length - 1];
+      if (prev === undefined || (item.br === 'soft' && 'br' in prev)) continue;
+    }
+    out.push(item);
+  }
+  while (out.length > 0 && 'br' in (out[out.length - 1] as Item)) out.pop();
+  return out;
+}
+
 function normalizeInline(block: Node): unknown[] {
-  return mergeTexts(dropEdgeMarks(splitWhitespace(trimLines(flatten(block)))));
+  const lines = joinSoftBreaks(collapseBreaks(trimLines(flatten(block))), block);
+  return mergeTexts(dropEdgeMarks(splitWhitespace(lines)));
 }
 
 function isEmptyParagraph(node: Node): boolean {

@@ -4,10 +4,26 @@
 import type { Mark, Node } from 'prosemirror-model';
 import type { Profile } from '../types';
 
+/** Definisi link dokumen (`[label]: url "title"`). */
+export interface LinkDefinition {
+  readonly label: string;
+  readonly url: string;
+  readonly title: string | null;
+}
+
 export interface InlineOptions {
   readonly inTable: boolean;
   readonly inAtxHeading: boolean;
+  /** Definisi link dokumen; jika tidak diberikan, referensi ditulis apa adanya. */
+  readonly definitions?: readonly LinkDefinition[];
 }
+
+/** Normalisasi label referensi (CommonMark): whitespace diringkas, case-insensitive. */
+const normLabel = (label: string) =>
+  label
+    .replace(/[\t\n\r ]+/g, ' ')
+    .trim()
+    .toLowerCase();
 
 export interface InlineResult {
   /** Markdown dengan semua kandidat di-escape. */
@@ -76,6 +92,24 @@ function trimLines(segs: Seg[]): Seg[] {
     }
   }
   flush();
+  return collapseBreaks(out);
+}
+
+/**
+ * Break di tepi blok tidak bermakna, dan soft break tepat setelah break lain akan menulis
+ * baris kosong yang memecah paragraf; keduanya dibuang.
+ */
+function collapseBreaks(segs: Seg[]): Seg[] {
+  const out: Seg[] = [];
+  for (const seg of segs) {
+    if (seg.kind === 'break') {
+      const prev = out[out.length - 1];
+      const soft = seg.node?.type.name !== 'hard_break';
+      if (prev === undefined || (soft && prev.kind === 'break')) continue;
+    }
+    out.push(seg);
+  }
+  while (out.length > 0 && (out[out.length - 1] as Seg).kind === 'break') out.pop();
   return out;
 }
 
@@ -116,17 +150,9 @@ function moveEdgeWhitespace(segs: Seg[]): Seg[] {
       hasMark(after.marks, m);
     return { ...seg, marks: seg.marks.filter(keep) };
   });
-  // Gabungkan kembali teks bersebelahan dengan mark identik.
-  const out: Seg[] = [];
-  for (const seg of marked) {
-    const prev = out[out.length - 1];
-    if (prev && prev.kind === 'text' && seg.kind === 'text' && sameSet(prev.marks, seg.marks)) {
-      out[out.length - 1] = { ...prev, text: prev.text + seg.text };
-    } else {
-      out.push(seg);
-    }
-  }
-  return out;
+  // Potongan tidak digabung kembali: whitespace harus tetap segmen tersendiri agar tidak
+  // pernah membuka mark (lihat inlineWithCandidates).
+  return marked;
 }
 
 function sameSet(a: readonly Mark[], b: readonly Mark[]): boolean {
@@ -167,6 +193,89 @@ function codeSpan(content: string): string {
   const fence = '`'.repeat(longest + 1);
   const pad = /^[` ]|[` ]$/.test(content) && !/^ *$/.test(content) ? ' ' : '';
   return fence + pad + content + pad + fence;
+}
+
+/** `n` karakter pertama setelah segmen `from` (break = `\n`, node inline = `\uFFFC`). */
+function following(segs: Seg[], from: number, n: number): string {
+  let out = '';
+  for (let i = from; i < segs.length && out.length < n; i++) {
+    const seg = segs[i] as Seg;
+    out += seg.kind === 'text' ? seg.text : seg.kind === 'break' ? '\n' : '\uFFFC';
+  }
+  return out.slice(0, n);
+}
+
+const TRAILING_PUNCT = new Set(['.', ',', ':', ';', '!', '?', ')']);
+const isSpace = (ch: string) => ch === '' || /\s/.test(ch);
+
+/**
+ * URL telanjang (autolink literal GFM) hanya dikenali jika teksnya sama dengan URL-nya,
+ * didahului awal/spasi/`(`/`*`/`_`/`~`, dan diakhiri spasi/akhir (boleh lewat tanda baca
+ * penutup).
+ */
+function literalSafe(content: string, href: string, before: string, after: string): boolean {
+  const sameTarget =
+    href === content || href === `http://${content}` || href === `mailto:${content}`;
+  if (!sameTarget) return false;
+  if (!(isSpace(before) || /[(*_~]/.test(before))) return false;
+  const [first = '', second = ''] = after;
+  return isSpace(first) || (TRAILING_PUNCT.has(first) && isSpace(second));
+}
+
+/**
+ * Rentang link autolink/literal yang bisa ditulis telanjang: semua segmennya teks dengan set
+ * mark identik (tanpa code), dan teksnya sama dengan URL-nya. `null` jika harus ditulis
+ * sebagai link inline.
+ */
+function bareLink(
+  segs: Seg[],
+  from: number,
+  mark: Mark,
+  marks: readonly Mark[],
+): { content: string; end: number } | null {
+  const kind = mark.attrs.kind as string;
+  if ((kind !== 'autolink' && kind !== 'literal') || isCode(marks)) return null;
+  let content = '';
+  let end = from;
+  while (end < segs.length) {
+    const s = segs[end] as Seg;
+    if (s.kind === 'break' || !hasMark(s.marks, mark)) break;
+    if (s.kind !== 'text' || !sameSet(s.marks, marks)) return null;
+    content += s.text;
+    end++;
+  }
+  const href = mark.attrs.href as string;
+  const same =
+    href === content ||
+    href === `mailto:${content}` ||
+    (kind === 'literal' && href === `http://${content}`);
+  return same ? { content, end } : null;
+}
+
+/** Semua segmen teks di rentang link punya set mark yang sama dengan `marks`. */
+function uniformRange(segs: Seg[], from: number, mark: Mark, marks: readonly Mark[]): boolean {
+  for (let i = from; i < segs.length; i++) {
+    const seg = segs[i] as Seg;
+    if (seg.kind === 'break') continue;
+    if (!hasMark(seg.marks, mark)) break;
+    if (seg.kind !== 'text' || !sameSet(seg.marks, marks)) return false;
+  }
+  return true;
+}
+
+/** Teks polos rentang link yang dimulai di segmen `from`. */
+function linkText(segs: Seg[], from: number, mark: Mark): string {
+  let text = '';
+  for (let i = from; i < segs.length; i++) {
+    const seg = segs[i] as Seg;
+    if (seg.kind === 'break') {
+      text += ' ';
+      continue;
+    }
+    if (!hasMark(seg.marks, mark)) break;
+    if (seg.kind === 'text') text += seg.text;
+  }
+  return text;
 }
 
 interface Open {
@@ -299,8 +408,11 @@ export function inlineWithCandidates(
     closeTo(keepCount(seg.marks));
 
     // Buka mark baru: link paling luar, code paling dalam, sisanya yang paling panjang dulu.
+    // Whitespace tidak pernah membuka mark (delimiter pembuka tidak boleh diikuti spasi);
+    // mark dibuka di segmen non-whitespace berikutnya.
+    const wsOnly = seg.kind === 'text' && !isCode(seg.marks) && /^[ \t]+$/.test(seg.text);
     const opening = seg.marks
-      .filter((m) => !stack.some((o) => o.mark.eq(m)))
+      .filter((m) => !wsOnly && !stack.some((o) => o.mark.eq(m)))
       .sort((a, b) => {
         const rank = (m: Mark) => (m.type.name === 'link' ? 0 : m.type.name === 'code' ? 2 : 1);
         return (
@@ -310,10 +422,57 @@ export function inlineWithCandidates(
         );
       });
 
+    const openDelimited = (mark: Mark) => {
+      let delim: string;
+      if (mark.type.name === 'strike') delim = '~~';
+      else {
+        const isStrong = mark.type.name === 'strong';
+        delim =
+          (mark.attrs.delim as string | null) ?? (isStrong ? profile.strongDelim : profile.emDelim);
+        if (delim[0] === '_') {
+          const next = segs[i + continuation(segs, i, mark)];
+          const after = next && next.kind === 'text' ? (next.text[0] ?? '') : '';
+          if (ALNUM.test(w.lastChar()) || ALNUM.test(after)) delim = isStrong ? '**' : '*';
+        }
+      }
+      w.raw(delim);
+      stack.push({ mark, close: delim });
+    };
+    /** `plain`: isi link teks polos tanpa mark lain yang dibuka di dalamnya. */
+    const openLink = (mark: Mark, plain: boolean) => {
+      w.raw('[');
+      const href = mark.attrs.href as string;
+      const title = mark.attrs.title as string | null;
+      if (mark.attrs.kind === 'reference') {
+        const label = mark.attrs.refLabel as string | null;
+        if (label !== null && label !== '') {
+          stack.push({ mark, close: `][${label}]` });
+          return;
+        }
+        // Shortcut/collapsed: teksnya adalah label. Jika teks sudah tidak cocok dengan label
+        // definisi URL ini, pakai bentuk full dengan label definisi, atau link inline.
+        const defs = opts.definitions;
+        const target = (d: LinkDefinition) => d.url === href && d.title === title;
+        const text = normLabel(linkText(segs, i, mark));
+        if (plain && (!defs || defs.some((d) => target(d) && normLabel(d.label) === text))) {
+          w.labelDepth++;
+          stack.push({ mark, close: label === null ? ']' : '][]', label: true });
+          return;
+        }
+        const def = defs?.find(target);
+        if (def) {
+          stack.push({ mark, close: `][${def.label}]` });
+          return;
+        }
+      }
+      stack.push({ mark, close: `](${linkDestination(href)}${linkTitle(title)})` });
+    };
+
     let consumed = false;
-    for (const mark of opening) {
+    for (let k = 0; k < opening.length; k++) {
+      const mark = opening[k] as Mark;
       const name = mark.type.name;
-      if (name === 'code') {
+      if (name === 'code' && seg.kind === 'text') {
         // Seluruh rentang code (segmen dengan mark identik) ditulis sebagai satu code span.
         let content = '';
         let j = i;
@@ -328,57 +487,40 @@ export function inlineWithCandidates(
         consumed = true;
         break;
       }
-      if (name === 'link') {
-        const kind = mark.attrs.kind as string;
-        const href = mark.attrs.href as string;
-        if (kind === 'autolink' || kind === 'literal') {
-          let content = '';
-          let j = i;
-          while (j < segs.length) {
-            const s = segs[j] as Seg;
-            if (s.kind === 'break' || !hasMark(s.marks, mark)) break;
-            if (s.kind === 'text') content += s.text;
-            j++;
-          }
-          if (kind === 'literal') w.raw(content);
-          else {
-            const shown =
-              href.startsWith('mailto:') && !content.startsWith('mailto:')
-                ? href.slice('mailto:'.length)
-                : href;
-            w.raw(`<${shown}>`);
-          }
-          i = j;
-          consumed = true;
-          break;
-        }
-        w.raw('[');
-        if (kind === 'reference') {
-          const label = mark.attrs.refLabel as string | null;
-          const isLabel = label === null || label === '';
-          if (isLabel) w.labelDepth++;
-          stack.push({ mark, close: label === null ? ']' : `][${label}]`, label: isLabel });
-        } else {
-          const title = linkTitle(mark.attrs.title as string | null);
-          stack.push({ mark, close: `](${linkDestination(href)}${title})` });
-        }
+      if (name === 'code') continue; // code pada node non-teks tidak bisa ditulis
+      if (name !== 'link') {
+        openDelimited(mark);
         continue;
       }
-      let delim: string;
-      if (name === 'strike') delim = '~~';
-      else {
-        const isStrong = name === 'strong';
-        delim =
-          (mark.attrs.delim as string | null) ?? (isStrong ? profile.strongDelim : profile.emDelim);
-        if (delim[0] === '_') {
-          const end = i + continuation(segs, i, mark);
-          const next = segs[end];
-          const after = next && next.kind === 'text' ? (next.text[0] ?? '') : '';
-          if (ALNUM.test(w.lastChar()) || ALNUM.test(after)) delim = isStrong ? '**' : '*';
-        }
+      const bare = bareLink(segs, i, mark, seg.marks);
+      if (!bare) {
+        const plain = k === opening.length - 1 && uniformRange(segs, i, mark, seg.marks);
+        openLink(mark, plain);
+        continue;
       }
-      w.raw(delim);
-      stack.push({ mark, close: delim });
+      // Bentuk telanjang tidak bisa membawa mark di dalamnya: mark lain dibuka di luar link.
+      for (const other of opening.slice(k + 1)) openDelimited(other);
+      const kind = mark.attrs.kind as string;
+      const href = mark.attrs.href as string;
+      if (
+        kind === 'literal' &&
+        !literalSafe(bare.content, href, w.lastChar(), following(segs, bare.end, 2))
+      ) {
+        // URL telanjang tidak akan dikenali GFM di posisi ini: tulis sebagai link inline.
+        openLink(mark, true);
+        break;
+      }
+      if (kind === 'literal') w.raw(bare.content);
+      else {
+        const shown =
+          href.startsWith('mailto:') && !bare.content.startsWith('mailto:')
+            ? href.slice('mailto:'.length)
+            : href;
+        w.raw(`<${shown}>`);
+      }
+      i = bare.end;
+      consumed = true;
+      break;
     }
     if (consumed) continue;
 

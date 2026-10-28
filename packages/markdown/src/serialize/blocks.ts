@@ -37,17 +37,26 @@ function paragraph(node: Node, ctx: Ctx, s: SerializerState): string {
   const inline = inlineWithCandidates(node, s.profile, s.eol, {
     inTable: false,
     inAtxHeading: false,
+    definitions: s.definitions,
   });
   return prefixLines(escapeMinimal(inline.text, inline.candidates, node, s.reparse), ctx, s.eol);
 }
 
 function heading(node: Node, ctx: Ctx, s: SerializerState): string {
   const level = node.attrs.level as number;
-  const style = (node.attrs.style as 'atx' | 'setext' | null) ?? s.profile.headingStyle;
+  let hardBreak = false;
+  node.forEach((child) => {
+    if (child.type.name === 'hard_break') hardBreak = true;
+  });
+  // ATX tidak bisa membawa hard break; setext (level 1–2) bisa.
+  const style = hardBreak
+    ? 'setext'
+    : ((node.attrs.style as 'atx' | 'setext' | null) ?? s.profile.headingStyle);
   if (style === 'setext' && level <= 2 && node.content.size > 0) {
     const inline = inlineWithCandidates(node, s.profile, s.eol, {
       inTable: false,
       inAtxHeading: false,
+      definitions: s.definitions,
     });
     const lastLine = inline.text.split(s.eol).pop() ?? '';
     const underline = (level === 1 ? '=' : '-').repeat(Math.max(3, lastLine.length));
@@ -60,7 +69,7 @@ function heading(node: Node, ctx: Ctx, s: SerializerState): string {
     node,
     s.profile,
     s.eol,
-    { inTable: false, inAtxHeading: true },
+    { inTable: false, inAtxHeading: true, definitions: s.definitions },
     false,
   );
   const prefix = hashes + ' ';
