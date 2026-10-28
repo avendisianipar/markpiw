@@ -72,6 +72,6 @@ describe('parseMarkdown structure', () => {
   });
   it('handles empty input and BOM', () => {
     expect(d('').toString()).toBe('doc(paragraph)');
-    expect(d('﻿# A\n').child(0).type.name).toBe('heading');
+    expect(d('\uFEFF# A\n').child(0).type.name).toBe('heading');
   });
 });

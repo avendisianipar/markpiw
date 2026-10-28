@@ -360,9 +360,13 @@ export class DocBuilder {
   private inlineNode(node: PhrasingContent, marks: readonly Mark[], out: Node[]): void {
     const withMark = (mark: Mark) => mark.addToSet(marks);
     switch (node.type) {
-      case 'text':
-        this.text(node.value, marks, out);
+      case 'text': {
+        // Newline dari entitas (`&#10;`) bukan pindah baris; pertahankan source-nya.
+        const lineBreaks = this.source.slice(start(node), end(node)).split('\n').length;
+        if (node.value.split('\n').length !== lineBreaks) out.push(this.rawInline(node, marks));
+        else this.text(node.value, marks, out);
         return;
+      }
       case 'emphasis': {
         const em = schema.marks.em.create({ delim: this.source[start(node)] });
         out.push(...this.inline(node.children, withMark(em)));
@@ -409,7 +413,7 @@ export class DocBuilder {
         const def = this.definitions.get(node.identifier);
         const refLabel =
           node.referenceType === 'full'
-            ? (node.label ?? node.identifier)
+            ? this.sourceLabel(node)
             : node.referenceType === 'collapsed'
               ? ''
               : null;
@@ -434,6 +438,18 @@ export class DocBuilder {
       default:
         out.push(this.rawInline(node, marks));
     }
+  }
+
+  /** Label referensi `full` persis seperti di source (termasuk escape), mis. `ref\[`. */
+  private sourceLabel(node: Nodes): string {
+    const src = this.source.slice(start(node), end(node));
+    for (let i = src.length - 2; i >= 0; i--) {
+      if (src[i] !== '[') continue;
+      let slashes = 0;
+      while (src[i - 1 - slashes] === '\\') slashes++;
+      if (slashes % 2 === 0) return src.slice(i + 1, -1);
+    }
+    return 'label' in node && typeof node.label === 'string' ? node.label : '';
   }
 
   private text(value: string, marks: readonly Mark[], out: Node[]): void {

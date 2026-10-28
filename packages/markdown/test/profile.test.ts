@@ -36,6 +36,6 @@ describe('profile detection', () => {
   it('detects eol, final newline and BOM', () => {
     expect(prof('a\r\n\r\nb\r\n').eol).toBe('\r\n');
     expect(prof('a').finalNewline).toBe(false);
-    expect(prof('﻿a\n').bom).toBe(true);
+    expect(prof('\uFEFFa\n').bom).toBe(true);
   });
 });

@@ -19,7 +19,7 @@ export interface InlineResult {
 type Seg =
   | { readonly kind: 'text'; readonly text: string; readonly marks: readonly Mark[] }
   | { readonly kind: 'node'; readonly node: Node; readonly marks: readonly Mark[] }
-  | { readonly kind: 'break'; readonly node: Node | null };
+  | { readonly kind: 'break'; readonly node: Node | null; readonly marks: readonly Mark[] };
 
 const ALWAYS = new Set(['\\', '`', '*', '_', '[', ']', '<', '>', '~', '|', '&', '#', '!']);
 const LINE_START = new Set(['-', '+', '=']);
@@ -34,11 +34,11 @@ function flatten(block: Node): Seg[] {
   block.forEach((child) => {
     if (child.isText) {
       (child.text ?? '').split('\n').forEach((part, i) => {
-        if (i > 0) segs.push({ kind: 'break', node: null });
+        if (i > 0) segs.push({ kind: 'break', node: null, marks: child.marks });
         if (part !== '') segs.push({ kind: 'text', text: part, marks: child.marks });
       });
     } else if (child.type.name === 'soft_break' || child.type.name === 'hard_break') {
-      segs.push({ kind: 'break', node: child });
+      segs.push({ kind: 'break', node: child, marks: child.marks });
     } else {
       segs.push({ kind: 'node', node: child, marks: child.marks });
     }
@@ -172,12 +172,18 @@ function codeSpan(content: string): string {
 interface Open {
   readonly mark: Mark;
   readonly close: string;
+  /** Link referensi shortcut/collapsed: teksnya adalah label, jadi escape dibatasi. */
+  readonly label?: boolean;
 }
+
+const ASCII_PUNCT = /[!-/:-@[-`{-~]/;
 
 class InlineWriter {
   text = '';
   readonly candidates: number[] = [];
   private lineStart: boolean;
+  /** > 0 saat menulis teks link referensi shortcut/collapsed (teks = label). */
+  labelDepth = 0;
 
   constructor(
     private readonly opts: InlineOptions,
@@ -200,6 +206,10 @@ class InlineWriter {
 
   /** Tulis teks biasa dengan semua kandidat escape di-escape. */
   plain(s: string): void {
+    if (this.labelDepth > 0) {
+      this.label(s);
+      return;
+    }
     for (let i = 0; i < s.length; i++) {
       const ch = s[i] as string;
       const startOfLine = this.lineStart;
@@ -218,6 +228,19 @@ class InlineWriter {
         continue;
       }
       if (candidate) this.escape(ch, true);
+      else this.raw(ch);
+    }
+  }
+
+  /**
+   * Teks label referensi harus sama dengan label definisinya, jadi hanya `[`, `]`, dan `\`
+   * sebelum tanda baca yang di-escape (paksa, bukan kandidat).
+   */
+  private label(s: string): void {
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i] as string;
+      const needs = ch === '[' || ch === ']' || (ch === '\\' && ASCII_PUNCT.test(s[i + 1] ?? ']'));
+      if (needs) this.escape(ch, false);
       else this.raw(ch);
     }
   }
@@ -247,13 +270,23 @@ export function inlineWithCandidates(
   const singleLine = opts.inAtxHeading || opts.inTable;
 
   const closeTo = (keep: number) => {
-    while (stack.length > keep) w.raw((stack.pop() as Open).close);
+    while (stack.length > keep) {
+      const open = stack.pop() as Open;
+      if (open.label) w.labelDepth--;
+      w.raw(open.close);
+    }
+  };
+  const keepCount = (marks: readonly Mark[]) => {
+    let keep = 0;
+    while (keep < stack.length && hasMark(marks, (stack[keep] as Open).mark)) keep++;
+    return keep;
   };
 
   let i = 0;
   while (i < segs.length) {
     const seg = segs[i] as Seg;
     if (seg.kind === 'break') {
+      closeTo(keepCount(seg.marks));
       const hard = seg.node?.type.name === 'hard_break';
       if (singleLine) w.raw(' ');
       else if (!hard) w.lineBreak(eol);
@@ -263,9 +296,7 @@ export function inlineWithCandidates(
     }
 
     // Tutup mark aktif yang tidak dimiliki segmen ini (dari yang paling dalam).
-    let keep = 0;
-    while (keep < stack.length && hasMark(seg.marks, (stack[keep] as Open).mark)) keep++;
-    closeTo(keep);
+    closeTo(keepCount(seg.marks));
 
     // Buka mark baru: link paling luar, code paling dalam, sisanya yang paling panjang dulu.
     const opening = seg.marks
@@ -292,7 +323,7 @@ export function inlineWithCandidates(
           content += s.text;
           j++;
         }
-        w.raw(codeSpan(content));
+        w.raw(codeSpan(opts.inTable ? content.replace(/\|/g, '\\|') : content));
         i = j;
         consumed = true;
         break;
@@ -322,14 +353,15 @@ export function inlineWithCandidates(
           break;
         }
         w.raw('[');
-        let close: string;
         if (kind === 'reference') {
           const label = mark.attrs.refLabel as string | null;
-          close = label === null ? ']' : `][${label}]`;
+          const isLabel = label === null || label === '';
+          if (isLabel) w.labelDepth++;
+          stack.push({ mark, close: label === null ? ']' : `][${label}]`, label: isLabel });
         } else {
-          close = `](${linkDestination(href)}${linkTitle(mark.attrs.title as string | null)})`;
+          const title = linkTitle(mark.attrs.title as string | null);
+          stack.push({ mark, close: `](${linkDestination(href)}${title})` });
         }
-        stack.push({ mark, close });
         continue;
       }
       let delim: string;

@@ -189,7 +189,7 @@ export function normalizeForCompare(node: Node): unknown {
   const attrs = semanticAttrs(node.attrs);
   const base = attrs ? { type, attrs } : { type };
   if (type === 'raw_block') {
-    return { ...base, text: node.textContent.replace(/[ \t\r]+$/gm, '') };
+    return { ...base, text: node.textContent.replace(/[ \t\r]+$/gm, '').replace(/\n+$/, '') };
   }
   if (node.type.spec.code) return { ...base, text: node.textContent };
   if (node.isTextblock) return { ...base, inline: normalizeInline(node) };

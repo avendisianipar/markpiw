@@ -3,12 +3,27 @@
 import type { Node } from 'prosemirror-model';
 import type { ParsedDoc, Profile, SourceEntry, SourceIndex } from '../types';
 import { serializeFreshBlock } from './blocks';
+import { makeReparse } from './escape';
 import { type Ctx, ROOT_CTX, entryOf, freshContribution, sameContribution } from './context';
 
 export interface SerializerState {
   readonly index: SourceIndex;
   readonly profile: Profile;
   readonly eol: '\n' | '\r\n';
+  /** Parse ulang satu blok (dengan definisi link dokumen) untuk escape minimal. */
+  readonly reparse: (md: string) => Node | null;
+}
+
+/** Teks semua definisi link di `doc`, untuk parse ulang blok yang memakai referensi. */
+function definitionsOf(doc: Node): string {
+  const defs: string[] = [];
+  doc.descendants((node) => {
+    if (node.type.name === 'raw_block' && node.attrs.kind === 'definition') {
+      defs.push(node.textContent);
+    }
+    return node.isBlock && !node.isTextblock;
+  });
+  return defs.join('\n\n');
 }
 
 export interface ChildrenResult {
@@ -92,11 +107,12 @@ function isContainer(node: Node): boolean {
 /** Serialisasi `doc` (hasil edit dari `parsed.doc`) kembali menjadi markdown. */
 export function serializeMarkdown(parsed: ParsedDoc, doc: Node): string {
   const s: SerializerState = {
+    reparse: makeReparse(definitionsOf(doc)),
     index: parsed.index,
     profile: parsed.profile,
     eol: parsed.profile.eol,
   };
-  const bom = s.profile.bom ? '﻿' : '';
+  const bom = s.profile.bom ? '\uFEFF' : '';
   const r = serializeChildren(doc, ROOT_CTX, ROOT_CTX, true, s);
   if (r.emitted === 0) return bom + (s.index.size === 0 ? s.index.trailing : '');
   const leading = r.firstEntry?.prevKey === null ? s.index.leading : '';

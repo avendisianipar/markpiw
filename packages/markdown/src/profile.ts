@@ -60,7 +60,7 @@ function mostCommonIndent(indents: Tally<number>): Profile['listIndent'] {
 }
 
 export function detectProfile(text: string, root: Root, index: MutableSourceIndex): Profile {
-  const bom = text.startsWith('﻿');
+  const bom = text.startsWith('\uFEFF');
   const body = bom ? text.slice(1) : text;
   const at = (node: Nodes, length = 1) => {
     const offset = node.position?.start.offset ?? 0;

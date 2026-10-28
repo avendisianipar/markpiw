@@ -33,8 +33,23 @@ export function escapeMinimal(
   return md;
 }
 
+const parseDoc = (md: string) => buildDoc(md, toMdast(md)).doc;
+
 /** Parse markdown sebagai dokumen berdiri sendiri; kembalikan bloknya jika tepat satu. */
 export function reparseBlock(md: string): Node | null {
-  const { doc } = buildDoc(md, toMdast(md));
+  const doc = parseDoc(md);
   return doc.childCount === 1 ? doc.child(0) : null;
+}
+
+/**
+ * Seperti `reparseBlock`, tetapi definisi link dokumen (`definitions`, markdown) ikut di-parse
+ * supaya link referensi di blok ter-resolve sama seperti di dokumen utuh.
+ */
+export function makeReparse(definitions: string): (md: string) => Node | null {
+  if (definitions === '') return reparseBlock;
+  const defBlocks = parseDoc(definitions).childCount;
+  return (md) => {
+    const doc = parseDoc(md + '\n\n' + definitions);
+    return doc.childCount === defBlocks + 1 ? doc.child(0) : null;
+  };
 }
