@@ -58,6 +58,23 @@ export default tseslint.config(
     },
   },
   {
+    files: ['packages/editor/src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: forbiddenPackages },
+            {
+              group: ['react', 'react-*', '@markpiw/ui', 'node:*', 'vscode'],
+              message: 'packages/editor tidak boleh bergantung pada React, UI, Node, atau VS Code.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['packages/markdown/src/**/*.ts'],
     languageOptions: {
       globals: {},

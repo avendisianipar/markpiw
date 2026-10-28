@@ -1,0 +1,19 @@
+{
+  "name": "@markpiw/editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./style.css": "./src/style.css"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@markpiw/host": "workspace:*",
+    "@markpiw/markdown": "workspace:*",
+    "@markpiw/vendor-prosemirror": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.0"
+  }
+}

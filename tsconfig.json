@@ -9,6 +9,9 @@
     },
     {
       "path": "packages/markdown"
+    },
+    {
+      "path": "packages/editor"
     }
   ]
 }

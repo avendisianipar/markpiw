@@ -40,4 +40,7 @@ export interface FileHost {
   openLink(target: string): void;
   persistUiState(state: UiState): void;
   restoreUiState(): UiState | null;
+  /** Hanya `historyMode: 'host'`: teruskan undo/redo ke host (mis. perintah native VS Code). */
+  undo?(): void;
+  redo?(): void;
 }
