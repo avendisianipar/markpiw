@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
-// mdast → dokumen ProseMirror (spesifikasi 3.2; aturan pemetaan di rencana Fase 1, Task 5).
+// mdast → dokumen ProseMirror + indeks source (spesifikasi 3.2–3.3; aturan di rencana Fase 1,
+// Task 5 dan 6).
 import type {
   Blockquote,
   Code,
@@ -16,6 +17,8 @@ import type {
 import type { Mark, Node } from 'prosemirror-model';
 import { LineIndex } from './lines';
 import { schema } from './schema';
+import { MutableSourceIndex } from './source-index';
+import type { Contribution, SourceEntry, SrcKey } from './types';
 
 type RawKind = 'frontmatter' | 'html' | 'definition' | 'footnote' | 'unknown';
 
@@ -27,7 +30,19 @@ interface BuildCtx {
   readonly rest: string;
 }
 
+/** Posisi sebuah node di antara saudara-saudaranya di source. */
+interface Sibling {
+  readonly prevKey: SrcKey | null;
+  readonly prevEnd: number | null;
+  readonly isLast: boolean;
+}
+
+type EntryExtras = Partial<
+  Pick<SourceEntry, 'contribution' | 'listNumber' | 'tableLines' | 'tableAligned'>
+>;
+
 const ROOT_CTX: BuildCtx = { rest: '' };
+const MARKER = /^(\d+[.)]|[-*+])([ \t]*)/;
 
 function start(node: Nodes): number {
   const offset = node.position?.start.offset;
@@ -62,25 +77,76 @@ function stripPrefix(line: string, rest: string): string {
   return line.slice(i);
 }
 
+/** Lebar marker+padding sebagai spasi; tab di padding dipertahankan. */
+function markerRest(first: string): string {
+  const m = MARKER.exec(first);
+  if (!m) return '  ';
+  return ' '.repeat((m[1] as string).length) + (m[2] as string);
+}
+
 export class DocBuilder {
   private readonly lines: LineIndex;
   private readonly definitions = new Map<string, { url: string; title: string | null }>();
+  private readonly index = new MutableSourceIndex();
 
   constructor(private readonly source: string) {
     this.lines = new LineIndex(source);
   }
 
-  build(root: Root): Node {
+  build(root: Root): { doc: Node; index: MutableSourceIndex } {
     this.collectDefinitions(root);
-    const blocks: Node[] = [];
-    for (const child of root.children) blocks.push(...this.topLevel(child));
+    const blocks = this.siblings(root.children, (child, sib) => this.topLevel(child, sib));
+    const first = root.children[0];
+    const last = root.children[root.children.length - 1];
+    if (first && last) {
+      this.index.leading = this.source.slice(0, this.lines.lineStart(start(first)));
+      this.index.trailing = this.source.slice(this.lines.lineEnd(end(last)));
+    } else {
+      this.index.trailing = this.source;
+    }
     if (blocks.length === 0) blocks.push(schema.nodes.paragraph.create());
-    return schema.nodes.doc.create(null, blocks);
+    return { doc: schema.nodes.doc.create(null, blocks), index: this.index };
   }
 
-  /** Slice dari awal baris `node` dimulai sampai akhir baris `node` berakhir. */
-  private lineSlice(node: Nodes): string {
-    return this.source.slice(this.lines.lineStart(start(node)), this.lines.lineEnd(end(node)));
+  /** Konversi anak-anak berurutan sambil melacak saudara sebelumnya di source. */
+  private siblings<T extends Nodes>(
+    children: readonly T[],
+    convert: (child: T, sib: Sibling) => Node,
+  ): Node[] {
+    const out: Node[] = [];
+    let prevKey: SrcKey | null = null;
+    let prevEnd: number | null = null;
+    children.forEach((child, i) => {
+      const node = convert(child, { prevKey, prevEnd, isLast: i === children.length - 1 });
+      out.push(node);
+      prevKey = (node.attrs.srcKey as SrcKey | null) ?? null;
+      prevEnd = end(child);
+    });
+    return out;
+  }
+
+  /** Daftarkan entri indeks untuk `node` dan kembalikan node dengan `srcKey`-nya. */
+  private keyed(node: Node, md: Nodes, sib: Sibling, extras: EntryExtras = {}): Node {
+    const from = this.lines.lineStart(start(md));
+    const keyedNode = node.type.create(
+      { ...node.attrs, srcKey: this.index.peekKey() },
+      node.content,
+      node.marks,
+    );
+    this.index.add({
+      node: keyedNode,
+      text: this.source.slice(from, this.lines.lineEnd(end(md))),
+      prevKey: sib.prevKey,
+      sepBefore:
+        sib.prevEnd === null ? '' : this.source.slice(this.lines.lineEnd(sib.prevEnd), from),
+      isLast: sib.isLast,
+      contribution: null,
+      listNumber: null,
+      tableLines: null,
+      tableAligned: false,
+      ...extras,
+    });
+    return keyedNode;
   }
 
   private collectDefinitions(node: Nodes): void {
@@ -93,21 +159,29 @@ export class DocBuilder {
     if ('children' in node) for (const child of node.children) this.collectDefinitions(child);
   }
 
-  private topLevel(node: RootContent): Node[] {
+  private topLevel(node: RootContent, sib: Sibling): Node {
+    const exact = (kind: RawKind) =>
+      this.keyed(this.raw(kind, this.source.slice(start(node), end(node))), node, sib);
     switch (node.type) {
       case 'html':
-        return [this.raw('html', this.source.slice(start(node), end(node)))];
+        return exact('html');
       case 'yaml':
-        return [this.raw('frontmatter', this.source.slice(start(node), end(node)))];
+        return exact('frontmatter');
       case 'definition':
-        return [this.raw('definition', this.source.slice(start(node), end(node)))];
+        return exact('definition');
       case 'footnoteDefinition':
-        return [this.raw('footnote', this.source.slice(start(node), end(node)))];
+        return exact('footnote');
     }
+    const size = this.index.size;
     try {
-      return this.block(node, ROOT_CTX);
+      return this.block(node, ROOT_CTX, sib);
     } catch {
-      return [this.raw('unknown', this.lineSlice(node))];
+      this.index.truncate(size);
+      const text = this.source.slice(
+        this.lines.lineStart(start(node)),
+        this.lines.lineEnd(end(node)),
+      );
+      return this.keyed(this.raw('unknown', text), node, sib);
     }
   }
 
@@ -123,43 +197,39 @@ export class DocBuilder {
     return this.raw(kind, text);
   }
 
-  private block(node: RootContent, ctx: BuildCtx): Node[] {
+  private block(node: RootContent, ctx: BuildCtx, sib: Sibling): Node {
     switch (node.type) {
       case 'paragraph':
-        return [schema.nodes.paragraph.create(null, this.inline(node.children, []))];
+        return this.keyed(
+          schema.nodes.paragraph.create(null, this.inline(node.children, [])),
+          node,
+          sib,
+        );
       case 'heading':
-        return [this.heading(node)];
+        return this.keyed(this.heading(node), node, sib);
       case 'blockquote':
-        return [this.blockquote(node, ctx)];
+        return this.blockquote(node, ctx, sib);
       case 'list':
-        return [this.list(node, ctx)];
+        return this.keyed(this.list(node, ctx), node, sib);
       case 'code':
-        return [this.code(node)];
-      case 'thematicBreak':
-        return [
-          schema.nodes.horizontal_rule.create({
-            marker: this.source.slice(start(node), end(node)).trim(),
-          }),
-        ];
+        return this.keyed(this.code(node), node, sib);
+      case 'thematicBreak': {
+        const marker = this.source.slice(start(node), end(node)).trim();
+        return this.keyed(schema.nodes.horizontal_rule.create({ marker }), node, sib);
+      }
       case 'table':
-        return [this.table(node)];
+        return this.table(node, ctx, sib);
       case 'html':
-        return [this.nestedRaw('html', node, ctx)];
+        return this.keyed(this.nestedRaw('html', node, ctx), node, sib);
       case 'yaml':
-        return [this.nestedRaw('frontmatter', node, ctx)];
+        return this.keyed(this.nestedRaw('frontmatter', node, ctx), node, sib);
       case 'definition':
-        return [this.nestedRaw('definition', node, ctx)];
+        return this.keyed(this.nestedRaw('definition', node, ctx), node, sib);
       case 'footnoteDefinition':
-        return [this.nestedRaw('footnote', node, ctx)];
+        return this.keyed(this.nestedRaw('footnote', node, ctx), node, sib);
       default:
-        return [this.nestedRaw('unknown', node, ctx)];
+        return this.keyed(this.nestedRaw('unknown', node, ctx), node, sib);
     }
-  }
-
-  private blocks(children: readonly RootContent[], ctx: BuildCtx): Node[] {
-    const out: Node[] = [];
-    for (const child of children) out.push(...this.block(child, ctx));
-    return out;
   }
 
   private heading(node: Heading): Node {
@@ -170,31 +240,35 @@ export class DocBuilder {
     );
   }
 
-  private blockquote(node: Blockquote, ctx: BuildCtx): Node {
-    const childCtx = { rest: ctx.rest + this.blockquotePrefix(node) };
-    const content = this.blocks(node.children, childCtx);
+  private blockquote(node: Blockquote, ctx: BuildCtx, sib: Sibling): Node {
+    const contribution = this.blockquoteContribution(node);
+    const childCtx = { rest: ctx.rest + contribution.rest };
+    const content = this.siblings(node.children, (child, s) => this.block(child, childCtx, s));
     if (content.length === 0) content.push(schema.nodes.paragraph.create());
-    return schema.nodes.blockquote.create(null, content);
+    return this.keyed(schema.nodes.blockquote.create(null, content), node, sib, { contribution });
   }
 
-  /** Prefix blockquote: slice sampai awal anak pertama jika di baris yang sama, selain itu `> `. */
-  protected blockquotePrefix(node: Blockquote): string {
+  /** Slice sampai awal anak pertama jika di baris yang sama, selain itu `> `. */
+  private blockquoteContribution(node: Blockquote): Contribution {
     const first = node.children[0];
     if (first) {
       const from = start(node);
       const to = start(first);
       if (this.lines.lineStart(to) === this.lines.lineStart(from)) {
-        return this.source.slice(from, to);
+        const prefix = this.source.slice(from, to);
+        return { first: prefix, rest: prefix };
       }
     }
-    return '> ';
+    return { first: '> ', rest: '> ' };
   }
 
   private list(node: List, ctx: BuildCtx): Node {
     const tight = !(node.spread || node.children.some((item) => item.spread));
-    const items = node.children.map((item) => this.listItem(item, ctx));
+    const items = this.siblings(node.children, (item, s) =>
+      this.listItem(item, ctx, s, node.ordered === true),
+    );
     const firstItem = node.children[0];
-    const marker = firstItem ? this.source.slice(start(firstItem)) : '';
+    const marker = firstItem ? this.source.slice(start(firstItem), start(firstItem) + 12) : '';
     if (node.ordered) {
       const delimiter = /^\d+([.)])/.exec(marker)?.[1] ?? '.';
       return schema.nodes.ordered_list.create({ start: node.start ?? 1, delimiter, tight }, items);
@@ -202,22 +276,28 @@ export class DocBuilder {
     return schema.nodes.bullet_list.create({ marker: marker[0] ?? '-', tight }, items);
   }
 
-  private listItem(item: ListItem, ctx: BuildCtx): Node {
+  private listItem(item: ListItem, ctx: BuildCtx, sib: Sibling, ordered: boolean): Node {
     const first = item.children[0];
     if (first && first.type !== 'paragraph') {
       throw new StructureFallback('list item tidak diawali paragraph');
     }
-    const childCtx = { rest: ctx.rest + this.itemRest(item) };
-    const content = this.blocks(item.children, childCtx);
+    const from = start(item);
+    const head = this.source.slice(from, this.lines.lineEnd(from));
+    let contribution: Contribution | null = null;
+    if (first && this.lines.lineStart(start(first)) === this.lines.lineStart(from)) {
+      const prefix = this.source.slice(from, start(first));
+      contribution = { first: prefix, rest: markerRest(prefix) };
+    }
+    const childCtx = { rest: ctx.rest + (contribution?.rest ?? markerRest(head)) };
+    const content = this.siblings(item.children, (child, s) => this.block(child, childCtx, s));
     if (content.length === 0) content.push(schema.nodes.paragraph.create());
-    return schema.nodes.list_item.create({ checked: item.checked ?? null }, content);
-  }
-
-  /** Lebar marker+padding item sebagai spasi (tab dipertahankan). */
-  protected itemRest(item: ListItem): string {
-    const m = /^(\d+[.)]|[-*+])([ \t]*)/.exec(this.source.slice(start(item), start(item) + 16));
-    if (!m) return '  ';
-    return ' '.repeat((m[1] as string).length) + (m[2] as string);
+    const listNumber = ordered ? Number(/^\d+/.exec(head)?.[0] ?? NaN) : null;
+    return this.keyed(
+      schema.nodes.list_item.create({ checked: item.checked ?? null }, content),
+      item,
+      sib,
+      { contribution, listNumber: Number.isNaN(listNumber) ? null : listNumber },
+    );
   }
 
   private code(node: Code): Node {
@@ -237,7 +317,7 @@ export class DocBuilder {
     );
   }
 
-  private table(node: Table): Node {
+  private table(node: Table, ctx: BuildCtx, sib: Sibling): Node {
     const rows = node.children.map((row, r) =>
       schema.nodes.table_row.create(
         null,
@@ -246,7 +326,16 @@ export class DocBuilder {
         ),
       ),
     );
-    return schema.nodes.table.create({ align: node.align ?? [] }, rows);
+    const [first = '', ...others] = this.source
+      .slice(start(node), this.lines.lineEnd(end(node)))
+      .split(/\r?\n/);
+    const tableLines = [first, ...others.map((line) => stripPrefix(line, ctx.rest))];
+    const tableAligned =
+      tableLines.length >= 2 && tableLines.every((line) => line.length === first.length);
+    return this.keyed(schema.nodes.table.create({ align: node.align ?? [] }, rows), node, sib, {
+      tableLines,
+      tableAligned,
+    });
   }
 
   private inline(children: readonly PhrasingContent[], marks: readonly Mark[]): Node[] {
@@ -261,35 +350,22 @@ export class DocBuilder {
       case 'text':
         this.text(node.value, marks, out);
         return;
-      case 'emphasis':
-        out.push(
-          ...this.inline(
-            node.children,
-            withMark(schema.marks.em.create({ delim: this.source[start(node)] })),
-          ),
-        );
+      case 'emphasis': {
+        const em = schema.marks.em.create({ delim: this.source[start(node)] });
+        out.push(...this.inline(node.children, withMark(em)));
         return;
-      case 'strong':
-        out.push(
-          ...this.inline(
-            node.children,
-            withMark(
-              schema.marks.strong.create({
-                delim: this.source.slice(start(node), start(node) + 2),
-              }),
-            ),
-          ),
-        );
+      }
+      case 'strong': {
+        const delim = this.source.slice(start(node), start(node) + 2);
+        out.push(...this.inline(node.children, withMark(schema.marks.strong.create({ delim }))));
         return;
+      }
       case 'delete':
         out.push(...this.inline(node.children, withMark(schema.marks.strike.create())));
         return;
       case 'inlineCode':
-        if (node.value === '') {
-          out.push(this.rawInline(node, marks));
-        } else {
-          out.push(schema.text(node.value, withMark(schema.marks.code.create())));
-        }
+        if (node.value === '') out.push(this.rawInline(node, marks));
+        else out.push(schema.text(node.value, withMark(schema.marks.code.create())));
         return;
       case 'break': {
         const style = this.source[start(node)] === '\\' ? 'backslash' : 'spaces';
@@ -355,7 +431,7 @@ export class DocBuilder {
   }
 }
 
-/** Bangun dokumen dari teks (tanpa BOM) dan mdast-nya. */
-export function buildDoc(text: string, root: Root): Node {
+/** Bangun dokumen dan indeks source dari teks (tanpa BOM) dan mdast-nya. */
+export function buildDoc(text: string, root: Root): { doc: Node; index: MutableSourceIndex } {
   return new DocBuilder(text).build(root);
 }
