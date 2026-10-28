@@ -13,3 +13,4 @@ export type {
   GuardFailure,
   Contribution,
 } from './types';
+export { parseMarkdown } from './parse';
