@@ -1,0 +1,607 @@
+/* SPDX-License-Identifier: LicenseRef-Proprietary */
+/* Tema markpiw (spesifikasi 5.3): token dipetakan ke --vscode-* dengan default terang untuk web. */
+@import '../../../vendor/prosemirror/prosemirror-view/style/prosemirror.css';
+@import '../../../vendor/prosemirror/prosemirror-gapcursor/style/gapcursor.css';
+
+:root {
+  --mp-canvas: var(--vscode-sideBar-background, #f3f3f1);
+  --mp-page: var(--vscode-editor-background, #ffffff);
+  --mp-fg: var(--vscode-editor-foreground, #1f2328);
+  --mp-muted: var(--vscode-descriptionForeground, #6b7280);
+  --mp-border: var(--vscode-panel-border, #e4e4e7);
+  --mp-accent: var(--vscode-focusBorder, #2563eb);
+  --mp-link: var(--vscode-textLink-foreground, #2563eb);
+  --mp-code-bg: var(--vscode-textCodeBlock-background, #f6f8fa);
+  --mp-toolbar-bg: var(--vscode-editorWidget-background, #ffffff);
+  --mp-hover: var(--vscode-toolbar-hoverBackground, #f0f0ee);
+  --mp-pressed: var(--vscode-toolbar-activeBackground, #e3ebfd);
+  --mp-popover-bg: var(--vscode-editorWidget-background, #ffffff);
+  --mp-popover-border: var(--vscode-editorWidget-border, #e4e4e7);
+  --mp-input-bg: var(--vscode-input-background, #ffffff);
+  --mp-input-border: var(--vscode-input-border, #d4d4d8);
+  --mp-button-bg: var(--vscode-button-background, #2563eb);
+  --mp-button-fg: var(--vscode-button-foreground, #ffffff);
+  --mp-danger-bg: var(--vscode-inputValidation-errorBackground, #fef2f2);
+  --mp-danger-border: var(--vscode-inputValidation-errorBorder, #fca5a5);
+  --mp-selected-node: var(--vscode-editor-selectionBackground, #bfdbfe);
+  --mp-font: var(--vscode-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
+  --mp-mono: var(--vscode-editor-font-family, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
+  --mp-radius: 6px;
+}
+
+.mp-root {
+  --mp-zoom: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--mp-canvas);
+  color: var(--mp-fg);
+  font-family: var(--mp-font);
+}
+
+.mp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--mp-toolbar-bg);
+  border-bottom: 1px solid var(--mp-border);
+  flex-wrap: wrap;
+}
+
+.mp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.mp-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.mp-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--mp-radius);
+  background: transparent;
+  color: var(--mp-fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mp-tool-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.mp-tool[data-hovered] {
+  background: var(--mp-hover);
+}
+
+.mp-tool[data-selected],
+.mp-tool[data-pressed] {
+  background: var(--mp-pressed);
+  color: var(--mp-accent);
+}
+
+.mp-tool[data-disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mp-tool[data-focus-visible] {
+  outline: 2px solid var(--mp-accent);
+  outline-offset: -1px;
+}
+
+.mp-tool-menu {
+  gap: 4px;
+  min-width: 112px;
+  justify-content: space-between;
+}
+
+.mp-zoom {
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mp-tool-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--mp-border);
+  border: 0;
+}
+
+.mp-popover {
+  z-index: 50;
+  background: var(--mp-popover-bg);
+  border: 1px solid var(--mp-popover-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  color: var(--mp-fg);
+  font-family: var(--mp-font);
+  font-size: 13px;
+}
+
+.mp-menu {
+  padding: 4px;
+  outline: none;
+  min-width: 180px;
+}
+
+.mp-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+}
+
+.mp-menu-item[data-focused] {
+  background: var(--mp-hover);
+}
+
+.mp-menu-item[data-disabled] {
+  opacity: 0.4;
+}
+
+.mp-menu-item kbd {
+  color: var(--mp-muted);
+  font-family: var(--mp-font);
+  font-size: 11px;
+}
+
+.mp-menu-h1 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.mp-menu-h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+.mp-menu-h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mp-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--mp-danger-bg);
+  border-bottom: 1px solid var(--mp-danger-border);
+  font-size: 13px;
+}
+
+.mp-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mp-button {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--mp-radius);
+  background: var(--mp-button-bg);
+  color: var(--mp-button-fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mp-button-quiet {
+  background: transparent;
+  color: var(--mp-fg);
+  border-color: var(--mp-input-border);
+}
+
+.mp-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--mp-radius);
+  background: transparent;
+  color: var(--mp-fg);
+  cursor: pointer;
+}
+
+.mp-icon-button:hover {
+  background: var(--mp-hover);
+}
+
+.mp-icon-button:disabled {
+  opacity: 0.4;
+}
+
+.mp-canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 32px 16px 96px;
+}
+
+.mp-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 64px;
+  background: var(--mp-page);
+  border: 1px solid var(--mp-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+@media (max-width: 720px) {
+  .mp-page {
+    padding: 24px 20px;
+  }
+}
+
+/* Konten editor */
+.mp-content {
+  font-size: calc(16px * var(--mp-zoom));
+  line-height: 1.65;
+  outline: none;
+  min-height: 300px;
+  word-wrap: break-word;
+}
+
+.mp-content > :first-child {
+  margin-top: 0;
+}
+
+.mp-content h1,
+.mp-content h2,
+.mp-content h3,
+.mp-content h4,
+.mp-content h5,
+.mp-content h6 {
+  margin: 1.4em 0 0.4em;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.mp-content h1 {
+  font-size: 2em;
+}
+.mp-content h2 {
+  font-size: 1.5em;
+}
+.mp-content h3 {
+  font-size: 1.25em;
+}
+.mp-content h4 {
+  font-size: 1.1em;
+}
+.mp-content h5,
+.mp-content h6 {
+  font-size: 1em;
+}
+
+.mp-content p {
+  margin: 0.5em 0;
+}
+
+.mp-content a {
+  color: var(--mp-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: text;
+}
+
+.mp-content code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--mp-code-bg);
+  font-family: var(--mp-mono);
+  font-size: 0.88em;
+}
+
+.mp-content blockquote {
+  margin: 0.8em 0;
+  padding: 0 1em;
+  border-left: 3px solid var(--mp-border);
+  color: var(--mp-muted);
+}
+
+.mp-content ul,
+.mp-content ol {
+  margin: 0.4em 0;
+  padding-left: 1.6em;
+}
+
+.mp-content li > p {
+  margin: 0.15em 0;
+}
+
+.mp-content hr {
+  margin: 1.5em 0;
+  border: 0;
+  border-top: 1px solid var(--mp-border);
+}
+
+.mp-content hr.ProseMirror-selectednode {
+  outline: 2px solid var(--mp-accent);
+}
+
+.mp-content table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.mp-content th,
+.mp-content td {
+  border: 1px solid var(--mp-border);
+  padding: 6px 10px;
+  vertical-align: top;
+  min-width: 48px;
+}
+
+.mp-content th {
+  background: var(--mp-code-bg);
+  font-weight: 600;
+  text-align: left;
+}
+
+.mp-placeholder::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--mp-muted);
+  pointer-events: none;
+}
+
+/* NodeView */
+.mp-image {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.mp-image img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.mp-image.ProseMirror-selectednode img {
+  outline: 2px solid var(--mp-accent);
+}
+
+.mp-image-missing {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px dashed var(--mp-border);
+  border-radius: 4px;
+  color: var(--mp-muted);
+  font-size: 0.85em;
+}
+
+.mp-content li.mp-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  list-style: none;
+  margin-left: -1.4em;
+}
+
+.mp-task-box {
+  user-select: none;
+  padding-top: 0.3em;
+}
+
+.mp-task-box input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.mp-task-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.mp-content li.mp-task[data-checked='true'] > .mp-task-content > p {
+  color: var(--mp-muted);
+  text-decoration: line-through;
+}
+
+.mp-code,
+.mp-raw {
+  position: relative;
+  margin: 0.8em 0;
+  border-radius: var(--mp-radius);
+  background: var(--mp-code-bg);
+}
+
+.mp-code pre,
+.mp-raw pre {
+  margin: 0;
+  padding: 12px 16px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.mp-code code,
+.mp-raw code {
+  padding: 0;
+  background: none;
+  font-family: var(--mp-mono);
+  font-size: 0.88em;
+  white-space: pre;
+}
+
+.mp-code-bar {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+}
+
+.mp-code-lang {
+  width: 90px;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--mp-muted);
+  font: 12px var(--mp-font);
+  text-align: right;
+}
+
+.mp-code-lang:hover,
+.mp-code-lang:focus {
+  border-color: var(--mp-input-border);
+  background: var(--mp-input-bg);
+  outline: none;
+}
+
+.mp-raw {
+  border: 1px dashed var(--mp-border);
+}
+
+.mp-raw-label {
+  padding: 4px 12px 0;
+  color: var(--mp-muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+/* Slash menu */
+.mp-slash {
+  z-index: 60;
+  width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--mp-popover-bg);
+  border: 1px solid var(--mp-popover-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  font-family: var(--mp-font);
+  font-size: 13px;
+  color: var(--mp-fg);
+}
+
+.mp-slash-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mp-slash-item {
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mp-slash-item[aria-selected='true'],
+.mp-slash-item:hover {
+  background: var(--mp-hover);
+}
+
+/* Popover link & gambar */
+.mp-link-popover,
+.mp-image-popover {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+}
+
+.mp-link-popover input,
+.mp-image-popover input {
+  width: 240px;
+  padding: 4px 8px;
+  border: 1px solid var(--mp-input-border);
+  border-radius: 4px;
+  background: var(--mp-input-bg);
+  color: var(--mp-fg);
+  font: 13px var(--mp-font);
+}
+
+.mp-image-popover input {
+  width: 160px;
+}
+
+.mp-notice {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 8px;
+  background: var(--mp-popover-bg);
+  border: 1px solid var(--mp-popover-border);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  font-size: 13px;
+}
+
+.mp-notice-error {
+  border-color: var(--mp-danger-border);
+  background: var(--mp-danger-bg);
+}
+
+.mp-crash {
+  padding: 16px;
+}
+
+.mp-crash-source {
+  white-space: pre-wrap;
+  font-family: var(--mp-mono);
+  font-size: 13px;
+}
+
+.mp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Tema high contrast VS Code */
+body.vscode-high-contrast .mp-page,
+body.vscode-high-contrast-light .mp-page {
+  border-color: var(--vscode-contrastBorder, currentColor);
+  box-shadow: none;
+}
+
+body.vscode-high-contrast .mp-tool[data-selected],
+body.vscode-high-contrast-light .mp-tool[data-selected] {
+  outline: 1px solid var(--vscode-contrastActiveBorder, currentColor);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 import js from '@eslint/js';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 const forbiddenPackages = [
@@ -51,6 +52,33 @@ export default tseslint.config(
             {
               group: ['*'],
               message: '@markpiw/host hanya berisi tipe dan tidak mengimpor apa pun.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['**/*.tsx'],
+    languageOptions: { globals: { ...globals.browser } },
+    plugins: { 'react-hooks': reactHooks },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
+    },
+  },
+  {
+    files: ['packages/ui/src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: forbiddenPackages },
+            {
+              group: ['node:*', 'vscode', 'prosemirror-*'],
+              message:
+                'packages/ui hanya memakai @markpiw/editor (bukan ProseMirror/Node/VS Code langsung).',
             },
           ],
         },
