@@ -1,22 +1,116 @@
 # markpiw
 
-Editor markdown WYSIWYG in-house: edit langsung di tampilan jadi, file `.md` tetap bersih untuk di-review di git. Tersedia sebagai **web app** (folder lokal lewat File System Access API, Chrome/Edge) dan **extension VS Code**.
+Editor markdown WYSIWYG in-house: edit langsung di tampilan jadi (seperti Notion), file `.md` tetap bersih untuk di-review di git. Tersedia sebagai **extension VS Code** dan **web app** (Chrome/Edge).
 
-- Panduan uji manual: [docs/manual-testing.md](docs/manual-testing.md)
-- Spesifikasi: [docs/superpowers/specs/2026-10-28-markpiw-design.md](docs/superpowers/specs/2026-10-28-markpiw-design.md)
-- Roadmap: [docs/superpowers/plans/2026-10-28-markpiw-roadmap.md](docs/superpowers/plans/2026-10-28-markpiw-roadmap.md)
+- [Pasang di VS Code](#pasang-di-vs-code) (untuk semua anggota tim)
+- [Memakai versi web](#memakai-versi-web)
+- [Untuk pengembang](#untuk-pengembang)
 
-## Mulai cepat
+---
 
-Prasyarat: Node 24 dan pnpm 10 (`corepack enable`).
+## Pasang di VS Code
+
+Yang Anda butuhkan hanya **VS Code 1.95 atau lebih baru**. Tidak perlu Node, pnpm, atau clone repo ini.
+
+### 1. Unduh file `.vsix`
+
+Buka halaman [**Releases**](https://github.com/avendisianipar/markpiw/releases), pilih versi terbaru, lalu unduh `markpiw.vsix` di bagian **Assets**.
+
+> Repo ini private. Jika halaman Releases tidak bisa dibuka, minta akses ke pemilik repo, atau minta file `.vsix`-nya langsung.
+
+Atau lewat terminal jika Anda memakai [GitHub CLI](https://cli.github.com/):
 
 ```bash
+gh release download --repo avendisianipar/markpiw --pattern '*.vsix'
+```
+
+### 2. Pasang extension
+
+Pilih salah satu cara:
+
+- **Lewat menu (paling mudah).** Di VS Code, buka panel **Extensions** (Ctrl/⌘+Shift+X), klik **`…`** di kanan atas panel, pilih **Install from VSIX…**, lalu pilih `markpiw.vsix`.
+- **Seret dan lepas.** Seret file `markpiw.vsix` ke panel **Extensions**.
+- **Lewat terminal.**
+
+  ```bash
+  code --install-extension markpiw.vsix
+  ```
+
+  > `code: command not found` di macOS? Di VS Code tekan ⌘+Shift+P, jalankan **Shell Command: Install 'code' command in PATH**, lalu buka terminal baru.
+
+Jika VS Code meminta, klik **Reload Window**. Setelah terpasang, **markpiw** muncul di daftar extension yang terpasang.
+
+### 3. Buka file markdown dengan markpiw
+
+- Klik kanan file `.md` di Explorer → **Buka dengan markpiw**, atau
+- buka file `.md`, lalu klik ikon ✎ **Buka dengan markpiw** di pojok kanan atas editor, atau
+- **Open With…** → **markpiw**.
+
+Editor teks bawaan tetap menjadi default; markpiw dipakai saat Anda memilihnya.
+
+**Ingin semua file `.md` langsung terbuka di markpiw?** Klik kanan file `.md` → **Open With…** → **Configure default editor for '\*.md'…** → **markpiw**. Atau tambahkan ini ke `settings.json`:
+
+```json
+"workbench.editorAssociations": { "*.md": "markpiw.editor" }
+```
+
+### Cara pakai singkat
+
+| Ingin | Caranya |
+|---|---|
+| Heading, list, kutipan, task | Ketik `# `, `- `, `1. `, `> `, `[ ] ` di awal baris |
+| Tebal, miring, kode, coret | Ketik `**teks**`, `_teks_`, `` `teks` ``, `~~teks~~`, atau pakai toolbar |
+| Menu blok (tabel, code block, gambar, …) | Ketik `/` di baris kosong |
+| Link | Pilih teks → Ctrl/⌘+K |
+| Gambar | Tempel (paste) atau seret gambar. File disimpan ke folder `assets/` di samping file `.md` |
+| Simpan, undo, redo | Ctrl/⌘+S, Ctrl/⌘+Z, Ctrl/⌘+Shift+Z (sama seperti biasa) |
+
+Folder gambar bisa diganti lewat setting `markpiw.assetsFolder`.
+
+### Update ke versi baru
+
+Extension yang dipasang dari `.vsix` **tidak diperbarui otomatis**. Saat ada rilis baru, unduh `.vsix` terbaru lalu pasang lagi dengan cara yang sama (versi lama otomatis tergantikan), kemudian **Reload Window**. Versi yang terpasang terlihat di halaman extension markpiw di panel Extensions.
+
+### Menghapus
+
+Panel **Extensions** → markpiw → **Uninstall**.
+
+### Jika ada masalah
+
+- **markpiw tidak muncul di Open With.** Pastikan extension terpasang dan aktif di panel Extensions, lalu jalankan **Developer: Reload Window** (Ctrl/⌘+Shift+P).
+- **Gagal memasang karena versi.** Perbarui VS Code ke 1.95 atau lebih baru (**Code → Check for Updates…**).
+- **Muncul banner merah dan editor menjadi baca-saja.** Ini disengaja: ada edit yang tidak bisa disimpan sebagai markdown tanpa mengubah isi, jadi markpiw tidak menulis apa pun ke file. Klik **Muat ulang dari file** untuk melanjutkan.
+
+Laporkan masalah lewat [Issues](https://github.com/avendisianipar/markpiw/issues). Sertakan langkah yang dilakukan, `git diff` file-nya, dan info dari tombol **Salin info diagnostik** jika ada.
+
+---
+
+## Memakai versi web
+
+Versi web belum di-host; untuk sekarang dijalankan dari repo ini (lihat [Untuk pengembang](#untuk-pengembang)):
+
+```bash
+pnpm dev:web
+```
+
+Lalu buka `http://localhost:5173` di **Chrome atau Edge**. Tambahkan `?demo` di URL untuk mencoba folder contoh tanpa menyentuh file Anda. Panduan lengkap ada di [docs/manual-testing.md](docs/manual-testing.md).
+
+---
+
+## Untuk pengembang
+
+Prasyarat: Node 24 dan pnpm 10 lewat Corepack.
+
+```bash
+corepack enable
 pnpm install
 pnpm dev:web          # web di http://localhost:5173 (tambahkan ?demo untuk folder contoh)
 pnpm package:vscode   # menghasilkan apps/vscode/markpiw.vsix
 ```
 
-## Pengembangan
+> `zsh: command not found: pnpm`? Jalankan `corepack enable` sekali (ulangi setelah berpindah versi Node lewat nvm).
+
+### Test
 
 ```bash
 pnpm verify        # typecheck + lint + format:check + test (unit, golden, property, upstream ProseMirror)
@@ -24,7 +118,24 @@ pnpm test:e2e      # E2E web di Chrome terpasang (headless)
 pnpm test:vscode   # test integrasi di VS Code terpasang (membuka jendela VS Code sementara)
 ```
 
-## Struktur
+### Merilis versi baru extension
+
+1. Naikkan `version` di [apps/vscode/package.json](apps/vscode/package.json) (mis. `0.1.0` → `0.2.0`).
+2. Pastikan semua test lulus, lalu build paketnya:
+
+   ```bash
+   pnpm verify && pnpm package:vscode
+   ```
+
+3. Buat rilis di GitHub dengan `.vsix` sebagai lampiran:
+
+   ```bash
+   gh release create v0.2.0 apps/vscode/markpiw.vsix --title "markpiw 0.2.0" --notes "Ringkasan perubahan…"
+   ```
+
+4. Umumkan ke tim agar mereka memasang ulang.
+
+### Struktur
 
 | Path | Isi |
 |---|---|
@@ -35,3 +146,9 @@ pnpm test:vscode   # test integrasi di VS Code terpasang (membuka jendela VS Cod
 | `packages/host` | Interface `FileHost` (types only) |
 | `apps/web` | SPA web (folder lokal + mode demo) |
 | `apps/vscode` | Extension VS Code (custom editor) |
+
+### Dokumen
+
+- Panduan uji manual: [docs/manual-testing.md](docs/manual-testing.md)
+- Spesifikasi: [docs/superpowers/specs/2026-10-28-markpiw-design.md](docs/superpowers/specs/2026-10-28-markpiw-design.md)
+- Roadmap: [docs/superpowers/plans/2026-10-28-markpiw-roadmap.md](docs/superpowers/plans/2026-10-28-markpiw-roadmap.md)
