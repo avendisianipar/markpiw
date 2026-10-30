@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // File System Access API yang belum ada di lib.dom TypeScript.
 interface FileSystemHandlePermissionDescriptor {
   mode?: 'read' | 'readwrite';

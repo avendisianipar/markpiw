@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Escape minimal: mulai dari semua kandidat di-escape, lalu hapus escape dari kiri ke kanan
 // selama hasil parse ulang tetap setara secara semantik.
 import type { Node } from 'prosemirror-model';

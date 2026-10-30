@@ -36,7 +36,7 @@
 - TypeScript (`tooling/tsconfig.base.json`): `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, `isolatedModules`, `module: "esnext"`, `moduleResolution: "bundler"`, `target: "es2022"`, `composite`, `declaration`, `types: []` (tetapkan eksplisit per paket). Vendor memakai `tsconfig` sendiri yang longgar sesuai kebutuhan upstream.
 - `packages/markdown` memakai `lib: ["ES2023", "DOM"]` hanya untuk tipe. ESLint `no-restricted-globals` melarang `document`, `window`, `navigator`, `localStorage`, `DOMParser` di `packages/markdown/src/**`.
 - Aturan impor (ESLint `no-restricted-imports` per direktori): `packages/host` tidak mengimpor apa pun; `packages/markdown/src` hanya boleh mengimpor `@markpiw/host`, `prosemirror-model`, `prosemirror-transform`, `mdast*`, `micromark*`, dan modul relatif (termasuk dilarang `node:*`). File test boleh mengimpor `node:*`, `vitest`, dan `fast-check`.
-- Setiap file source/test milik proyek (`.ts`, `.mjs`, `.js` di luar `vendor/prosemirror/<pkg>/`) diawali `// SPDX-License-Identifier: LicenseRef-Proprietary`.
+- Setiap file source/test milik proyek (`.ts`, `.mjs`, `.js` di luar `vendor/prosemirror/<pkg>/`) diawali `// SPDX-License-Identifier: MIT`.
 - `.gitattributes`: `* text=auto eol=lf`, `fixtures/** -text` (agar fixture CRLF/BOM tetap byte-exact), dan `vendor/prosemirror/** -text`.
 - Pesan commit berformat conventional (`feat:`, `test:`, `chore:`, `docs:`, `vendor:`). Akhiri setiap pesan commit dengan baris `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - **`pnpm verify` wajib lulus di akhir setiap task.** Isinya: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test`.

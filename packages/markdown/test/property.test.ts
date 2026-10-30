@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { globSync, readFileSync } from 'node:fs';
 import fc from 'fast-check';
 import type { MarkType, Node } from 'prosemirror-model';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Slash command (spesifikasi 4.2): "/" di awal paragraf atau setelah spasi membuka menu.
 import { schema } from '@markpiw/markdown';
 import { Plugin, PluginKey, type EditorState } from 'prosemirror-state';

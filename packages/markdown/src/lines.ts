@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 
 /** Line ending seperti CommonMark/micromark: `\r\n`, `\r`, atau `\n`. */
 export const LINE_BREAK = /\r\n|\r|\n/;

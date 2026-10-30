@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Perintah editor (spesifikasi 4.1). Semua perintah aman dipanggil kapan saja: jika tidak
 // berlaku pada posisi kursor, perintah tidak melakukan apa-apa.
 import type { FileHost } from '@markpiw/host';

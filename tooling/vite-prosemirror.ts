@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Source ProseMirror upstream me-re-export tipe dengan `export { Tipe } from "./x"`. Di build
 // bundler hal ini bisa di-shim, tetapi di dev server Vite browser memuat modul ESM satu per satu
 // dan menolak ekspor yang tidak ada ("does not provide an export named 'Attrs'"). Plugin ini

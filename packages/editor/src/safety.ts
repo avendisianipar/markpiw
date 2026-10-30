@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Spesifikasi 4.5: link dan gambar hanya dibuka/dimuat dari skema yang aman.
 
 const SCHEME = /^([a-z][a-z0-9+.-]*):/i;

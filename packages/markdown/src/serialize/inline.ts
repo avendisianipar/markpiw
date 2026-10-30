@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Serialisasi konten inline + mark (rencana Fase 1, Task 8). Menghasilkan markdown dengan
 // semua kandidat escape sudah di-escape, beserta offset backslash-nya untuk escapeMinimal.
 import type { Mark, Node } from 'prosemirror-model';

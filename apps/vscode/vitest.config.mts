@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { defineProject } from 'vitest/config';
 import { prosemirrorAliases } from '../../tooling/vendor-aliases.ts';
 

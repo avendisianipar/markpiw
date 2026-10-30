@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // FileHost untuk web (spesifikasi 6): satu file .md di dalam folder yang dibuka.
 import type { Disposable, FileHost, HostError, Result, UiState } from '@markpiw/host';
 import { type DirectoryLike, type FileLike, NotFoundError } from '../fs/types';

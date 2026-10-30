@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { Node } from 'prosemirror-model';
 import type { Transform } from 'prosemirror-transform';
 import { describe, expect, it } from 'vitest';

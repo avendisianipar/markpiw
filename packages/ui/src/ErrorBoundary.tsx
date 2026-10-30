@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { Component, type ReactNode } from 'react';
 import { t } from './strings/id';
 

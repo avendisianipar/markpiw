@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { prosemirrorAliases } from '../../tooling/vendor-aliases.ts';
+import { thirdPartyNotices } from '../../tooling/third-party.ts';
 import { prosemirrorTypeReexports } from '../../tooling/vite-prosemirror.ts';
 
 const CSP =
@@ -22,7 +23,7 @@ function contentSecurityPolicy(): Plugin {
 
 export default defineConfig({
   base: './',
-  plugins: [prosemirrorTypeReexports(), react(), contentSecurityPolicy()],
+  plugins: [prosemirrorTypeReexports(), react(), contentSecurityPolicy(), thirdPartyNotices()],
   resolve: { alias: prosemirrorAliases },
   build: {
     target: 'es2022',

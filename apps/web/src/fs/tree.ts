@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { DirectoryLike, FileLike } from './types';
 
 export type TreeEntry =

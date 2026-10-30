@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { buildDoc } from './build';
 import { toMdast } from './mdast';
 import { detectProfile } from './profile';

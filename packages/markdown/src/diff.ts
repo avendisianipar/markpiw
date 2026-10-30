@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { TextChange } from '@markpiw/host';
 
 const isHigh = (code: number) => code >= 0xd800 && code <= 0xdbff;

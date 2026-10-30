@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Bundle webview (spesifikasi 7.5): satu JS + satu CSS dengan nama tetap, tanpa code splitting.
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { prosemirrorAliases } from '../../tooling/vendor-aliases.ts';
+import { bundledModules } from '../../tooling/third-party.ts';
 import { prosemirrorTypeReexports } from '../../tooling/vite-prosemirror.ts';
 
 export default defineConfig({
-  plugins: [prosemirrorTypeReexports(), react()],
+  plugins: [prosemirrorTypeReexports(), react(), bundledModules('modules.json')],
   resolve: { alias: prosemirrorAliases },
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   build: {

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { EditorSnapshot } from '@markpiw/editor';
 import { X } from 'lucide-react';
 import { useEffect } from 'react';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import '@markpiw/ui/theme.css';
 import './webview.css';
 import { EditorController, type EditorSnapshot } from '@markpiw/editor';

@@ -1,10 +1,13 @@
 # markpiw
 
-Editor markdown WYSIWYG in-house: edit langsung di tampilan jadi (seperti Notion), file `.md` tetap bersih untuk di-review di git. Tersedia sebagai **extension VS Code** dan **web app** (Chrome/Edge).
+Editor markdown WYSIWYG: edit langsung di tampilan jadi (seperti Notion), file `.md` tetap bersih untuk di-review di git. Tersedia sebagai **extension VS Code** dan **web app** (Chrome/Edge). Semuanya berjalan di komputer Anda; markpiw tidak mengirim data ke mana pun (lihat [Privasi](#privasi)).
 
-- [Pasang di VS Code](#pasang-di-vs-code) (untuk semua anggota tim)
+- [Pasang di VS Code](#pasang-di-vs-code)
 - [Memakai versi web](#memakai-versi-web)
 - [Untuk pengembang](#untuk-pengembang)
+- [Privasi](#privasi)
+- [Terima kasih](#terima-kasih)
+- [Lisensi](#lisensi)
 
 ---
 
@@ -152,3 +155,44 @@ pnpm test:vscode   # test integrasi di VS Code terpasang (membuka jendela VS Cod
 - Panduan uji manual: [docs/manual-testing.md](docs/manual-testing.md)
 - Spesifikasi: [docs/superpowers/specs/2026-10-28-markpiw-design.md](docs/superpowers/specs/2026-10-28-markpiw-design.md)
 - Roadmap: [docs/superpowers/plans/2026-10-28-markpiw-roadmap.md](docs/superpowers/plans/2026-10-28-markpiw-roadmap.md)
+
+### Dependensi pihak ketiga
+
+`THIRD_PARTY_NOTICES.txt` dibuat otomatis saat build dari modul yang benar-benar masuk bundle ([tooling/third-party.ts](tooling/third-party.ts)): di root `.vsix` dan di `dist/` versi web. Build gagal jika ada paket tanpa file lisensi. Periksa lisensinya secara manual, lalu tambahkan ke `LICENSE_OVERRIDES`.
+
+---
+
+## Privasi
+
+markpiw tidak memiliki telemetri, analytics, atau server. Isi dokumen tidak pernah dikirim ke mana pun.
+
+- **Versi web** membuka folder lewat File System Access API langsung di browser. Yang disimpan hanya di browser Anda sendiri: handle folder terakhir dan draf darurat (IndexedDB), serta tema dan state tampilan (localStorage).
+- **Extension VS Code** hanya membaca dan menulis file yang Anda buka. Tema dan state tampilan disimpan di storage VS Code.
+- **Gambar dari URL luar** (`![](https://…)`) dimuat langsung dari server asalnya, sama seperti preview markdown di GitHub atau VS Code. Gambar yang Anda tempel disimpan sebagai file lokal di folder `assets/`.
+
+---
+
+## Terima kasih
+
+markpiw berdiri di atas karya open source berikut. Terima kasih kepada para pembuat dan kontributornya.
+
+| Proyek | Dipakai untuk | Lisensi |
+|---|---|---|
+| [ProseMirror](https://prosemirror.net) oleh Marijn Haverbeke | Inti editor (di-vendor di `vendor/prosemirror`) | MIT |
+| [micromark](https://github.com/micromark/micromark) dan [mdast](https://github.com/syntax-tree/mdast) oleh Titus Wormer | Parsing Markdown dan GFM | MIT |
+| [React](https://react.dev) oleh Meta | Antarmuka | MIT |
+| [React Aria](https://react-spectrum.adobe.com/react-aria/) oleh Adobe | Komponen UI yang aksesibel | Apache-2.0 |
+| [Floating UI](https://floating-ui.com) | Posisi popover dan menu | MIT |
+| [Lucide](https://lucide.dev) | Ikon | ISC |
+| [Valibot](https://valibot.dev) oleh Fabian Hiller | Validasi pesan VS Code ↔ webview | MIT |
+| [clsx](https://github.com/lukeed/clsx), [escape-string-regexp](https://github.com/sindresorhus/escape-string-regexp), [format](https://github.com/samsonjs/format) | Utilitas | MIT |
+
+Dibangun dengan [TypeScript](https://www.typescriptlang.org), [Vite](https://vite.dev), [esbuild](https://esbuild.github.io), [Vitest](https://vitest.dev), [Playwright](https://playwright.dev), dan [pnpm](https://pnpm.io).
+
+Daftar lengkap komponen pihak ketiga beserta teks lisensinya ada di `THIRD_PARTY_NOTICES.txt` yang disertakan di setiap rilis.
+
+---
+
+## Lisensi
+
+[MIT](LICENSE) © 2026 Avendi Sianipar dan kontributor markpiw.

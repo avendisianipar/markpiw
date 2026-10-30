@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Jalur serialisasi ulang (tanpa indeks source) harus setara secara semantik untuk seluruh
 // korpus golden: parse → serialisasi fresh → parse ulang menghasilkan dokumen yang sama.
 import { globSync, readFileSync } from 'node:fs';

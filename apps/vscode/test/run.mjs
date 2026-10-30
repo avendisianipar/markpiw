@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Test integrasi VS Code (spesifikasi 11) memakai VS Code yang terpasang (tanpa unduhan).
 // Override lokasi dengan VSCODE_EXECUTABLE. Membuka jendela VS Code sementara.
 import { cpSync, mkdtempSync, rmSync } from 'node:fs';

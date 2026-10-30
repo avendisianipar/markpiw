@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Guard round-trip (spesifikasi 3.6): output serializer harus di-parse kembali menjadi dokumen
 // yang setara secara semantik dengan dokumen editor.
 import type { Result } from '@markpiw/host';

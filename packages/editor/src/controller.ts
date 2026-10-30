@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // EditorController (spesifikasi 4.1): pemilik EditorState/EditorView, store snapshot untuk UI,
 // perintah, dan pipeline serialisasi + guard. Tidak tahu soal React maupun file.
 import type { Disposable, FileHost, Result } from '@markpiw/host';

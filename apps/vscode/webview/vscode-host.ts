@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // FileHost di dalam webview VS Code: semua akses file lewat pesan ke extension.
 import type { Disposable, FileHost, HostError, Result, UiState } from '@markpiw/host';
 import type { ExtensionMessage, WebviewMessage } from '../src/protocol';

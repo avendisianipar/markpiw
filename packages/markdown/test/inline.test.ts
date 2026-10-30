@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest';
 import type { Mark, Node } from 'prosemirror-model';
 import { schema, parseMarkdown, serializeMarkdown } from '../src';

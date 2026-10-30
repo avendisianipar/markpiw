@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Perintah tabel dasar (tanpa seleksi multi-sel) dan navigasi sel dengan Tab.
 import { schema } from '@markpiw/markdown';
 import type { Node } from 'prosemirror-model';

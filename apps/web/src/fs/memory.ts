@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { type DirectoryLike, type FileLike, type FileSnapshot, NotFoundError } from './types';
 
 type Tree = { [name: string]: string | Uint8Array | Tree };

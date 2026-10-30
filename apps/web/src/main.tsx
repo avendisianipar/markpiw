@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import '@markpiw/ui/theme.css';
 import './app.css';
 // Pasang data-theme sebelum render pertama agar tidak berkedip terang.

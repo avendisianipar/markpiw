@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Slash menu (spesifikasi 5.2): portal, posisi via Floating UI, pola listbox dengan
 // aria-activedescendant di elemen editor; fokus tetap di editor.
 import type { EditorSnapshot } from '@markpiw/editor';

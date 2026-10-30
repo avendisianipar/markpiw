@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Semua teks UI (spesifikasi 5.4). Tambahkan `en.ts` dengan kunci yang sama untuk bahasa lain.
 import { DEFAULT_EDITOR_STRINGS, type EditorStrings } from '@markpiw/editor';
 

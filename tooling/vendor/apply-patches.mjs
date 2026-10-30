@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Terapkan vendor/prosemirror/patches/*.patch berurutan nama (path relatif ke root repo).
 // Patch yang sudah terpasang dilewati, sehingga skrip ini aman dijalankan berulang.
 import { execFileSync } from 'node:child_process';

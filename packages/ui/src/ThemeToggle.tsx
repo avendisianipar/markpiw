@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Tombol mode terang/gelap di ujung kanan topbar; host (web/VS Code) yang menyimpan pilihannya.
 import { Moon, Sun } from 'lucide-react';
 import { ToggleButton } from 'react-aria-components';

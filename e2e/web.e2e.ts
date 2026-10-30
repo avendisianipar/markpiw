@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // E2E web (mode demo) dengan Chrome terpasang via playwright-core, headless.
 // Jalankan: pnpm test:e2e (butuh `pnpm --filter @markpiw/web build` lebih dulu).
 import { type ChildProcess, spawn } from 'node:child_process';

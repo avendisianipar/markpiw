@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Popover link (spesifikasi 5.2): muncul saat kursor di link atau Mod-K.
 import { type EditorSnapshot, isSafeHref } from '@markpiw/editor';
 import { ExternalLink, Unlink } from 'lucide-react';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Subset File System Access API yang dipakai markpiw; diimplementasikan oleh adapter FS Access
 // asli (fs-access.ts) dan folder memori (memory.ts, untuk demo dan test).
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Mode terang/gelap, sama untuk web dan VS Code: tanpa pilihan pengguna, ikut skema "sistem"
 // (OS di web, tema VS Code di webview); setelah memilih, pilihan disimpan host. Skema aktif
 // dipasang sebagai data-theme di <html> dan dibaca token --mp-* di theme.css.

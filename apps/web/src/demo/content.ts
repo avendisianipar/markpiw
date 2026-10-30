@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Folder contoh untuk mode demo (di memori; tidak ada yang ditulis ke disk).
 import { MemoryDirectory } from '../fs/memory';
 

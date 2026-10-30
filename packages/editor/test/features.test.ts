@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { Slice } from 'prosemirror-model';
 import { describe, expect, it } from 'vitest';
 import { isSafeHref, isSafeImageSrc } from '../src';

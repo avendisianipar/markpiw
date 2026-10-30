@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Menjalankan test upstream ProseMirror (non-browser) terhadap source yang di-vendor.
 import { readFileSync } from 'node:fs';
 import { defineProject } from 'vitest/config';

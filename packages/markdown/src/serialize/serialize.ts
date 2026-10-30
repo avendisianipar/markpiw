@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Serializer dengan preservasi source (spesifikasi 3.3–3.4; algoritma di rencana Fase 1, Task 7).
 import type { Node } from 'prosemirror-model';
 import type { ParsedDoc, Profile, SourceEntry, SourceIndex, SrcKey } from '../types';
