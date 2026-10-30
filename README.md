@@ -1,199 +1,253 @@
+<div align="center">
+
 # markpiw
 
-**markpiw** (dari *Markdown Preview*) adalah editor markdown WYSIWYG: edit langsung di tampilan jadi (seperti Notion), file `.md` tetap bersih untuk di-review di git. Tersedia sebagai **extension VS Code** dan **web app** (Chrome/Edge). Semuanya berjalan di komputer Anda; markpiw tidak mengirim data ke mana pun (lihat [Privasi](#privasi)).
+**Edit Markdown seperti dokumen biasa, tanpa mengorbankan source dan git diff.**
 
-- [Pasang di VS Code](#pasang-di-vs-code)
-- [Memakai versi web](#memakai-versi-web)
-- [Untuk pengembang](#untuk-pengembang)
-- [Privasi](#privasi)
-- [Terima kasih](#terima-kasih)
-- [Lisensi](#lisensi)
+[![Latest release](https://img.shields.io/github/v/release/avendisianipar/markpiw?display_name=tag&sort=semver)](https://github.com/avendisianipar/markpiw/releases/latest)
+[![CI](https://github.com/avendisianipar/markpiw/actions/workflows/ci.yml/badge.svg)](https://github.com/avendisianipar/markpiw/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/avendisianipar/markpiw)](LICENSE)
+![VS Code >= 1.95](https://img.shields.io/badge/VS_Code-%E2%89%A5_1.95-007ACC?logo=visualstudiocode&logoColor=white)
 
----
+[Unduh extension](https://github.com/avendisianipar/markpiw/releases/latest) ·
+[Lihat fitur](#fitur-utama) ·
+[Mulai berkontribusi](CONTRIBUTING.md) ·
+[Laporkan masalah](https://github.com/avendisianipar/markpiw/issues/new/choose)
 
-## Pasang di VS Code
+</div>
 
-Yang Anda butuhkan hanya **VS Code 1.95 atau lebih baru**. Tidak perlu Node, pnpm, atau clone repo ini.
+markpiw adalah editor Markdown WYSIWYG lokal untuk VS Code dan browser berbasis Chromium.
+Anda mengedit langsung di tampilan jadi—seperti editor dokumen modern—sementara file `.md`
+tetap menjadi sumber utama dan mudah di-review di Git.
 
-### 1. Unduh file `.vsix`
+> [!NOTE]
+> Rilis stabil terbaru adalah `v1.0.0`. File tetap disimpan sebagai Markdown biasa sehingga
+> dapat dibuka dan di-review tanpa markpiw.
 
-Buka halaman [**Releases**](https://github.com/avendisianipar/markpiw/releases), pilih versi terbaru, lalu unduh `markpiw.vsix` di bagian **Assets**.
+## Mengapa markpiw?
 
-> Repo ini private. Jika halaman Releases tidak bisa dibuka, minta akses ke pemilik repo, atau minta file `.vsix`-nya langsung.
+| | |
+|---|---|
+| **Markdown tetap Markdown** | Tidak ada format dokumen tersembunyi atau lock-in. |
+| **Diff tetap terarah** | Hanya blok yang Anda edit yang diserialisasi ulang; bagian lain dipertahankan. |
+| **Lokal dan privat** | Tidak ada server, telemetri, atau analytics. |
+| **Menyatu dengan VS Code** | Save, undo, redo, dan file workflow memakai mekanisme bawaan VS Code. |
+| **Gagal dengan aman** | Jika perubahan tidak dapat disimpan tanpa mengubah makna dokumen, editor tidak menulis file. |
 
-Atau lewat terminal jika Anda memakai [GitHub CLI](https://cli.github.com/):
+```mermaid
+flowchart LR
+    A[File .md lokal] --> B[Edit secara visual]
+    B --> C{Bisa dipreservasi?}
+    C -->|Ya| D[Simpan Markdown]
+    C -->|Tidak| E[Mode baca-saja]
+    D --> F[Git diff terarah]
+```
+
+## Fitur utama
+
+- Toolbar dan shortcut untuk heading, list, kutipan, task, tebal, miring, kode, dan coret.
+- Slash menu (`/`) untuk tabel, code block, gambar, dan blok lainnya.
+- Paste atau drag-and-drop gambar ke folder aset lokal.
+- Dukungan GitHub Flavored Markdown (GFM), termasuk tabel dan task list.
+- Preservasi source untuk menjaga perubahan di Git tetap mudah di-review.
+- Tema terang dan gelap.
+- Web app dengan mode demo yang tidak menyentuh file lokal.
+
+<details>
+<summary><strong>Lihat cara pakai singkat</strong></summary>
+
+| Ingin | Caranya |
+|---|---|
+| Heading, list, kutipan, task | Ketik `# `, `- `, `1. `, `> `, atau `[ ] ` di awal baris |
+| Tebal, miring, kode, coret | Ketik `**teks**`, `_teks_`, `` `teks` ``, `~~teks~~`, atau gunakan toolbar |
+| Menu blok | Ketik `/` di baris kosong |
+| Link | Pilih teks lalu tekan Ctrl/⌘+K |
+| Gambar | Paste atau seret gambar ke editor |
+| Simpan, undo, redo | Ctrl/⌘+S, Ctrl/⌘+Z, Ctrl/⌘+Shift+Z |
+
+</details>
+
+## Mulai cepat di VS Code
+
+Yang Anda butuhkan hanya **VS Code 1.95 atau lebih baru**. Node, pnpm, dan clone
+repository tidak diperlukan untuk memakai extension.
+
+1. Unduh `markpiw.vsix` dari [rilis terbaru](https://github.com/avendisianipar/markpiw/releases/latest).
+2. Buka panel **Extensions** di VS Code (Ctrl/⌘+Shift+X).
+3. Klik **`…`** → **Install from VSIX…** lalu pilih file yang diunduh.
+4. Klik kanan file `.md` → **Buka dengan markpiw**.
+
+Atau unduh dan pasang lewat terminal:
 
 ```bash
 gh release download --repo avendisianipar/markpiw --pattern '*.vsix'
+code --install-extension markpiw.vsix
 ```
 
-### 2. Pasang extension
-
-Pilih salah satu cara:
-
-- **Lewat menu (paling mudah).** Di VS Code, buka panel **Extensions** (Ctrl/⌘+Shift+X), klik **`…`** di kanan atas panel, pilih **Install from VSIX…**, lalu pilih `markpiw.vsix`.
-- **Seret dan lepas.** Seret file `markpiw.vsix` ke panel **Extensions**.
-- **Lewat terminal.**
-
-  ```bash
-  code --install-extension markpiw.vsix
-  ```
-
-  > `code: command not found` di macOS? Di VS Code tekan ⌘+Shift+P, jalankan **Shell Command: Install 'code' command in PATH**, lalu buka terminal baru.
-
-Jika VS Code meminta, klik **Reload Window**. Setelah terpasang, **markpiw** muncul di daftar extension yang terpasang.
-
-### 3. Buka file markdown dengan markpiw
-
-- Klik kanan file `.md` di Explorer → **Buka dengan markpiw**, atau
-- buka file `.md`, lalu klik ikon ✎ **Buka dengan markpiw** di pojok kanan atas editor, atau
-- **Open With…** → **markpiw**.
-
-Editor teks bawaan tetap menjadi default; markpiw dipakai saat Anda memilihnya.
-
-**Ingin semua file `.md` langsung terbuka di markpiw?** Klik kanan file `.md` → **Open With…** → **Configure default editor for '\*.md'…** → **markpiw**. Atau tambahkan ini ke `settings.json`:
+Untuk menjadikan markpiw sebagai editor default file Markdown, tambahkan konfigurasi berikut
+ke `settings.json`:
 
 ```json
 "workbench.editorAssociations": { "*.md": "markpiw.editor" }
 ```
 
-### Cara pakai singkat
+Folder gambar default adalah `assets/` di samping file `.md`. Ubah melalui setting
+`markpiw.assetsFolder` jika diperlukan.
 
-| Ingin | Caranya |
-|---|---|
-| Heading, list, kutipan, task | Ketik `# `, `- `, `1. `, `> `, `[ ] ` di awal baris |
-| Tebal, miring, kode, coret | Ketik `**teks**`, `_teks_`, `` `teks` ``, `~~teks~~`, atau pakai toolbar |
-| Menu blok (tabel, code block, gambar, …) | Ketik `/` di baris kosong |
-| Link | Pilih teks → Ctrl/⌘+K |
-| Gambar | Tempel (paste) atau seret gambar. File disimpan ke folder `assets/` di samping file `.md` |
-| Simpan, undo, redo | Ctrl/⌘+S, Ctrl/⌘+Z, Ctrl/⌘+Shift+Z (sama seperti biasa) |
+<details>
+<summary><strong>Update, migrasi dari versi lama, dan uninstall</strong></summary>
 
-Folder gambar bisa diganti lewat setting `markpiw.assetsFolder`.
+### Update
 
-### Update ke versi baru
+Extension yang dipasang dari `.vsix` tidak diperbarui otomatis. Unduh `.vsix` terbaru,
+pasang dengan cara yang sama, lalu jalankan **Developer: Reload Window** jika diminta.
 
-Extension yang dipasang dari `.vsix` **tidak diperbarui otomatis**. Saat ada rilis baru, unduh `.vsix` terbaru lalu pasang lagi dengan cara yang sama (versi lama otomatis tergantikan), kemudian **Reload Window**. Versi yang terpasang terlihat di halaman extension markpiw di panel Extensions.
+### Migrasi dari versi 0.1.0 lama
 
-> **Dari versi 0.1.0:** ID extension berubah dari `markpiw-internal.markpiw` menjadi `avendisianipar.markpiw`, sehingga VS Code menganggapnya extension baru. Uninstall markpiw lama lebih dulu (panel **Extensions** → markpiw → **Uninstall**), lalu pasang yang baru. Setting `markpiw.assetsFolder` tetap terbawa; pilihan tema terang/gelap perlu dipilih ulang sekali.
+ID extension berubah dari `markpiw-internal.markpiw` menjadi `avendisianipar.markpiw`.
+Uninstall extension dengan ID lama sebelum memasang versi baru. Setting
+`markpiw.assetsFolder` tetap terbawa; tema mungkin perlu dipilih ulang sekali.
 
-### Menghapus
+### Uninstall
 
-Panel **Extensions** → markpiw → **Uninstall**.
+Buka panel **Extensions**, pilih **markpiw**, lalu klik **Uninstall**.
 
-### Jika ada masalah
+</details>
 
-- **markpiw tidak muncul di Open With.** Pastikan extension terpasang dan aktif di panel Extensions, lalu jalankan **Developer: Reload Window** (Ctrl/⌘+Shift+P).
-- **Gagal memasang karena versi.** Perbarui VS Code ke 1.95 atau lebih baru (**Code → Check for Updates…**).
-- **Muncul banner merah dan editor menjadi baca-saja.** Ini disengaja: ada edit yang tidak bisa disimpan sebagai markdown tanpa mengubah isi, jadi markpiw tidak menulis apa pun ke file. Klik **Muat ulang dari file** untuk melanjutkan.
+<details>
+<summary><strong>Troubleshooting</strong></summary>
 
-Laporkan masalah lewat [Issues](https://github.com/avendisianipar/markpiw/issues). Sertakan langkah yang dilakukan, `git diff` file-nya, dan info dari tombol **Salin info diagnostik** jika ada.
+- **markpiw tidak muncul di Open With.** Pastikan extension aktif, lalu jalankan
+  **Developer: Reload Window**.
+- **Instalasi ditolak karena versi VS Code.** Perbarui VS Code ke versi 1.95 atau lebih baru.
+- **Editor menampilkan banner merah dan menjadi baca-saja.** Ada edit yang tidak dapat
+  disimpan sebagai Markdown tanpa mengubah makna dokumen. markpiw tidak menulis perubahan
+  tersebut. Pilih **Muat ulang dari file** untuk melanjutkan.
+- **Perintah `code` tidak ditemukan di macOS.** Buka Command Palette dan jalankan
+  **Shell Command: Install 'code' command in PATH**, lalu buka terminal baru.
 
----
+Masih mengalami masalah? Buat [bug report](https://github.com/avendisianipar/markpiw/issues/new/choose)
+dan sertakan langkah reproduksi, `git diff`, serta keluaran **Salin info diagnostik**.
 
-## Memakai versi web
+</details>
 
-Versi web belum di-host; untuk sekarang dijalankan dari repo ini (lihat [Untuk pengembang](#untuk-pengembang)):
+## Versi web
+
+Versi web belum di-host. Jalankan dari source dengan Chrome atau Edge:
 
 ```bash
 pnpm dev:web
 ```
 
-Lalu buka `http://localhost:5173` di **Chrome atau Edge**. Tambahkan `?demo` di URL untuk mencoba folder contoh tanpa menyentuh file Anda. Panduan lengkap ada di [docs/manual-testing.md](docs/manual-testing.md).
+Buka `http://localhost:5173`. Tambahkan `?demo` untuk mencoba folder contoh tanpa menyentuh
+file lokal. Lihat [panduan uji manual](docs/manual-testing.md) untuk skenario lengkap.
 
----
+## Dukungan
 
-## Untuk pengembang
+| Target | Status |
+|---|---|
+| VS Code 1.95+ | Didukung |
+| Chrome dan Edge | Didukung untuk web app |
+| Firefox dan Safari | Belum didukung untuk membuka folder lokal |
+| VS Code Marketplace | Belum tersedia; gunakan file `.vsix` dari Releases |
 
-Prasyarat: Node 24 dan pnpm 10 lewat Corepack.
+## Pengembangan lokal
+
+Prasyarat: Node 24 dan pnpm 10 melalui Corepack.
 
 ```bash
 corepack enable
 pnpm install
-pnpm dev:web          # web di http://localhost:5173 (tambahkan ?demo untuk folder contoh)
+pnpm dev:web          # web app di http://localhost:5173
 pnpm package:vscode   # menghasilkan apps/vscode/markpiw.vsix
 ```
 
-> `zsh: command not found: pnpm`? Jalankan `corepack enable` sekali (ulangi setelah berpindah versi Node lewat nvm).
-
-### Test
+### Verifikasi
 
 ```bash
-pnpm verify        # typecheck + lint + format:check + test (unit, golden, property, upstream ProseMirror)
-pnpm test:e2e      # E2E web di Chrome terpasang (headless)
-pnpm test:vscode   # test integrasi di VS Code terpasang (membuka jendela VS Code sementara)
+pnpm verify        # typecheck + lint + format + unit/property/upstream tests
+pnpm test:e2e      # E2E web di Chrome (headless)
+pnpm test:vscode   # integration test di VS Code
 ```
 
-### Merilis versi baru extension
-
-1. Naikkan `version` di [apps/vscode/package.json](apps/vscode/package.json) (mis. `0.1.0` → `0.2.0`).
-2. Pastikan semua test lulus, lalu build paketnya:
-
-   ```bash
-   pnpm verify && pnpm package:vscode
-   ```
-
-3. Buat rilis di GitHub dengan `.vsix` sebagai lampiran:
-
-   ```bash
-   gh release create v0.2.0 apps/vscode/markpiw.vsix --title "markpiw 0.2.0" --notes "Ringkasan perubahan…"
-   ```
-
-4. Umumkan ke tim agar mereka memasang ulang.
-
-### Struktur
+### Struktur repository
 
 | Path | Isi |
 |---|---|
-| `vendor/prosemirror/` | 10 paket ProseMirror yang di-vendor tanpa modifikasi |
-| `packages/markdown` | Parse GFM ↔ dokumen, preservasi source, serializer, guard round-trip |
-| `packages/editor` | `EditorController`: plugin, perintah, input rules, slash, paste, NodeView |
-| `packages/ui` | Komponen React: toolbar, slash menu, popover, tema |
-| `packages/host` | Interface `FileHost` (types only) |
-| `apps/web` | SPA web (folder lokal + mode demo) |
-| `apps/vscode` | Extension VS Code (custom editor) |
+| `vendor/prosemirror/` | Paket ProseMirror yang di-vendor tanpa modifikasi |
+| `packages/markdown` | Parse GFM, preservasi source, serializer, dan round-trip guard |
+| `packages/editor` | Controller, plugin, command, input rule, slash menu, paste, dan NodeView |
+| `packages/ui` | Komponen React, toolbar, slash menu, popover, dan tema |
+| `packages/host` | Interface `FileHost` |
+| `apps/web` | SPA web untuk folder lokal dan mode demo |
+| `apps/vscode` | Extension VS Code berbasis custom editor |
 
-### Dokumen
+### Dokumentasi teknis
 
-- Panduan uji manual: [docs/manual-testing.md](docs/manual-testing.md)
-- Spesifikasi: [docs/superpowers/specs/2026-10-28-markpiw-design.md](docs/superpowers/specs/2026-10-28-markpiw-design.md)
-- Roadmap: [docs/superpowers/plans/2026-10-28-markpiw-roadmap.md](docs/superpowers/plans/2026-10-28-markpiw-roadmap.md)
+- [Panduan uji manual](docs/manual-testing.md)
+- [Spesifikasi desain](docs/superpowers/specs/2026-10-28-markpiw-design.md)
+- [Roadmap](docs/superpowers/plans/2026-10-28-markpiw-roadmap.md)
+- [Architecture Decision Records](docs/adr/)
+- [Panduan rilis extension](docs/releasing.md)
+- [Dependensi dan lisensi pihak ketiga](docs/third-party.md)
 
-### Dependensi pihak ketiga
+## Berkontribusi
 
-`THIRD_PARTY_NOTICES.txt` dibuat otomatis saat build dari modul yang benar-benar masuk bundle ([tooling/third-party.ts](tooling/third-party.ts)): di root `.vsix` dan di `dist/` versi web. Build gagal jika ada paket tanpa file lisensi. Periksa lisensinya secara manual, lalu tambahkan ke `LICENSE_OVERRIDES`.
+Kontribusi dalam bentuk bug report, usulan fitur, dokumentasi, dan kode diterima. Baca
+[panduan kontribusi](CONTRIBUTING.md) sebelum membuka pull request. Semua partisipan wajib
+mengikuti [Code of Conduct](CODE_OF_CONDUCT.md).
 
----
+Kerentanan keamanan jangan dilaporkan melalui issue publik. Ikuti
+[kebijakan keamanan](SECURITY.md) untuk pelaporan privat.
 
 ## Privasi
 
-markpiw tidak memiliki telemetri, analytics, atau server. Isi dokumen tidak pernah dikirim ke mana pun.
+markpiw tidak memiliki telemetri, analytics, atau server. Isi dokumen tidak pernah dikirim
+ke layanan markpiw.
 
-- **Versi web** membuka folder lewat File System Access API langsung di browser. Yang disimpan hanya di browser Anda sendiri: handle folder terakhir dan draf darurat (IndexedDB), serta tema dan state tampilan (localStorage).
-- **Extension VS Code** hanya membaca dan menulis file yang Anda buka. Tema dan state tampilan disimpan di storage VS Code.
-- **Gambar dari URL luar** (`![](https://…)`) dimuat langsung dari server asalnya, sama seperti preview markdown di GitHub atau VS Code. Gambar yang Anda tempel disimpan sebagai file lokal di folder `assets/`.
+- **Web app** membuka folder melalui File System Access API. Handle folder terakhir dan draf
+  darurat disimpan di IndexedDB; tema dan state tampilan disimpan di localStorage.
+- **Extension VS Code** hanya membaca dan menulis file yang Anda buka. Tema dan state tampilan
+  disimpan melalui storage VS Code.
+- **Gambar eksternal** (`![](https://…)`) dimuat langsung dari server asal, seperti preview
+  Markdown di GitHub atau VS Code. Gambar yang ditempel disimpan sebagai file lokal.
 
----
+## Terima kasih kepada open source 💙
 
-## Terima kasih
+markpiw tidak mungkin terwujud tanpa karya para maintainer dan kontributor open source.
+Terima kasih sebesar-besarnya kepada proyek-proyek berikut yang menjadi fondasi editor ini:
 
-markpiw berdiri di atas karya open source berikut. Terima kasih kepada para pembuat dan kontributornya.
+| Proyek | Kontribusi untuk markpiw |
+|---|---|
+| [ProseMirror](https://prosemirror.net) | Fondasi editor, document model, state, history, command, dan rendering editor. |
+| [micromark](https://github.com/micromark/micromark) dan ekosistem [mdast](https://github.com/syntax-tree/mdast) | Parsing CommonMark, GFM, frontmatter, dan math dengan posisi source yang presisi. |
+| [React](https://react.dev) dan [React DOM](https://react.dev/reference/react-dom) | Fondasi antarmuka web dan webview VS Code. |
+| [React Aria Components](https://react-spectrum.adobe.com/react-aria/components.html) | Komponen toolbar, menu, popover, dan kontrol yang aksesibel. |
+| [Floating UI](https://floating-ui.com) | Penempatan menu dan popover agar tetap tepat di sekitar selection. |
+| [Lucide](https://lucide.dev) | Ikon antarmuka yang konsisten dan mudah dikenali. |
+| [KaTeX](https://katex.org) | Pratinjau rumus matematika. |
+| [Mermaid](https://mermaid.js.org) | Pratinjau diagram langsung dari code block Markdown. |
+| [lowlight](https://github.com/wooorm/lowlight) dan [highlight.js](https://highlightjs.org) | Syntax highlighting untuk code block. |
+| [Valibot](https://valibot.dev) | Validasi pesan antara extension VS Code dan webview. |
 
-| Proyek | Dipakai untuk | Lisensi |
-|---|---|---|
-| [ProseMirror](https://prosemirror.net) oleh Marijn Haverbeke | Inti editor (di-vendor di `vendor/prosemirror`) | MIT |
-| [micromark](https://github.com/micromark/micromark) dan [mdast](https://github.com/syntax-tree/mdast) oleh Titus Wormer | Parsing Markdown dan GFM | MIT |
-| [React](https://react.dev) oleh Meta | Antarmuka | MIT |
-| [React Aria](https://react-spectrum.adobe.com/react-aria/) oleh Adobe | Komponen UI yang aksesibel | Apache-2.0 |
-| [Floating UI](https://floating-ui.com) | Posisi popover dan menu | MIT |
-| [Lucide](https://lucide.dev) | Ikon | ISC |
-| [Valibot](https://valibot.dev) oleh Fabian Hiller | Validasi pesan VS Code ↔ webview | MIT |
-| [clsx](https://github.com/lukeed/clsx), [escape-string-regexp](https://github.com/sindresorhus/escape-string-regexp), [format](https://github.com/samsonjs/format) | Utilitas | MIT |
+<details>
+<summary><strong>Terima kasih juga kepada toolchain pengembangan</strong></summary>
 
-Dibangun dengan [TypeScript](https://www.typescriptlang.org), [Vite](https://vite.dev), [esbuild](https://esbuild.github.io), [Vitest](https://vitest.dev), [Playwright](https://playwright.dev), dan [pnpm](https://pnpm.io).
+[TypeScript](https://www.typescriptlang.org), [Vite](https://vite.dev),
+[esbuild](https://esbuild.github.io), [pnpm](https://pnpm.io),
+[Vitest](https://vitest.dev), [fast-check](https://fast-check.dev),
+[Playwright](https://playwright.dev), [jsdom](https://github.com/jsdom/jsdom),
+[ESLint](https://eslint.org), [Prettier](https://prettier.io), serta tooling extension dari
+[Visual Studio Code](https://github.com/microsoft/vscode).
 
-Daftar lengkap komponen pihak ketiga beserta teks lisensinya ada di `THIRD_PARTY_NOTICES.txt` yang disertakan di setiap rilis.
+</details>
 
----
+Terima kasih kepada setiap orang yang membangun, merawat, mendokumentasikan, menguji, dan
+mendukung proyek-proyek tersebut. markpiw dapat berdiri dan berkembang karena karya mereka.
+
+Daftar lengkap seluruh komponen yang benar-benar masuk ke bundle—termasuk dependency
+transitif—beserta versi dan teks lisensinya dibuat otomatis sebagai `THIRD_PARTY_NOTICES.txt`
+di setiap rilis. Ringkasan lisensi tersedia di [dokumentasi pihak ketiga](docs/third-party.md).
 
 ## Lisensi
 
