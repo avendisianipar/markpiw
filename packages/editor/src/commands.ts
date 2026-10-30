@@ -322,6 +322,21 @@ export class EditorCommands {
   setZoom(zoom: number): void {
     this.ctx.setZoom(zoom);
   }
+
+  /** Pindahkan kursor ke awal heading di `pos` dan gulir heading ke atas layar (daftar isi). */
+  goToHeading(pos: number): boolean {
+    const state = this.ctx.getState();
+    if (pos < 0 || pos >= state.doc.content.size) return false;
+    if (state.doc.nodeAt(pos)?.type.name !== 'heading') return false;
+    const tr = state.tr.setSelection(TextSelection.create(state.doc, pos + 1));
+    const view = this.ctx.getView();
+    const dom = view?.nodeDOM(pos);
+    const scrollable = dom instanceof HTMLElement && typeof dom.scrollIntoView === 'function';
+    this.ctx.dispatch(scrollable ? tr : tr.scrollIntoView());
+    view?.focus();
+    if (scrollable) dom.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    return true;
+  }
 }
 
 /** Ganti tipe list (bullet/ordered) dan status task item-nya. */

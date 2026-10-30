@@ -6,6 +6,7 @@ export { EditorCommands } from './commands';
 export type {
   BlockTypeInfo,
   EditorSnapshot,
+  HeadingInfo,
   ImageState,
   LinkState,
   ListKind,

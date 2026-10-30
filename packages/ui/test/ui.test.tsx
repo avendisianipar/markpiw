@@ -103,3 +103,70 @@ describe('MarkpiwEditor', () => {
     expect(document.querySelector('.mp-zoom')?.textContent).toBe('110%');
   });
 });
+
+describe('Outline', () => {
+  const outline = () => document.querySelector('nav[aria-label="Daftar isi"]');
+  const items = () =>
+    [...document.querySelectorAll<HTMLButtonElement>('.mp-outline-item')].map((b) => ({
+      text: b.textContent,
+      level: b.dataset.level,
+    }));
+
+  it('lists the headings with their level and marks one as current', () => {
+    render('# Judul\n\nIsi.\n\n## Bagian\n\n### Sub\n');
+    expect(outline()).not.toBeNull();
+    expect(items()).toEqual([
+      { text: 'Judul', level: '1' },
+      { text: 'Bagian', level: '2' },
+      { text: 'Sub', level: '3' },
+    ]);
+    expect(document.querySelectorAll('.mp-outline-rail-line')).toHaveLength(3);
+    expect(document.querySelectorAll('.mp-outline-item[aria-current="location"]')).toHaveLength(1);
+    expect(document.querySelectorAll('.mp-outline-rail-line[data-active]')).toHaveLength(1);
+  });
+
+  it('moves the cursor to the clicked heading', () => {
+    const { controller } = render('# Judul\n\nIsi.\n\n## Bagian\n');
+    const target = [...document.querySelectorAll<HTMLElement>('.mp-outline-item')][1];
+    act(() => target?.click());
+    expect(controller.state.selection.$from.parent.textContent).toBe('Bagian');
+  });
+
+  it('follows document edits and hides without headings', () => {
+    const { controller } = render('Hanya paragraf.\n');
+    expect(outline()).toBeNull();
+    act(() => controller.applyExternalText('# Baru\n'));
+    expect(items()).toEqual([{ text: 'Baru', level: '1' }]);
+  });
+
+  it('tracks the scrolled heading and selects the last one at the bottom', async () => {
+    const { container } = render('# Satu\n\n## Dua\n\n## Tiga\n');
+    const canvas = container.querySelector('.mp-canvas') as HTMLElement;
+    const headings = [...container.querySelectorAll<HTMLElement>('h1, h2')];
+    let scrollTop = 0;
+    // Layout palsu: heading berjarak 400px, canvas setinggi 500px dengan konten 1200px.
+    headings.forEach((h, i) => {
+      h.getBoundingClientRect = () => new DOMRect(0, 100 + i * 400 - scrollTop, 100, 30);
+    });
+    Object.defineProperty(canvas, 'clientHeight', { value: 500 });
+    Object.defineProperty(canvas, 'scrollHeight', { value: 1200 });
+    Object.defineProperty(canvas, 'scrollTop', { get: () => scrollTop });
+    const scrollTo = async (top: number) => {
+      scrollTop = top;
+      await act(async () => {
+        canvas.dispatchEvent(new Event('scroll'));
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      });
+    };
+    const current = () =>
+      document.querySelector('.mp-outline-item[aria-current="location"]')?.textContent;
+
+    await scrollTo(0);
+    expect(current()).toBe('Satu');
+    await scrollTo(450);
+    expect(current()).toBe('Dua');
+    // Di dasar canvas "Tiga" belum melewati atas, tetapi tetap dianggap aktif.
+    await scrollTo(700);
+    expect(current()).toBe('Tiga');
+  });
+});
