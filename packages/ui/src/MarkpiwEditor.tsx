@@ -12,7 +12,7 @@ import { Outline } from './Outline';
 import { type BannerAction, ReadOnlyBanner } from './ReadOnlyBanner';
 import { SlashMenu } from './SlashMenu';
 import { type ColorScheme, ThemeToggle } from './ThemeToggle';
-import { Toolbar } from './Toolbar';
+import { Toolbar, ZoomControls } from './Toolbar';
 
 export interface MarkpiwEditorProps {
   readonly controller: EditorController;
@@ -52,6 +52,8 @@ function Surface({
         {topBar}
         <Toolbar onPickImage={pickImage} />
         <div className="mp-topbar-end">
+          <ZoomControls />
+          <span className="mp-tool-sep" aria-hidden="true" />
           <ThemeToggle scheme={colorScheme} onChange={onColorSchemeChange} />
         </div>
       </header>

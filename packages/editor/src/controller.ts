@@ -261,6 +261,13 @@ export class EditorController {
     this.view?.focus();
   }
 
+  /** Pindahkan sorotan slash menu ke item ke-`index` (mis. saat mouse menunjuk item). */
+  selectSlashItem(index: number): void {
+    const s = slashKey.getState(this.editorState);
+    if (!s?.match || s.selectedIndex === index) return;
+    this.dispatch(this.editorState.tr.setMeta(slashKey, { type: 'select', index }));
+  }
+
   /** Tutup slash menu tanpa menjalankan apa pun. */
   closeSlash(): void {
     this.dispatch(this.editorState.tr.setMeta(slashKey, { type: 'close' }));

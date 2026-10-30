@@ -2,7 +2,7 @@
 import type { GuardFailure, MarkName } from '@markpiw/markdown';
 import type { Node } from 'prosemirror-model';
 import { type EditorState, NodeSelection } from 'prosemirror-state';
-import type { SlashItemId } from './strings';
+import type { SlashGroupId, SlashItemId } from './strings';
 import type { TableState } from './table';
 
 export type BlockTypeInfo =
@@ -17,6 +17,7 @@ export type ListKind = 'bullet' | 'ordered' | 'task';
 export interface SlashItem {
   readonly id: SlashItemId;
   readonly label: string;
+  readonly group: SlashGroupId;
 }
 
 export interface SlashState {

@@ -4,30 +4,20 @@ import { schema } from '@markpiw/markdown';
 import { Plugin, PluginKey, type EditorState } from 'prosemirror-state';
 import type { EditorController } from '../controller';
 import type { SlashItem } from '../snapshot';
-import type { EditorStrings, SlashItemId } from '../strings';
+import type { EditorStrings, SlashGroupId, SlashItemId } from '../strings';
 
-export const SLASH_ITEMS: readonly SlashItemId[] = [
-  'text',
-  'h1',
-  'h2',
-  'h3',
-  'bullet',
-  'ordered',
-  'task',
-  'quote',
-  'code',
-  'table',
-  'image',
-  'hr',
-  'note',
-  'tip',
-  'important',
-  'warning',
-  'caution',
-  'math',
-  'mathInline',
-  'mermaid',
+/** Item per kelompok, berurutan seperti tampilannya di slash menu dan toolbar. */
+export const SLASH_GROUPS: readonly { id: SlashGroupId; items: readonly SlashItemId[] }[] = [
+  { id: 'text', items: ['text', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+  { id: 'list', items: ['bullet', 'ordered', 'task'] },
+  { id: 'block', items: ['quote', 'code'] },
+  { id: 'insert', items: ['table', 'image', 'hr', 'link'] },
+  { id: 'callout', items: ['note', 'tip', 'important', 'warning', 'caution'] },
+  { id: 'advanced', items: ['math', 'mathInline', 'mermaid'] },
 ];
+
+export const SLASH_ITEMS: readonly { id: SlashItemId; group: SlashGroupId }[] =
+  SLASH_GROUPS.flatMap((group) => group.items.map((id) => ({ id, group: group.id })));
 
 export interface SlashMatch {
   /** Posisi karakter "/". */
@@ -44,7 +34,8 @@ interface SlashPluginState {
   readonly dismissed: number | null;
 }
 
-type SlashMeta = { type: 'move'; delta: number } | { type: 'close' };
+type SlashMeta =
+  { type: 'move'; delta: number } | { type: 'select'; index: number } | { type: 'close' };
 
 export const slashKey = new PluginKey<SlashPluginState>('markpiw-slash');
 
@@ -62,11 +53,11 @@ function findMatch(state: EditorState): SlashMatch | null {
 
 export function filterItems(query: string, strings: EditorStrings): SlashItem[] {
   const q = query.trim().toLowerCase();
-  return SLASH_ITEMS.filter((id) => {
+  return SLASH_ITEMS.filter(({ id }) => {
     if (q === '') return true;
     const entry = strings.slash[id];
     return entry.label.toLowerCase().includes(q) || entry.aliases.some((a) => a.startsWith(q));
-  }).map((id) => ({ id, label: strings.slash[id].label }));
+  }).map(({ id, group }) => ({ id, label: strings.slash[id].label, group }));
 }
 
 export function slashPlugin(controller: EditorController): Plugin<SlashPluginState> {
@@ -94,6 +85,7 @@ export function slashPlugin(controller: EditorController): Plugin<SlashPluginSta
           const count = filterItems(match.query, controller.strings).length;
           selectedIndex = (prev.selectedIndex + meta.delta + count) % count;
         }
+        if (match && meta?.type === 'select') selectedIndex = meta.index;
         return { match, selectedIndex, dismissed: match ? null : dismissed };
       },
     },
@@ -130,7 +122,7 @@ export function slashPlugin(controller: EditorController): Plugin<SlashPluginSta
   });
 }
 
-/** Hapus teks "/query" lalu jalankan aksi item. */
+/** Hapus teks "/query" (jika slash menu terbuka) lalu jalankan aksi item; dipakai juga toolbar. */
 export function runSlashItem(controller: EditorController, id: SlashItemId): void {
   const s = slashKey.getState(controller.state);
   if (s?.match) controller.dispatch(controller.state.tr.delete(s.match.from, s.match.to));
@@ -142,7 +134,10 @@ export function runSlashItem(controller: EditorController, id: SlashItemId): voi
     case 'h1':
     case 'h2':
     case 'h3':
-      c.setBlock({ type: 'heading', level: Number(id[1]) as 1 | 2 | 3 });
+    case 'h4':
+    case 'h5':
+    case 'h6':
+      c.setBlock({ type: 'heading', level: Number(id[1]) as 1 | 2 | 3 | 4 | 5 | 6 });
       break;
     case 'bullet':
     case 'ordered':
@@ -163,6 +158,9 @@ export function runSlashItem(controller: EditorController, id: SlashItemId): voi
       break;
     case 'hr':
       c.insertHorizontalRule();
+      break;
+    case 'link':
+      controller.openLinkEditor();
       break;
     case 'note':
     case 'tip':

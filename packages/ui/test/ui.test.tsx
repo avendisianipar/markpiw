@@ -81,8 +81,45 @@ describe('MarkpiwEditor', () => {
       type(controller.editorView!, '/');
     });
     const options = document.querySelectorAll('[role="option"]');
-    expect(options).toHaveLength(20);
+    expect(options).toHaveLength(24);
     expect(controller.editorView?.dom.getAttribute('aria-activedescendant')).toBe('mp-slash-text');
+  });
+
+  it('groups slash items under headers and gives every item an icon', () => {
+    const { controller } = render('');
+    act(() => {
+      controller.dispatch(
+        controller.state.tr.setSelection(TextSelection.create(controller.state.doc, 1)),
+      );
+      type(controller.editorView!, '/');
+    });
+    const headers = [...document.querySelectorAll('.mp-slash-header')].map((h) => h.textContent);
+    expect(headers).toEqual([
+      'Teks & heading',
+      'List',
+      'Blok',
+      'Sisipkan',
+      'Callout',
+      'Rumus & diagram',
+    ]);
+    for (const option of document.querySelectorAll('[role="option"]'))
+      expect(option.querySelector('svg.mp-block-icon')).not.toBeNull();
+  });
+
+  it('toolbar buttons use the same labels as the slash menu', () => {
+    render('a\n');
+    for (const id of [
+      'bullet',
+      'ordered',
+      'task',
+      'quote',
+      'code',
+      'table',
+      'image',
+      'hr',
+      'link',
+    ] as const)
+      expect(button(editorStrings.slash[id].label)).not.toBeNull();
   });
 
   it('shows a read-only banner with recovery actions when the guard fails', () => {
