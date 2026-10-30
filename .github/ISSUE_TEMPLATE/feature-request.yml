@@ -1,0 +1,41 @@
+name: Feature request
+description: Usulkan peningkatan yang bermanfaat untuk pengguna markpiw.
+title: '[Feature]: '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Masalah pengguna
+      description: Masalah apa yang ingin diselesaikan? Jelaskan konteksnya, bukan hanya solusi.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solusi yang diusulkan
+      description: Jelaskan alur yang Anda harapkan dan contoh penggunaannya.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatif yang sudah dicoba
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Konteks tambahan
+      description: Tambahkan mockup, contoh Markdown, atau referensi bila membantu.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pemeriksaan
+      options:
+        - label: Saya sudah mencari usulan serupa.
+          required: true
+        - label: Fitur ini tetap mempertahankan Markdown sebagai sumber utama.
+          required: true

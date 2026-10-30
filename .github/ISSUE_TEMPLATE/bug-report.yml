@@ -1,0 +1,79 @@
+name: Bug report
+description: Laporkan perilaku markpiw yang tidak berjalan sebagaimana mestinya.
+title: '[Bug]: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Terima kasih sudah membantu memperbaiki markpiw. Jangan gunakan form ini untuk kerentanan keamanan; ikuti SECURITY.md.
+
+  - type: input
+    id: version
+    attributes:
+      label: Versi markpiw
+      description: Lihat versi di panel Extensions atau nama release yang diunduh.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: host
+    attributes:
+      label: Host
+      options:
+        - VS Code
+        - Web app
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Lingkungan
+      description: Sistem operasi dan versi VS Code atau browser.
+      placeholder: macOS 15, VS Code 1.95.3
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Langkah reproduksi
+      description: Berikan contoh paling kecil dan Markdown yang aman dibagikan.
+      placeholder: |
+        1. Buka file ...
+        2. Pilih ...
+        3. Ketik ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Hasil yang diharapkan
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Hasil aktual
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Informasi tambahan
+      description: Tempel git diff, screenshot, atau keluaran Salin info diagnostik jika relevan. Hapus data sensitif terlebih dahulu.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pemeriksaan
+      options:
+        - label: Saya sudah mencari issue serupa.
+          required: true
+        - label: Laporan ini tidak memuat data sensitif atau detail kerentanan keamanan.
+          required: true
