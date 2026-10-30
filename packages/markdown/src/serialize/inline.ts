@@ -37,7 +37,8 @@ type Seg =
   | { readonly kind: 'node'; readonly node: Node; readonly marks: readonly Mark[] }
   | { readonly kind: 'break'; readonly node: Node | null; readonly marks: readonly Mark[] };
 
-const ALWAYS = new Set(['\\', '`', '*', '_', '[', ']', '<', '>', '~', '|', '&', '#', '!']);
+// `$` membuka rumus inline (ekstensi math), jadi juga kandidat escape.
+const ALWAYS = new Set(['\\', '`', '*', '_', '[', ']', '<', '>', '~', '|', '&', '#', '!', '$']);
 const LINE_START = new Set(['-', '+', '=']);
 const ALNUM = /[\p{L}\p{N}]/u;
 
@@ -539,6 +540,8 @@ export function inlineWithCandidates(
       w.raw('![');
       w.plain(alt);
       w.raw(`](${linkDestination(src)}${linkTitle(title)})`);
+    } else if (seg.node.type.name === 'math_inline') {
+      w.raw(mathSpan(seg.node, singleLine, opts.inTable, eol));
     } else {
       const source = (seg.node.attrs.source as string | undefined) ?? '';
       w.raw(source.replace(/\r\n|\r|\n/g, singleLine ? ' ' : eol));
@@ -561,4 +564,16 @@ export function serializeInline(
   opts: InlineOptions,
 ): string {
   return inlineWithCandidates(block, profile, eol, opts).text;
+}
+
+/** Rumus inline `$…$`; delimiter lebih panjang dari `$` terpanjang di isi agar tidak tertutup dini. */
+function mathSpan(node: Node, singleLine: boolean, inTable: boolean, eol: string): string {
+  // Rumus kosong belum punya bentuk markdown (`$$` adalah fence blok): tidak ditulis.
+  if (node.attrs.latex === '') return '';
+  let latex = (node.attrs.latex as string).replace(/\r\n|\r|\n/g, singleLine ? ' ' : eol);
+  if (inTable) latex = latex.replace(/\|/g, '\\|');
+  let longest = 0;
+  for (const run of latex.match(/\$+/g) ?? []) longest = Math.max(longest, run.length);
+  const delim = '$'.repeat(Math.max((node.attrs.delim as string).length, longest + 1));
+  return delim + latex + delim;
 }

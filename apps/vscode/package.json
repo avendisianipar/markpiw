@@ -172,7 +172,8 @@
   "scripts": {
     "build": "node esbuild.mjs && vite build && node notices.mjs",
     "package": "pnpm build && vsce package --no-dependencies --allow-missing-repository -o markpiw.vsix",
-    "test:integration": "pnpm build && node test/run.mjs"
+    "test:integration": "pnpm build && node test/run.mjs",
+    "test:webview": "pnpm build && node test/webview.mjs"
   },
   "dependencies": {
     "@markpiw/editor": "workspace:*",

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { schema } from '../src/schema';
 
 describe('schema', () => {
-  it('declares exactly the GFM node and mark names', () => {
+  it('declares exactly the GFM (+ math) node and mark names', () => {
     expect(Object.keys(schema.nodes).sort()).toEqual([
       'blockquote',
       'bullet_list',
@@ -14,6 +14,8 @@ describe('schema', () => {
       'horizontal_rule',
       'image',
       'list_item',
+      'math_block',
+      'math_inline',
       'ordered_list',
       'paragraph',
       'raw_block',

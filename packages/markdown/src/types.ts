@@ -13,8 +13,10 @@ export type BlockNodeName =
   | 'table_row'
   | 'table_cell'
   | 'horizontal_rule'
+  | 'math_block'
   | 'raw_block';
-export type InlineNodeName = 'text' | 'image' | 'hard_break' | 'soft_break' | 'raw_inline';
+export type InlineNodeName =
+  'text' | 'image' | 'hard_break' | 'soft_break' | 'raw_inline' | 'math_inline';
 export type NodeName = 'doc' | BlockNodeName | InlineNodeName;
 export type MarkName = 'strong' | 'em' | 'strike' | 'code' | 'link';
 

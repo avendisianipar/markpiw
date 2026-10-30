@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { schema } from '@markpiw/markdown';
-import { baseKeymap, chainCommands } from 'prosemirror-commands';
+import { baseKeymap, chainCommands, newlineInCode } from 'prosemirror-commands';
 import { undoInputRule } from 'prosemirror-inputrules';
 import { keymap } from 'prosemirror-keymap';
 import { liftListItem, sinkListItem, splitListItem } from 'prosemirror-schema-list';
@@ -24,6 +24,21 @@ const codeFenceOnEnter: Command = (state, dispatch) => {
         fence,
         fenceLength: (m[1] as string).length,
       });
+    dispatch(tr.scrollIntoView());
+  }
+  return true;
+};
+
+/** "$$" + Enter di paragraf → blok rumus. */
+const mathFenceOnEnter: Command = (state, dispatch) => {
+  const { $from, empty } = state.selection;
+  if (!empty || $from.parent.type !== schema.nodes.paragraph) return false;
+  if (!/^\${2,}$/.test($from.parent.textContent)) return false;
+  if ($from.parentOffset !== $from.parent.content.size) return false;
+  if (dispatch) {
+    const tr = state.tr
+      .delete($from.start(), $from.end())
+      .setBlockType($from.start(), $from.start(), schema.nodes.math_block);
     dispatch(tr.scrollIntoView());
   }
   return true;
@@ -55,6 +70,22 @@ const splitItem: Command = (state, dispatch) => {
 };
 
 const inTable: Command = (state) => tableCommands.goToCell(1)(state);
+
+/**
+ * Shift+Enter: baris baru tanpa paragraf baru. Di paragraf menjadi hard break (`\` di akhir
+ * baris); di sel tabel menjadi `<br>`. Heading tidak bisa memuat pindah baris di markdown.
+ */
+const lineBreak: Command = (state, dispatch) => {
+  const { $from } = state.selection;
+  if ($from.parent.type === schema.nodes.table_cell)
+    return tableCommands.lineBreak()(state, dispatch);
+  if ($from.parent.type !== schema.nodes.paragraph) return false;
+  if (dispatch) {
+    const br = schema.nodes.hard_break.create({ style: 'backslash' });
+    dispatch(state.tr.replaceSelectionWith(br).scrollIntoView());
+  }
+  return true;
+};
 
 export function editorKeymap(controller: EditorController): Plugin {
   const c = controller.commands;
@@ -96,10 +127,12 @@ export function editorKeymap(controller: EditorController): Plugin {
     ),
     Enter: chainCommands(
       codeFenceOnEnter,
+      mathFenceOnEnter,
       hrOnEnter,
       splitItem,
       liftListItem(schema.nodes.list_item),
     ),
+    'Shift-Enter': chainCommands(newlineInCode, lineBreak),
     Backspace: undoInputRule,
     // Mode host (VS Code): webview meneruskan setiap keydown ke workbench, yang sudah menjalankan
     // undo/redo native untuk custom editor. Tombol ini hanya ditelan agar contenteditable tidak

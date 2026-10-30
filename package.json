@@ -17,7 +17,7 @@
     "vendor:patch": "node tooling/vendor/apply-patches.mjs",
     "vendor:drift": "node tooling/vendor/check-drift.mjs",
     "test:e2e": "pnpm --filter @markpiw/web build && vitest run --config e2e/vitest.config.ts",
-    "test:vscode": "pnpm --filter markpiw test:integration",
+    "test:vscode": "pnpm --filter markpiw test:integration && pnpm --filter markpiw test:webview",
     "package:vscode": "pnpm --filter markpiw package",
     "dev:web": "pnpm --filter @markpiw/web dev"
   },

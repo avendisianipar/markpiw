@@ -12,9 +12,13 @@
   "dependencies": {
     "@markpiw/host": "workspace:*",
     "@markpiw/markdown": "workspace:*",
-    "@markpiw/vendor-prosemirror": "workspace:*"
+    "@markpiw/vendor-prosemirror": "workspace:*",
+    "katex": "^0.16.47",
+    "lowlight": "^3.3.0",
+    "mermaid": "^11.17.2"
   },
   "devDependencies": {
+    "@types/hast": "^3.0.5",
     "jsdom": "^30.0.0"
   }
 }

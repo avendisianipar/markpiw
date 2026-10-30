@@ -33,6 +33,7 @@ import {
   stabilize,
 } from './snapshot';
 import { DEFAULT_EDITOR_STRINGS, type EditorStrings, type SlashItemId } from './strings';
+import { tableStateOf } from './table';
 
 export type UiRequest = 'image';
 
@@ -294,6 +295,7 @@ export class EditorController {
       listKind: listKindOf(state),
       inQuote: hasAncestor(state, 'blockquote'),
       inTable: hasAncestor(state, 'table'),
+      table: tableStateOf(state),
       canUndo: editorHistory ? undoDepth(state) > 0 : true,
       canRedo: editorHistory ? redoDepth(state) > 0 : true,
       slash: this.slashSnapshot(),

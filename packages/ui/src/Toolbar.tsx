@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Toolbar (spesifikasi 5.2): React Aria Toolbar dengan roving focus; tombol toggle memakai
 // aria-pressed; tooltip memuat shortcut.
-import type { BlockTypeInfo, EditorSnapshot, ListKind } from '@markpiw/editor';
+import type { BlockTypeInfo, EditorSnapshot, ListKind, TableState } from '@markpiw/editor';
 import {
   AlignCenter,
   AlignLeft,
@@ -16,6 +16,7 @@ import {
   ListChecks,
   ListOrdered,
   Minus,
+  Plus,
   Quote,
   Redo2,
   SquareCode,
@@ -25,7 +26,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import type { Key, ReactNode } from 'react';
+import { type Key, type ReactNode, useRef, useState } from 'react';
 import {
   Button,
   Menu,
@@ -37,6 +38,7 @@ import {
   Toolbar as AriaToolbar,
 } from 'react-aria-components';
 import { useController, useEditorSnapshot } from './context';
+import { TableSizePicker } from './TableSizePicker';
 import { t } from './strings/id';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad)/.test(navigator.platform);
@@ -59,7 +61,7 @@ const selectBlock = (s: EditorSnapshot) => s.blockType;
 const selectList = (s: EditorSnapshot) => s.listKind;
 const selectMarks = (s: EditorSnapshot) => s.activeMarks;
 const selectQuote = (s: EditorSnapshot) => s.inQuote;
-const selectTable = (s: EditorSnapshot) => s.inTable;
+const selectTable = (s: EditorSnapshot) => s.table;
 const selectUndo = (s: EditorSnapshot) => s.canUndo;
 const selectRedo = (s: EditorSnapshot) => s.canRedo;
 const selectZoom = (s: EditorSnapshot) => s.zoom;
@@ -109,6 +111,29 @@ function ToolToggle(props: {
   );
 }
 
+const CALLOUTS = ['note', 'tip', 'important', 'warning', 'caution'] as const;
+
+/** Aksi tabel yang tidak berlaku di posisi kursor (di luar tabel: semua kecuali sisipkan). */
+function tableDisabledKeys(table: TableState | null): string[] {
+  if (!table)
+    return [
+      'rowBefore',
+      'row',
+      'colBefore',
+      'col',
+      'left',
+      'center',
+      'right',
+      'rowDelete',
+      'colDelete',
+      'tableDelete',
+    ];
+  const keys: string[] = [];
+  if (!table.canDeleteRow) keys.push('rowDelete');
+  if (!table.canDeleteColumn) keys.push('colDelete');
+  return keys;
+}
+
 export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
   const controller = useController();
   const c = controller.commands;
@@ -116,11 +141,16 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
   const listKind = useEditorSnapshot(selectList);
   const marks = useEditorSnapshot(selectMarks);
   const inQuote = useEditorSnapshot(selectQuote);
-  const inTable = useEditorSnapshot(selectTable);
+  const table = useEditorSnapshot(selectTable);
+  const inTable = table !== null;
   const canUndo = useEditorSnapshot(selectUndo);
   const canRedo = useEditorSnapshot(selectRedo);
   const zoom = useEditorSnapshot(selectZoom);
   const readOnly = useEditorSnapshot(selectReadOnly);
+  const tableButton = useRef<HTMLButtonElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  // Sel tabel GFM hanya berisi teks satu baris: aksi blok tidak berlaku di dalamnya.
+  const blockDisabled = readOnly || inTable;
 
   const list = (kind: ListKind) => () => c.wrapList(kind);
   const blockMenu = (key: Key) => {
@@ -129,16 +159,33 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
     else if (value === 'code_block') c.setBlock({ type: 'code_block' });
     else c.setBlock({ type: 'heading', level: Number(value.slice(1)) as 1 | 2 | 3 | 4 | 5 | 6 });
   };
+  const insertMenu = (key: Key) => {
+    const value = String(key);
+    if (value === 'mathInline') c.insertMathInline();
+    else if (value === 'math') c.insertMathBlock();
+    else if (value === 'mermaid') c.insertMermaid();
+    else if ((CALLOUTS as readonly string[]).includes(value))
+      c.insertCallout(value as (typeof CALLOUTS)[number]);
+  };
   const tableMenu = (key: Key) => {
     switch (String(key)) {
       case 'insert':
-        c.insertTable(3, 3);
+        setPickerOpen(true);
+        break;
+      case 'rowBefore':
+        c.tableAddRow('before');
         break;
       case 'row':
         c.tableAddRow('after');
         break;
+      case 'colBefore':
+        c.tableAddColumn('before');
+        break;
       case 'col':
         c.tableAddColumn('after');
+        break;
+      case 'tableDelete':
+        c.tableDelete();
         break;
       case 'rowDelete':
         c.tableDeleteRow();
@@ -199,7 +246,7 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
         <Button
           className="mp-tool mp-tool-menu"
           aria-label={t('toolbar.block')}
-          isDisabled={readOnly}
+          isDisabled={blockDisabled}
         >
           {blockLabel(block)} <ChevronDown {...ICON} size={14} />
         </Button>
@@ -229,7 +276,7 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           shortcut={`${MOD}+Shift+8`}
           isSelected={listKind === 'bullet'}
           onChange={list('bullet')}
-          isDisabled={readOnly}
+          isDisabled={blockDisabled}
         >
           <List {...ICON} />
         </ToolToggle>
@@ -238,7 +285,7 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           shortcut={`${MOD}+Shift+7`}
           isSelected={listKind === 'ordered'}
           onChange={list('ordered')}
-          isDisabled={readOnly}
+          isDisabled={blockDisabled}
         >
           <ListOrdered {...ICON} />
         </ToolToggle>
@@ -247,7 +294,7 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           shortcut={`${MOD}+Shift+9`}
           isSelected={listKind === 'task'}
           onChange={list('task')}
-          isDisabled={readOnly}
+          isDisabled={blockDisabled}
         >
           <ListChecks {...ICON} />
         </ToolToggle>
@@ -306,7 +353,7 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           label={t('toolbar.quote')}
           isSelected={inQuote}
           onChange={() => c.toggleQuote()}
-          isDisabled={readOnly}
+          isDisabled={blockDisabled}
         >
           <Quote {...ICON} />
         </ToolToggle>
@@ -316,7 +363,7 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           onChange={() =>
             c.setBlock(block.type === 'code_block' ? { type: 'paragraph' } : { type: 'code_block' })
           }
-          isDisabled={readOnly}
+          isDisabled={blockDisabled}
         >
           <SquareCode {...ICON} />
         </ToolToggle>
@@ -324,7 +371,12 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
       <Separator orientation="vertical" className="mp-tool-sep" />
       <div className="mp-tool-group">
         <MenuTrigger>
-          <Button className="mp-tool" aria-label={t('toolbar.table')} isDisabled={readOnly}>
+          <Button
+            ref={tableButton}
+            className="mp-tool"
+            aria-label={t('toolbar.table')}
+            isDisabled={readOnly}
+          >
             <span title={t('toolbar.table')} className="mp-tool-inner">
               <Table {...ICON} />
               <ChevronDown {...ICON} size={12} />
@@ -335,37 +387,60 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
               className="mp-menu"
               onAction={tableMenu}
               aria-label={t('toolbar.table')}
-              disabledKeys={
-                inTable ? [] : ['row', 'col', 'rowDelete', 'colDelete', 'left', 'center', 'right']
-              }
+              disabledKeys={tableDisabledKeys(table)}
             >
               <MenuItem id="insert" className="mp-menu-item">
                 {t('toolbar.tableInsert')}
               </MenuItem>
+              <Separator className="mp-menu-sep" />
+              <MenuItem id="rowBefore" className="mp-menu-item">
+                {t('toolbar.tableRowBefore')}
+              </MenuItem>
               <MenuItem id="row" className="mp-menu-item">
                 {t('toolbar.tableRowAfter')}
+              </MenuItem>
+              <MenuItem id="colBefore" className="mp-menu-item">
+                {t('toolbar.tableColBefore')}
               </MenuItem>
               <MenuItem id="col" className="mp-menu-item">
                 {t('toolbar.tableColAfter')}
               </MenuItem>
+              <Separator className="mp-menu-sep" />
+              {(
+                [
+                  ['left', AlignLeft, 'toolbar.alignLeft'],
+                  ['center', AlignCenter, 'toolbar.alignCenter'],
+                  ['right', AlignRight, 'toolbar.alignRight'],
+                ] as const
+              ).map(([id, Icon, label]) => (
+                <MenuItem
+                  key={id}
+                  id={id}
+                  className="mp-menu-item mp-menu-item-icon"
+                  data-active={table?.align === id ? '' : undefined}
+                >
+                  <Icon {...ICON} /> {t(label)}
+                </MenuItem>
+              ))}
+              <Separator className="mp-menu-sep" />
               <MenuItem id="rowDelete" className="mp-menu-item">
                 {t('toolbar.tableRowDelete')}
               </MenuItem>
               <MenuItem id="colDelete" className="mp-menu-item">
                 {t('toolbar.tableColDelete')}
               </MenuItem>
-              <MenuItem id="left" className="mp-menu-item">
-                <AlignLeft {...ICON} /> {t('toolbar.alignLeft')}
-              </MenuItem>
-              <MenuItem id="center" className="mp-menu-item">
-                <AlignCenter {...ICON} /> {t('toolbar.alignCenter')}
-              </MenuItem>
-              <MenuItem id="right" className="mp-menu-item">
-                <AlignRight {...ICON} /> {t('toolbar.alignRight')}
+              <MenuItem id="tableDelete" className="mp-menu-item mp-menu-danger">
+                {t('toolbar.tableDelete')}
               </MenuItem>
             </Menu>
           </Popover>
         </MenuTrigger>
+        <TableSizePicker
+          triggerRef={tableButton}
+          isOpen={pickerOpen}
+          onOpenChange={setPickerOpen}
+          onPick={(rows, cols) => c.insertTable(rows, cols)}
+        />
         <ToolButton label={t('toolbar.image')} onPress={onPickImage} isDisabled={readOnly}>
           <Image {...ICON} />
         </ToolButton>
@@ -376,6 +451,38 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
         >
           <Minus {...ICON} />
         </ToolButton>
+        <MenuTrigger>
+          <Button className="mp-tool" aria-label={t('toolbar.insert')} isDisabled={readOnly}>
+            <span title={t('toolbar.insert')} className="mp-tool-inner">
+              <Plus {...ICON} />
+              <ChevronDown {...ICON} size={12} />
+            </span>
+          </Button>
+          <Popover className="mp-popover" placement="bottom end">
+            <Menu
+              className="mp-menu"
+              onAction={insertMenu}
+              aria-label={t('toolbar.insert')}
+              disabledKeys={inTable ? ['math', 'mermaid', ...CALLOUTS] : []}
+            >
+              <MenuItem id="mathInline" className="mp-menu-item">
+                {t('toolbar.mathInline')}
+              </MenuItem>
+              <MenuItem id="math" className="mp-menu-item">
+                {t('toolbar.mathBlock')}
+              </MenuItem>
+              <MenuItem id="mermaid" className="mp-menu-item">
+                {t('toolbar.mermaid')}
+              </MenuItem>
+              <Separator className="mp-menu-sep" />
+              {CALLOUTS.map((type) => (
+                <MenuItem key={type} id={type} className="mp-menu-item">
+                  {t(`toolbar.callout.${type}`)}
+                </MenuItem>
+              ))}
+            </Menu>
+          </Popover>
+        </MenuTrigger>
       </div>
     </AriaToolbar>
   );

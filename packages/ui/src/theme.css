@@ -107,11 +107,16 @@
 .mp-topbar-end {
   display: flex;
   align-items: center;
+  align-self: flex-start;
   margin-left: auto;
 }
 
+/* Toolbar mengisi sisa baris dan terbungkus di dalamnya sendiri (editor sempit, mis. VS Code),
+   sehingga toggle tema tetap di kanan atas, bukan terdorong ke baris baru. */
 .mp-toolbar {
   display: flex;
+  flex: 1 1 0;
+  min-width: 0;
   align-items: center;
   gap: 2px;
   flex-wrap: wrap;
@@ -218,6 +223,67 @@
 
 .mp-menu-item[data-disabled] {
   opacity: 0.4;
+}
+
+/* Item dengan ikon di depan: ikon dan label berdampingan, bukan didorong ke dua sisi. */
+.mp-menu-item-icon {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.mp-menu-item[data-active] {
+  color: var(--mp-accent);
+  font-weight: 600;
+}
+
+.mp-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--mp-border);
+  border: 0;
+}
+
+.mp-menu-item.mp-menu-danger {
+  color: var(--mp-danger-fg);
+}
+
+/* Pemilih ukuran tabel (grid baris × kolom). */
+.mp-grid-picker {
+  padding: 10px;
+  outline: none;
+}
+.mp-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 18px);
+  gap: 3px;
+}
+.mp-grid-row {
+  display: contents;
+}
+.mp-grid-cell {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--mp-input-border);
+  border-radius: 3px;
+  background: var(--mp-input-bg);
+  cursor: pointer;
+}
+.mp-grid-cell[data-on] {
+  background: var(--mp-pressed);
+  border-color: var(--mp-accent);
+}
+.mp-grid-cell[data-header][data-on] {
+  background: var(--mp-accent);
+}
+.mp-grid-cell:focus-visible {
+  outline: 2px solid var(--mp-accent);
+  outline-offset: 1px;
+}
+.mp-grid-label {
+  margin-top: 8px;
+  color: var(--mp-muted);
+  text-align: center;
 }
 
 .mp-menu-item kbd {
@@ -432,6 +498,216 @@
   background: var(--mp-code-bg);
   font-weight: 600;
   text-align: left;
+}
+
+/* Pratinjau ```mermaid, ```math, dan blok $$ (di bawah source, tidak bisa diedit). */
+.mp-preview {
+  padding: 12px 16px;
+  border-top: 1px dashed var(--mp-border);
+  background: var(--mp-page);
+  border-radius: 0 0 var(--mp-radius) var(--mp-radius);
+  text-align: center;
+  overflow-x: auto;
+  user-select: none;
+}
+.mp-preview img {
+  max-width: 100%;
+  height: auto;
+}
+.mp-preview math {
+  font-size: 1.15em;
+}
+.mp-preview-note {
+  color: var(--mp-muted);
+  font-size: 0.85em;
+}
+.mp-preview-error,
+.mp-math-error {
+  color: var(--mp-danger-fg);
+  font-family: var(--mp-mono);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.mp-code-label {
+  color: var(--mp-muted);
+  font: 12px var(--mp-font);
+}
+
+/* Rumus inline $…$: hasil render; input LaTeX muncul saat dipilih. */
+.mp-math-inline {
+  padding: 0 2px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.mp-math-inline:hover {
+  background: var(--mp-hover);
+}
+.mp-math-inline.ProseMirror-selectednode {
+  outline: 2px solid var(--mp-accent);
+}
+.mp-math-empty {
+  color: var(--mp-muted);
+  font-style: italic;
+}
+.mp-math-input {
+  margin-left: 4px;
+  padding: 1px 6px;
+  min-width: 120px;
+  border: 1px solid var(--mp-accent);
+  border-radius: 4px;
+  background: var(--mp-input-bg);
+  color: var(--mp-fg);
+  font: 0.85em var(--mp-mono);
+}
+
+/* Syntax highlighting code block (class hljs-* dari dekorasi lowlight). */
+:root {
+  --mp-hl-keyword: #cf222e;
+  --mp-hl-string: #0a3069;
+  --mp-hl-comment: #6e7781;
+  --mp-hl-number: #0550ae;
+  --mp-hl-title: #8250df;
+  --mp-hl-attr: #0550ae;
+  --mp-hl-type: #953800;
+  --mp-hl-addition-bg: #dafbe1;
+  --mp-hl-deletion-bg: #ffebe9;
+}
+:root[data-theme='dark'] {
+  --mp-hl-keyword: #ff7b72;
+  --mp-hl-string: #a5d6ff;
+  --mp-hl-comment: #8b949e;
+  --mp-hl-number: #79c0ff;
+  --mp-hl-title: #d2a8ff;
+  --mp-hl-attr: #79c0ff;
+  --mp-hl-type: #ffa657;
+  --mp-hl-addition-bg: #033a16;
+  --mp-hl-deletion-bg: #67060c;
+}
+.mp-code .hljs-keyword,
+.mp-code .hljs-selector-tag,
+.mp-code .hljs-meta .hljs-keyword,
+.mp-code .hljs-doctag {
+  color: var(--mp-hl-keyword);
+}
+.mp-code .hljs-string,
+.mp-code .hljs-regexp,
+.mp-code .hljs-meta .hljs-string {
+  color: var(--mp-hl-string);
+}
+.mp-code .hljs-comment,
+.mp-code .hljs-quote {
+  color: var(--mp-hl-comment);
+  font-style: italic;
+}
+.mp-code .hljs-number,
+.mp-code .hljs-literal,
+.mp-code .hljs-symbol,
+.mp-code .hljs-variable,
+.mp-code .hljs-template-variable {
+  color: var(--mp-hl-number);
+}
+.mp-code .hljs-title,
+.mp-code .hljs-section,
+.mp-code .hljs-name {
+  color: var(--mp-hl-title);
+}
+.mp-code .hljs-attr,
+.mp-code .hljs-attribute,
+.mp-code .hljs-property,
+.mp-code .hljs-selector-class,
+.mp-code .hljs-selector-id {
+  color: var(--mp-hl-attr);
+}
+.mp-code .hljs-type,
+.mp-code .hljs-built_in,
+.mp-code .hljs-params,
+.mp-code .hljs-meta {
+  color: var(--mp-hl-type);
+}
+.mp-code .hljs-addition {
+  background: var(--mp-hl-addition-bg);
+}
+.mp-code .hljs-deletion {
+  background: var(--mp-hl-deletion-bg);
+}
+.mp-code .hljs-emphasis {
+  font-style: italic;
+}
+.mp-code .hljs-strong {
+  font-weight: 600;
+}
+
+/* Callout GitHub (> [!NOTE] dkk.): blockquote biasa yang diberi kotak dan label. */
+.mp-content blockquote.mp-callout {
+  --mp-callout: var(--mp-accent);
+  border-left: 4px solid var(--mp-callout);
+  border-radius: 0 var(--mp-radius) var(--mp-radius) 0;
+  background: color-mix(in srgb, var(--mp-callout) 8%, transparent);
+  color: var(--mp-fg);
+  padding: 8px 14px;
+}
+.mp-content blockquote.mp-callout::before {
+  content: attr(data-callout-label);
+  display: block;
+  color: var(--mp-callout);
+  font-weight: 600;
+  font-size: 0.9em;
+}
+.mp-callout-tip {
+  --mp-callout: #1a7f37;
+}
+.mp-callout-important {
+  --mp-callout: #8250df;
+}
+.mp-callout-warning {
+  --mp-callout: #9a6700;
+}
+.mp-callout-caution {
+  --mp-callout: #cf222e;
+}
+:root[data-theme='dark'] .mp-callout-tip {
+  --mp-callout: #3fb950;
+}
+:root[data-theme='dark'] .mp-callout-important {
+  --mp-callout: #a371f7;
+}
+:root[data-theme='dark'] .mp-callout-warning {
+  --mp-callout: #d29922;
+}
+:root[data-theme='dark'] .mp-callout-caution {
+  --mp-callout: #f85149;
+}
+.mp-callout-marker {
+  color: var(--mp-muted);
+  font-family: var(--mp-mono);
+  font-size: 0.8em;
+}
+
+/* Rata kolom GFM (|:---:|) dari dekorasi tableAlignment. */
+.mp-content th.mp-align-left,
+.mp-content td.mp-align-left {
+  text-align: left;
+}
+.mp-content th.mp-align-center,
+.mp-content td.mp-align-center {
+  text-align: center;
+}
+.mp-content th.mp-align-right,
+.mp-content td.mp-align-right {
+  text-align: right;
+}
+
+/* <br> di sel tabel: pindah baris sungguhan, ditandai tipis agar terlihat saat diedit. */
+.mp-raw-br {
+  display: inline;
+}
+.mp-raw-br::before {
+  content: '↵';
+  color: var(--mp-muted);
+  font-size: 0.75em;
+  opacity: 0.6;
 }
 
 .mp-placeholder::before {

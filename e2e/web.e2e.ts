@@ -166,3 +166,130 @@ describe('web demo', () => {
     expect(await theme()).toBe('light');
   });
 });
+
+// Skenario yang sama dengan apps/vscode/test/webview.mjs agar web dan VS Code teruji setara.
+describe('web demo: fitur lanjutan (CSP produksi aktif)', () => {
+  const FILE = 'panduan/fitur-lanjutan.md';
+  const saved = () =>
+    page.waitForFunction(() => document.querySelector('.web-status')?.textContent === 'Tersimpan');
+  /** Tunggu sampai file demo memenuhi `check` (simpan otomatis 1 detik setelah berhenti mengetik). */
+  async function fileWhere(check: (text: string) => boolean): Promise<string> {
+    for (let i = 0; i < 50; i++) {
+      await saved();
+      const text = await read(FILE);
+      if (check(text)) return text;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    return read(FILE);
+  }
+  /**
+   * Kursor di akhir teks `needle` di editor. ProseMirror membaca seleksi DOM pada
+   * `selectionchange` (asinkron), jadi tunggu sebentar sebelum menekan tombol.
+   */
+  const caretAfter = (needle: string) =>
+    page.evaluate(async (text) => {
+      const root = document.querySelector<HTMLElement>('.ProseMirror')!;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const at = node.textContent!.indexOf(text);
+        if (at < 0) continue;
+        root.focus();
+        const range = document.createRange();
+        range.setStart(node, at + text.length);
+        getSelection()!.removeAllRanges();
+        getSelection()!.addRange(range);
+        await new Promise((r) => setTimeout(r, 50));
+        return true;
+      }
+      return false;
+    }, needle);
+  const toolbarButton = (label: string) =>
+    page.locator(`.mp-toolbar button[aria-label="${label}"]`);
+  const menuItem = (text: string) => page.locator('[role="menuitem"]', { hasText: text });
+
+  beforeAll(async () => {
+    await page.goto(DEMO_URL);
+    await page.click('.web-tree-item:has-text("panduan")');
+    await page.click('.web-tree-item:has-text("fitur-lanjutan")');
+    await page.waitForSelector('.ProseMirror h1:has-text("Fitur lanjutan")');
+    await page.waitForSelector('.mp-preview-mermaid img', { timeout: 20_000 });
+  });
+
+  it('renders callouts, math, mermaid, highlighting and table alignment', async () => {
+    expect(await page.getAttribute('blockquote.mp-callout-tip', 'data-callout-label')).toBe('Tips');
+    expect(await page.locator('.mp-math-inline math').count()).toBeGreaterThan(0);
+    expect(await page.locator('.mp-math-block .mp-preview math').count()).toBe(1);
+    expect(await page.locator('td .mp-math-inline math').count()).toBe(1);
+    expect(await page.textContent('.mp-code .hljs-keyword')).toBe('export');
+    expect(await page.locator('td .mp-raw-br br').count()).toBe(1);
+    const align = await page.$eval('td.mp-align-right', (el) => getComputedStyle(el).textAlign);
+    expect(align).toBe('right');
+    const [shown, natural] = await page.$eval('.mp-preview-mermaid img', (img) => [
+      img.getBoundingClientRect().width,
+      (img as HTMLImageElement).naturalWidth,
+    ]);
+    expect(natural).toBeGreaterThan(0);
+    expect(shown).toBeLessThanOrEqual(natural + 1);
+    await page.screenshot({ path: `${SHOTS}05-fitur-lanjutan.png` });
+  });
+
+  it('Shift+Enter writes <br> in a cell and a hard break in a paragraph', async () => {
+    await caretAfter('Shift+Enter di sel');
+    await page.keyboard.press('Shift+Enter');
+    await page.keyboard.type('x');
+    await caretAfter('tampil benar di GitHub.');
+    await page.keyboard.press('Shift+Enter');
+    await page.keyboard.type('baris dua');
+    const text = await fileWhere((t) => t.includes('baris dua'));
+    expect(text).toContain('| Shift+Enter di sel<br>x |');
+    expect(text).toContain('tampil benar di GitHub.\\\nbaris dua');
+  });
+
+  it('table menu: delete row disabled in header, alignment and size picker write the file', async () => {
+    await caretAfter('Kolom kiri');
+    await toolbarButton('Tabel').click();
+    expect(await menuItem('Hapus baris').getAttribute('aria-disabled')).toBe('true');
+    await menuItem('Rata tengah').click();
+    await caretAfter('Kanan');
+    await toolbarButton('Tabel').click();
+    await menuItem('Sisipkan tabel').click();
+    await page.click('button[aria-label="3 × 2"]');
+    const text = await fileWhere((t) => (t.match(/\| --- \| --- \|/g) ?? []).length === 1);
+    expect(text).toContain('| :---: | :---: | ---: |');
+    expect(await page.locator('.ProseMirror table').count()).toBe(2);
+  });
+
+  it('insert menu → inline math focuses the LaTeX input and saves', async () => {
+    await caretAfter('baris dua');
+    await toolbarButton('Sisipkan lainnya').click();
+    await menuItem('Rumus inline').click();
+    await page.waitForFunction(
+      () => document.activeElement?.classList.contains('mp-math-input'),
+      null,
+      { timeout: 3000 },
+    );
+    await page.keyboard.type('\\sqrt{2}');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type(' ok');
+    const text = await fileWhere((t) => t.includes('$\\sqrt{2}$ ok'));
+    expect(text).toContain('baris dua$\\sqrt{2}$ ok');
+  });
+
+  it('slash callout and $$ math block are written as GitHub markdown', async () => {
+    await caretAfter('ok');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('/catatan');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('isi catatan');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('$$');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('a+b');
+    const text = await fileWhere((t) => t.includes('a+b'));
+    expect(text).toContain('> [!NOTE]\n> isi catatan');
+    expect(text).toContain('$$\na+b\n$$');
+    expect(await page.locator('.mp-banner').count()).toBe(0);
+    await page.screenshot({ path: `${SHOTS}06-fitur-lanjutan-edit.png` });
+  });
+});
