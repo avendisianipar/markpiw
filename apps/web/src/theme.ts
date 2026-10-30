@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
-// Mode terang/gelap web: pilihan pengguna disimpan di localStorage; tanpa pilihan, ikut sistem.
-// Skema aktif dipasang sebagai data-theme di <html> dan dibaca oleh token --mp-* di theme.css.
-import type { ColorScheme } from '@markpiw/ui';
+// Tema web: "sistem" = prefers-color-scheme OS, pilihan pengguna disimpan di localStorage.
+import { createThemeStore, type ColorScheme, type ThemeStore } from '@markpiw/ui';
 
 const KEY = 'markpiw.theme';
 
@@ -14,12 +13,6 @@ export interface ThemeEnv {
   } | null;
 }
 
-export interface ThemeStore {
-  get(): ColorScheme;
-  set(next: ColorScheme): void;
-  subscribe(listener: () => void): () => void;
-}
-
 function stored(env: ThemeEnv): ColorScheme | null {
   try {
     const value = env.storage?.getItem(KEY);
@@ -29,39 +22,22 @@ function stored(env: ThemeEnv): ColorScheme | null {
   }
 }
 
-export function createThemeStore(env: ThemeEnv): ThemeStore {
-  const system = (): ColorScheme => (env.media?.matches ? 'dark' : 'light');
-  let chosen = stored(env);
-  let current = chosen ?? system();
-  const listeners = new Set<() => void>();
-
-  const apply = (next: ColorScheme) => {
-    current = next;
-    env.root.dataset.theme = next;
-    listeners.forEach((fn) => fn());
-  };
-
-  env.root.dataset.theme = current;
-  env.media?.addEventListener('change', () => {
-    if (chosen === null) apply(system());
-  });
-
-  return {
-    get: () => current,
-    set(next) {
-      chosen = next;
+export function createWebThemeStore(env: ThemeEnv): ThemeStore {
+  return createThemeStore({
+    root: env.root,
+    chosen: stored(env),
+    system: {
+      get: () => (env.media?.matches ? 'dark' : 'light'),
+      subscribe: (listener) => env.media?.addEventListener('change', listener),
+    },
+    save(next) {
       try {
         env.storage?.setItem(KEY, next);
       } catch {
         // Penyimpanan diblokir (mode privat): pilihan tetap berlaku untuk sesi ini.
       }
-      apply(next);
     },
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-  };
+  });
 }
 
 function browserStorage(): Storage | null {
@@ -72,7 +48,7 @@ function browserStorage(): Storage | null {
   }
 }
 
-export const theme = createThemeStore({
+export const theme = createWebThemeStore({
   root: document.documentElement,
   storage: browserStorage(),
   media: typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null,

@@ -1,9 +1,62 @@
 /* SPDX-License-Identifier: LicenseRef-Proprietary */
-/* Tema markpiw (spesifikasi 5.3): token dipetakan ke --vscode-* dengan default terang untuk web. */
+/* Tema markpiw (spesifikasi 5.3): palet terang/gelap sendiri, atau warna --vscode-* di VS Code. */
 @import '../../../vendor/prosemirror/prosemirror-view/style/prosemirror.css';
 @import '../../../vendor/prosemirror/prosemirror-gapcursor/style/gapcursor.css';
 
+/* Palet markpiw sendiri: terang di :root, gelap di data-theme="dark" (dipasang theme store). */
 :root {
+  --mp-canvas: #f3f3f1;
+  --mp-page: #ffffff;
+  --mp-fg: #1f2328;
+  --mp-muted: #6b7280;
+  --mp-border: #e4e4e7;
+  --mp-accent: #2563eb;
+  --mp-link: #2563eb;
+  --mp-code-bg: #f6f8fa;
+  --mp-toolbar-bg: #ffffff;
+  --mp-hover: #f0f0ee;
+  --mp-pressed: #e3ebfd;
+  --mp-popover-bg: #ffffff;
+  --mp-popover-border: #e4e4e7;
+  --mp-input-bg: #ffffff;
+  --mp-input-border: #d4d4d8;
+  --mp-button-bg: #2563eb;
+  --mp-button-fg: #ffffff;
+  --mp-danger-bg: #fef2f2;
+  --mp-danger-border: #fca5a5;
+  --mp-danger-fg: #b91c1c;
+  --mp-selected-node: #bfdbfe;
+  --mp-font: var(--vscode-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
+  --mp-mono: var(--vscode-editor-font-family, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
+  --mp-radius: 6px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --mp-canvas: #18181b;
+  --mp-page: #1f1f23;
+  --mp-fg: #e4e4e7;
+  --mp-muted: #a1a1aa;
+  --mp-border: #2e2e33;
+  --mp-accent: #60a5fa;
+  --mp-link: #60a5fa;
+  --mp-code-bg: #27272a;
+  --mp-toolbar-bg: #111113;
+  --mp-hover: #27272a;
+  --mp-pressed: #1e2a44;
+  --mp-popover-bg: #1f1f23;
+  --mp-popover-border: #3f3f46;
+  --mp-input-bg: #18181b;
+  --mp-input-border: #3f3f46;
+  --mp-danger-bg: #3b1416;
+  --mp-danger-border: #7f1d1d;
+  --mp-danger-fg: #fca5a5;
+  --mp-selected-node: #1e3a5f;
+}
+
+/* VS Code: selama skema markpiw sama dengan jenis tema VS Code, pakai warna tema itu
+   (data-host-colors). Harus setelah blok data-theme agar menang pada spesifisitas sama. */
+:root[data-host-colors] {
   --mp-canvas: var(--vscode-sideBar-background, #f3f3f1);
   --mp-page: var(--vscode-editor-background, #ffffff);
   --mp-fg: var(--vscode-editor-foreground, #1f2328);
@@ -25,34 +78,6 @@
   --mp-danger-border: var(--vscode-inputValidation-errorBorder, #fca5a5);
   --mp-danger-fg: var(--vscode-errorForeground, #b91c1c);
   --mp-selected-node: var(--vscode-editor-selectionBackground, #bfdbfe);
-  --mp-font: var(--vscode-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
-  --mp-mono: var(--vscode-editor-font-family, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
-  --mp-radius: 6px;
-}
-
-/* Default gelap untuk web: host memasang data-theme="dark" di <html>. VS Code tidak memasangnya,
-   jadi di sana warna tetap mengikuti --vscode-*. */
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --mp-canvas: var(--vscode-sideBar-background, #18181b);
-  --mp-page: var(--vscode-editor-background, #1f1f23);
-  --mp-fg: var(--vscode-editor-foreground, #e4e4e7);
-  --mp-muted: var(--vscode-descriptionForeground, #a1a1aa);
-  --mp-border: var(--vscode-panel-border, #2e2e33);
-  --mp-accent: var(--vscode-focusBorder, #60a5fa);
-  --mp-link: var(--vscode-textLink-foreground, #60a5fa);
-  --mp-code-bg: var(--vscode-textCodeBlock-background, #27272a);
-  --mp-toolbar-bg: var(--vscode-editorWidget-background, #111113);
-  --mp-hover: var(--vscode-toolbar-hoverBackground, #27272a);
-  --mp-pressed: var(--vscode-toolbar-activeBackground, #1e2a44);
-  --mp-popover-bg: var(--vscode-editorWidget-background, #1f1f23);
-  --mp-popover-border: var(--vscode-editorWidget-border, #3f3f46);
-  --mp-input-bg: var(--vscode-input-background, #18181b);
-  --mp-input-border: var(--vscode-input-border, #3f3f46);
-  --mp-danger-bg: var(--vscode-inputValidation-errorBackground, #3b1416);
-  --mp-danger-border: var(--vscode-inputValidation-errorBorder, #7f1d1d);
-  --mp-danger-fg: var(--vscode-errorForeground, #fca5a5);
-  --mp-selected-node: var(--vscode-editor-selectionBackground, #1e3a5f);
 }
 
 .mp-root {

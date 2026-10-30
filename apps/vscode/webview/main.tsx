@@ -2,17 +2,47 @@
 import '@markpiw/ui/theme.css';
 import './webview.css';
 import { EditorController, type EditorSnapshot } from '@markpiw/editor';
-import { MarkpiwEditor, editorStrings } from '@markpiw/ui';
-import { StrictMode } from 'react';
+import { createThemeStore, MarkpiwEditor, editorStrings, type ThemeStore } from '@markpiw/ui';
+import { StrictMode, useSyncExternalStore } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { type ExtensionMessage, parseExtensionMessage } from '../src/protocol';
 import { WebviewSync } from './sync';
+import { vscodeSchemeSource } from './theme';
 import { VsCodeFileHost } from './vscode-host';
 
 const api = acquireVsCodeApi();
 let root: Root | null = null;
 let host: VsCodeFileHost | null = null;
 let sync: WebviewSync | null = null;
+let theme: ThemeStore | null = null;
+
+function themeFor(init: Extract<ExtensionMessage, { type: 'init' }>): ThemeStore {
+  if (theme) {
+    if (init.theme) theme.adopt(init.theme);
+    return theme;
+  }
+  theme = createThemeStore({
+    root: document.documentElement,
+    system: vscodeSchemeSource(document.body),
+    chosen: init.theme,
+    save: (next) => api.postMessage({ type: 'setTheme', theme: next }),
+    hostColors: true,
+  });
+  return theme;
+}
+
+function Editor(props: { controller: EditorController; sync: WebviewSync; theme: ThemeStore }) {
+  const scheme = useSyncExternalStore(props.theme.subscribe, props.theme.get);
+  return (
+    <MarkpiwEditor
+      controller={props.controller}
+      fallbackText={() => props.sync.lastText}
+      recoveryActions={[{ label: 'Muat ulang dari file', onPress: () => props.sync.reload() }]}
+      colorScheme={scheme}
+      onColorSchemeChange={props.theme.set}
+    />
+  );
+}
 
 function start(init: Extract<ExtensionMessage, { type: 'init' }>): void {
   host = new VsCodeFileHost(api, init.text, init.uiState);
@@ -45,11 +75,7 @@ function start(init: Extract<ExtensionMessage, { type: 'init' }>): void {
   root = createRoot(document.getElementById('root') as HTMLElement);
   root.render(
     <StrictMode>
-      <MarkpiwEditor
-        controller={controller}
-        fallbackText={() => currentSync.lastText}
-        recoveryActions={[{ label: 'Muat ulang dari file', onPress: () => currentSync.reload() }]}
-      />
+      <Editor controller={controller} sync={currentSync} theme={themeFor(init)} />
     </StrictMode>,
   );
 }
@@ -70,6 +96,9 @@ window.addEventListener('message', (event: MessageEvent) => {
     case 'assetSaved':
     case 'imagesResolved':
       host?.handleReply(message);
+      break;
+    case 'theme':
+      theme?.adopt(message.theme);
       break;
   }
 });

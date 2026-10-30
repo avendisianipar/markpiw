@@ -168,6 +168,17 @@ exports.run = async function run() {
     assert.equal(vscode.workspace.getConfiguration('workbench').get('sideBar.location'), before);
   });
 
+  await test('setTheme is saved globally and sent with the next init', async () => {
+    await send({ type: 'setTheme', theme: 'dark' });
+    await send({ type: 'ready' });
+    const init = await waitFor(
+      async () => (await drain()).find((m) => m.type === 'init'),
+      'init after setTheme',
+    );
+    assert.equal(init.theme, 'dark');
+    take();
+  });
+
   await test('invalid messages are ignored', async () => {
     const before = doc.getText();
     await send({ type: 'edits', baseVersion: 'nope', changes: 'x' });

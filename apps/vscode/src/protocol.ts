@@ -14,6 +14,8 @@ const UiState = v.object({
   selection: v.nullable(v.object({ anchor: v.number(), head: v.number() })),
 });
 
+const Theme = v.picklist(['light', 'dark']);
+
 const HostError = v.object({
   code: v.picklist(['permission', 'conflict', 'not-found', 'io', 'invalid-path']),
   message: v.string(),
@@ -34,6 +36,7 @@ export const WebviewMessage = v.variant('type', [
   v.object({ type: v.literal('uiState'), state: UiState }),
   v.object({ type: v.literal('undo') }),
   v.object({ type: v.literal('redo') }),
+  v.object({ type: v.literal('setTheme'), theme: Theme }),
 ]);
 
 export const ExtensionMessage = v.variant('type', [
@@ -43,6 +46,8 @@ export const ExtensionMessage = v.variant('type', [
     version: v.number(),
     uiState: v.nullable(UiState),
     config: v.object({ assetsFolder: v.string() }),
+    /** Pilihan tema tersimpan; null = ikut tema VS Code. */
+    theme: v.nullable(Theme),
   }),
   v.object({ type: v.literal('editsApplied'), version: v.number() }),
   v.object({ type: v.literal('externalChange'), text: v.string(), version: v.number() }),
@@ -59,6 +64,8 @@ export const ExtensionMessage = v.variant('type', [
     requestId: v.number(),
     urls: v.record(v.string(), v.nullable(v.string())),
   }),
+  /** Tema dipilih di panel lain; diterapkan tanpa disimpan ulang. */
+  v.object({ type: v.literal('theme'), theme: Theme }),
 ]);
 
 export type WebviewMessage = v.InferOutput<typeof WebviewMessage>;

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
-// Tombol mode terang/gelap di ujung kanan topbar. Hanya tampil bila host mengelola skema warna
-// (web); di VS Code tema mengikuti variabel --vscode-* sehingga tombol tidak dirender.
+// Tombol mode terang/gelap di ujung kanan topbar; host (web/VS Code) yang menyimpan pilihannya.
 import { Moon, Sun } from 'lucide-react';
 import { ToggleButton } from 'react-aria-components';
 import { t } from './strings/id';

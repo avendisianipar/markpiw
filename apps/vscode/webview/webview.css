@@ -12,7 +12,7 @@ body {
   color: var(--mp-fg);
 }
 
-/* Di VS Code, kanvas memakai latar editor agar menyatu dengan tema. */
-:root {
+/* Saat memakai warna tema VS Code, kanvas memakai latar editor agar menyatu dengan tema. */
+:root[data-host-colors] {
   --mp-canvas: var(--vscode-editor-background, #ffffff);
 }

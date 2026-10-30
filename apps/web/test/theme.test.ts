@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 import { describe, expect, it } from 'vitest';
-import { createThemeStore, type ThemeEnv } from '../src/theme';
+import { createWebThemeStore, type ThemeEnv } from '../src/theme';
 
 function fakeMedia(matches: boolean) {
   const listeners = new Set<() => void>();
@@ -36,21 +36,21 @@ function env(overrides: Partial<ThemeEnv> = {}): ThemeEnv {
 describe('theme store', () => {
   it('follows the system preference when nothing is stored', () => {
     const e = env({ media: fakeMedia(true) });
-    const store = createThemeStore(e);
+    const store = createWebThemeStore(e);
     expect(store.get()).toBe('dark');
     expect(e.root.dataset.theme).toBe('dark');
   });
 
   it('prefers the stored choice over the system preference', () => {
     const e = env({ media: fakeMedia(true), storage: fakeStorage({ 'markpiw.theme': 'light' }) });
-    expect(createThemeStore(e).get()).toBe('light');
+    expect(createWebThemeStore(e).get()).toBe('light');
     expect(e.root.dataset.theme).toBe('light');
   });
 
   it('set applies, persists and notifies', () => {
     const storage = fakeStorage();
     const e = env({ storage });
-    const store = createThemeStore(e);
+    const store = createWebThemeStore(e);
     let calls = 0;
     store.subscribe(() => calls++);
     store.set('dark');
@@ -62,7 +62,7 @@ describe('theme store', () => {
 
   it('tracks system changes until the user picks a theme', () => {
     const media = fakeMedia(false);
-    const store = createThemeStore(env({ media }));
+    const store = createWebThemeStore(env({ media }));
     media.flip(true);
     expect(store.get()).toBe('dark');
     store.set('light');
@@ -71,7 +71,7 @@ describe('theme store', () => {
   });
 
   it('ignores invalid stored values', () => {
-    const store = createThemeStore(env({ storage: fakeStorage({ 'markpiw.theme': 'blue' }) }));
+    const store = createWebThemeStore(env({ storage: fakeStorage({ 'markpiw.theme': 'blue' }) }));
     expect(store.get()).toBe('light');
   });
 
@@ -84,7 +84,7 @@ describe('theme store', () => {
         throw new Error('blocked');
       },
     };
-    const store = createThemeStore(env({ storage: broken, media: null }));
+    const store = createWebThemeStore(env({ storage: broken, media: null }));
     expect(store.get()).toBe('light');
     store.set('dark');
     expect(store.get()).toBe('dark');

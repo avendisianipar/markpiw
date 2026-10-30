@@ -13,6 +13,8 @@ import {
 } from './protocol';
 
 export const VIEW_TYPE = 'markpiw.editor';
+/** Pilihan tema pengguna, berlaku untuk semua workspace (globalState). */
+const THEME_KEY = 'markpiw.theme';
 
 type AssetResult = Extract<ExtensionMessage, { type: 'assetSaved' }>['result'];
 
@@ -66,6 +68,7 @@ export class MarkpiwSession {
           version: this.document.version,
           uiState: this.context.workspaceState.get(this.uiKey) ?? null,
           config: { assetsFolder: this.assetsFolder() },
+          theme: this.context.globalState.get<'light' | 'dark'>(THEME_KEY) ?? null,
         });
         return;
       case 'edits':
@@ -93,6 +96,11 @@ export class MarkpiwSession {
       case 'undo':
       case 'redo':
         await vscode.commands.executeCommand(message.type);
+        return;
+      case 'setTheme':
+        await this.context.globalState.update(THEME_KEY, message.theme);
+        for (const other of MarkpiwEditorProvider.sessions.values())
+          if (other !== this) other.post({ type: 'theme', theme: message.theme });
         return;
     }
   }
@@ -261,7 +269,7 @@ export class MarkpiwEditorProvider implements vscode.CustomTextEditorProvider {
       `font-src ${webview.cspSource}`,
     ].join('; ');
     return `<!doctype html>
-<html lang="id">
+<html lang="id" data-host-colors>
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />

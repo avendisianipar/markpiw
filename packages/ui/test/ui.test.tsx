@@ -29,6 +29,8 @@ function render(text: string, extra: Partial<MarkpiwEditorProps> = {}) {
           controller={controller}
           fallbackText={() => text}
           recoveryActions={[{ label: 'Urungkan', onPress: () => controller.clearReadOnly() }]}
+          colorScheme="light"
+          onColorSchemeChange={() => {}}
           {...extra}
         />
       </StrictMode>,
@@ -102,11 +104,6 @@ describe('MarkpiwEditor', () => {
     act(() => button('Perbesar').click());
     expect(controller.getSnapshot().zoom).toBe(110);
     expect(document.querySelector('.mp-zoom')?.textContent).toBe('110%');
-  });
-
-  it('hides the theme toggle when the host does not manage the color scheme', () => {
-    render('a\n');
-    expect(button('Mode gelap')).toBeNull();
   });
 
   it('theme toggle reflects the scheme and asks the host to switch', () => {
