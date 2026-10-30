@@ -267,7 +267,7 @@ button {
 .web-status-error,
 .web-status-readonly {
   background: var(--mp-danger-bg);
-  color: #b91c1c;
+  color: var(--mp-danger-fg);
 }
 
 .web-draft {

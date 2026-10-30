@@ -11,6 +11,7 @@ import { Notice } from './Notice';
 import { Outline } from './Outline';
 import { type BannerAction, ReadOnlyBanner } from './ReadOnlyBanner';
 import { SlashMenu } from './SlashMenu';
+import { type ColorScheme, ThemeToggle } from './ThemeToggle';
 import { Toolbar } from './Toolbar';
 
 export interface MarkpiwEditorProps {
@@ -21,6 +22,9 @@ export interface MarkpiwEditorProps {
   readonly recoveryActions?: readonly BannerAction[];
   /** Teks untuk mode baca-saja saat crash (biasanya isi file terakhir yang valid). */
   readonly fallbackText: () => string;
+  /** Skema warna aktif; bila diisi bersama `onColorSchemeChange`, tombol tema tampil di kanan. */
+  readonly colorScheme?: ColorScheme;
+  readonly onColorSchemeChange?: (next: ColorScheme) => void;
 }
 
 const selectZoom = (s: EditorSnapshot) => s.zoom;
@@ -29,6 +33,8 @@ function Surface({
   controller,
   topBar,
   recoveryActions,
+  colorScheme,
+  onColorSchemeChange,
 }: Omit<MarkpiwEditorProps, 'fallbackText'>) {
   const zoom = useEditorSnapshot(selectZoom);
   const file = useRef<HTMLInputElement>(null);
@@ -45,6 +51,11 @@ function Surface({
       <header className="mp-topbar">
         {topBar}
         <Toolbar onPickImage={pickImage} />
+        {colorScheme && onColorSchemeChange && (
+          <div className="mp-topbar-end">
+            <ThemeToggle scheme={colorScheme} onChange={onColorSchemeChange} />
+          </div>
+        )}
       </header>
       <ReadOnlyBanner actions={recoveryActions ?? []} />
       <div className="mp-body">

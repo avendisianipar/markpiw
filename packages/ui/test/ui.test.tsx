@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FakeHost } from '../../editor/test/fake-host';
 import { type } from '../../editor/test/util';
-import { MarkpiwEditor, editorStrings } from '../src';
+import { MarkpiwEditor, type MarkpiwEditorProps, editorStrings } from '../src';
 
 let root: Root | null = null;
 let container: HTMLElement | null = null;
@@ -16,7 +16,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-function render(text: string) {
+function render(text: string, extra: Partial<MarkpiwEditorProps> = {}) {
   const host = new FakeHost(text);
   const controller = new EditorController({ text, host, strings: editorStrings });
   container = document.createElement('div');
@@ -29,6 +29,7 @@ function render(text: string) {
           controller={controller}
           fallbackText={() => text}
           recoveryActions={[{ label: 'Urungkan', onPress: () => controller.clearReadOnly() }]}
+          {...extra}
         />
       </StrictMode>,
     ),
@@ -101,6 +102,27 @@ describe('MarkpiwEditor', () => {
     act(() => button('Perbesar').click());
     expect(controller.getSnapshot().zoom).toBe(110);
     expect(document.querySelector('.mp-zoom')?.textContent).toBe('110%');
+  });
+
+  it('hides the theme toggle when the host does not manage the color scheme', () => {
+    render('a\n');
+    expect(button('Mode gelap')).toBeNull();
+  });
+
+  it('theme toggle reflects the scheme and asks the host to switch', () => {
+    const requested: string[] = [];
+    render('a\n', { colorScheme: 'light', onColorSchemeChange: (next) => requested.push(next) });
+    expect(button('Mode gelap').getAttribute('aria-pressed')).toBe('false');
+    act(() => button('Mode gelap').click());
+    expect(requested).toEqual(['dark']);
+  });
+
+  it('theme toggle switches back to light from dark', () => {
+    const requested: string[] = [];
+    render('a\n', { colorScheme: 'dark', onColorSchemeChange: (next) => requested.push(next) });
+    expect(button('Mode gelap').getAttribute('aria-pressed')).toBe('true');
+    act(() => button('Mode gelap').click());
+    expect(requested).toEqual(['light']);
   });
 });
 

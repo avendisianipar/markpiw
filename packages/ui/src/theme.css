@@ -23,10 +23,36 @@
   --mp-button-fg: var(--vscode-button-foreground, #ffffff);
   --mp-danger-bg: var(--vscode-inputValidation-errorBackground, #fef2f2);
   --mp-danger-border: var(--vscode-inputValidation-errorBorder, #fca5a5);
+  --mp-danger-fg: var(--vscode-errorForeground, #b91c1c);
   --mp-selected-node: var(--vscode-editor-selectionBackground, #bfdbfe);
   --mp-font: var(--vscode-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
   --mp-mono: var(--vscode-editor-font-family, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
   --mp-radius: 6px;
+}
+
+/* Default gelap untuk web: host memasang data-theme="dark" di <html>. VS Code tidak memasangnya,
+   jadi di sana warna tetap mengikuti --vscode-*. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --mp-canvas: var(--vscode-sideBar-background, #18181b);
+  --mp-page: var(--vscode-editor-background, #1f1f23);
+  --mp-fg: var(--vscode-editor-foreground, #e4e4e7);
+  --mp-muted: var(--vscode-descriptionForeground, #a1a1aa);
+  --mp-border: var(--vscode-panel-border, #2e2e33);
+  --mp-accent: var(--vscode-focusBorder, #60a5fa);
+  --mp-link: var(--vscode-textLink-foreground, #60a5fa);
+  --mp-code-bg: var(--vscode-textCodeBlock-background, #27272a);
+  --mp-toolbar-bg: var(--vscode-editorWidget-background, #111113);
+  --mp-hover: var(--vscode-toolbar-hoverBackground, #27272a);
+  --mp-pressed: var(--vscode-toolbar-activeBackground, #1e2a44);
+  --mp-popover-bg: var(--vscode-editorWidget-background, #1f1f23);
+  --mp-popover-border: var(--vscode-editorWidget-border, #3f3f46);
+  --mp-input-bg: var(--vscode-input-background, #18181b);
+  --mp-input-border: var(--vscode-input-border, #3f3f46);
+  --mp-danger-bg: var(--vscode-inputValidation-errorBackground, #3b1416);
+  --mp-danger-border: var(--vscode-inputValidation-errorBorder, #7f1d1d);
+  --mp-danger-fg: var(--vscode-errorForeground, #fca5a5);
+  --mp-selected-node: var(--vscode-editor-selectionBackground, #1e3a5f);
 }
 
 .mp-root {
@@ -51,6 +77,12 @@
   background: var(--mp-toolbar-bg);
   border-bottom: 1px solid var(--mp-border);
   flex-wrap: wrap;
+}
+
+.mp-topbar-end {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 .mp-toolbar {

@@ -34,6 +34,7 @@ export const id = {
   'toolbar.alignRight': 'Rata kanan',
   'toolbar.image': 'Gambar',
   'toolbar.hr': 'Garis pemisah',
+  'toolbar.darkMode': 'Mode gelap',
   'slash.label': 'Perintah',
   'link.url': 'URL',
   'link.apply': 'Terapkan',

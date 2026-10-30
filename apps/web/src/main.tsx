@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 import '@markpiw/ui/theme.css';
 import './app.css';
+// Pasang data-theme sebelum render pertama agar tidak berkedip terang.
+import './theme';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';

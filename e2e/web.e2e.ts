@@ -147,4 +147,22 @@ describe('web demo', () => {
       '# Catatan CRLF!\r\n\r\nFile ini memakai line ending Windows (CRLF).\r\nBaris yang tidak diedit tetap CRLF.\r\n',
     );
   });
+
+  it('theme toggle switches to dark mode and survives a reload', async () => {
+    const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
+    const canvas = () =>
+      page.evaluate(() => getComputedStyle(document.querySelector('.mp-root')!).backgroundColor);
+    expect(await theme()).toBe('light');
+    const light = await canvas();
+    await page.click('[aria-label="Mode gelap"]');
+    expect(await theme()).toBe('dark');
+    expect(await canvas()).not.toBe(light);
+    await page.screenshot({ path: `${SHOTS}04-dark.png` });
+    await page.reload();
+    await page.waitForSelector('.ProseMirror h1');
+    expect(await theme()).toBe('dark');
+    expect(await page.getAttribute('[aria-label="Mode gelap"]', 'aria-pressed')).toBe('true');
+    await page.click('[aria-label="Mode gelap"]');
+    expect(await theme()).toBe('light');
+  });
 });

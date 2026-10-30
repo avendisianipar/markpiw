@@ -6,6 +6,7 @@ import type { DirectoryLike } from '../fs/types';
 import { FileSession } from '../session';
 import { clearDraft, type Draft, takeDraft } from '../storage';
 import { webStrings as s } from '../strings';
+import { theme } from '../theme';
 import { FileTree } from './FileTree';
 
 const EXTERNAL_POLL_MS = 5000;
@@ -64,6 +65,7 @@ export function Workspace(props: {
   onClose: () => void;
 }) {
   const [session, setSession] = useState<FileSession | null>(null);
+  const scheme = useSyncExternalStore(theme.subscribe, theme.get);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const current = useRef<FileSession | null>(null);
@@ -194,6 +196,8 @@ export function Workspace(props: {
               key={session.path.join('/')}
               controller={session.controller}
               fallbackText={() => session.lastKnownText}
+              colorScheme={scheme}
+              onColorSchemeChange={theme.set}
               topBar={
                 <div className="web-filebar">
                   <span className="web-filename" title={session.path.join('/')}>
