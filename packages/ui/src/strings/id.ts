@@ -49,6 +49,8 @@ export const id = {
   'readonly.copyDiagnostics': 'Salin info diagnostik',
   'readonly.copied': 'Disalin',
   'notice.dismiss': 'Tutup',
+  'outline.label': 'Daftar isi',
+  'outline.untitled': 'Tanpa judul',
 } as const;
 
 export type StringKey = keyof typeof id;

@@ -49,6 +49,14 @@ export interface Notice {
   readonly id: number;
 }
 
+/** Satu entri daftar isi: heading di dokumen. */
+export interface HeadingInfo {
+  /** Posisi node heading (sebelum node). */
+  readonly pos: number;
+  readonly level: 1 | 2 | 3 | 4 | 5 | 6;
+  readonly text: string;
+}
+
 export interface EditorSnapshot {
   readonly activeMarks: ReadonlySet<MarkName>;
   readonly blockType: BlockTypeInfo;
@@ -66,6 +74,8 @@ export interface EditorSnapshot {
   readonly readOnly: ReadOnlyState | null;
   readonly dirty: boolean;
   readonly notice: Notice | null;
+  /** Semua heading dokumen, berurutan (untuk daftar isi). */
+  readonly outline: readonly HeadingInfo[];
 }
 
 const MARKS: readonly MarkName[] = ['strong', 'em', 'strike', 'code', 'link'];
@@ -164,6 +174,41 @@ export function imageAt(state: EditorState): ImageState | null {
   return null;
 }
 
+const outlineCache = new WeakMap<Node, readonly HeadingInfo[]>();
+
+/** Daftar heading di dokumen; di-cache per dokumen agar gerakan kursor tidak memindai ulang. */
+export function outlineOf(doc: Node): readonly HeadingInfo[] {
+  let outline = outlineCache.get(doc);
+  if (!outline) {
+    const found: HeadingInfo[] = [];
+    doc.descendants((node, pos) => {
+      if (node.type.name === 'heading') {
+        found.push({
+          pos,
+          level: node.attrs.level as HeadingInfo['level'],
+          text: node.textContent,
+        });
+      }
+      // Tidak perlu masuk ke isi blok teks.
+      return !node.isTextblock;
+    });
+    outline = found;
+    outlineCache.set(doc, outline);
+  }
+  return outline;
+}
+
+function sameOutline(a: readonly HeadingInfo[], b: readonly HeadingInfo[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  return a.every((h, i) => {
+    const other = b[i];
+    return (
+      other !== undefined && h.pos === other.pos && h.level === other.level && h.text === other.text
+    );
+  });
+}
+
 function sameSet<T>(a: ReadonlySet<T>, b: ReadonlySet<T>): boolean {
   if (a.size !== b.size) return false;
   for (const x of a) if (!b.has(x)) return false;
@@ -188,6 +233,9 @@ export function stabilize(prev: EditorSnapshot | null, next: EditorSnapshot): Ed
     prev.zoom === next.zoom &&
     prev.readOnly === next.readOnly &&
     prev.dirty === next.dirty &&
-    prev.notice === next.notice;
-  return same ? prev : next;
+    prev.notice === next.notice &&
+    sameOutline(prev.outline, next.outline);
+  if (same) return prev;
+  // Pertahankan referensi outline lama jika isinya sama (komponen daftar isi tidak re-render).
+  return sameOutline(prev.outline, next.outline) ? { ...next, outline: prev.outline } : next;
 }

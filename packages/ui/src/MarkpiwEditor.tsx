@@ -8,6 +8,7 @@ import { EditorErrorBoundary } from './ErrorBoundary';
 import { ImagePopover } from './ImagePopover';
 import { LinkPopover } from './LinkPopover';
 import { Notice } from './Notice';
+import { Outline } from './Outline';
 import { type BannerAction, ReadOnlyBanner } from './ReadOnlyBanner';
 import { SlashMenu } from './SlashMenu';
 import { Toolbar } from './Toolbar';
@@ -31,6 +32,7 @@ function Surface({
 }: Omit<MarkpiwEditorProps, 'fallbackText'>) {
   const zoom = useEditorSnapshot(selectZoom);
   const file = useRef<HTMLInputElement>(null);
+  const canvas = useRef<HTMLElement>(null);
   const pickImage = () => file.current?.click();
   useEffect(() => {
     const sub = controller.onUiRequest((request) => {
@@ -45,11 +47,14 @@ function Surface({
         <Toolbar onPickImage={pickImage} />
       </header>
       <ReadOnlyBanner actions={recoveryActions ?? []} />
-      <main className="mp-canvas">
-        <article className="mp-page">
-          <EditorHost controller={controller} />
-        </article>
-      </main>
+      <div className="mp-body">
+        <main ref={canvas} className="mp-canvas">
+          <article className="mp-page">
+            <EditorHost controller={controller} />
+          </article>
+        </main>
+        <Outline canvas={canvas} />
+      </div>
       <SlashMenu />
       <LinkPopover />
       <ImagePopover />

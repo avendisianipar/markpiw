@@ -27,6 +27,7 @@ import {
   linkAt,
   listKindOf,
   type Notice,
+  outlineOf,
   type ReadOnlyState,
   type SlashState,
   stabilize,
@@ -303,6 +304,7 @@ export class EditorController {
       readOnly: this.readOnlyState,
       dirty: this.dirtyFlag,
       notice: this.noticeValue,
+      outline: outlineOf(state.doc),
     };
   }
 }
