@@ -38,7 +38,7 @@ exports.run = async function run() {
     }
   }
 
-  const extension = vscode.extensions.getExtension('markpiw-internal.markpiw');
+  const extension = vscode.extensions.getExtension('avendisianipar.markpiw');
   assert.ok(extension, 'extension markpiw tidak ditemukan');
   await extension.activate();
   const commands = (await vscode.commands.getCommands(true)).filter((c) => c.startsWith('markpiw'));

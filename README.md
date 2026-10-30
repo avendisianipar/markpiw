@@ -1,6 +1,6 @@
 # markpiw
 
-Editor markdown WYSIWYG: edit langsung di tampilan jadi (seperti Notion), file `.md` tetap bersih untuk di-review di git. Tersedia sebagai **extension VS Code** dan **web app** (Chrome/Edge). Semuanya berjalan di komputer Anda; markpiw tidak mengirim data ke mana pun (lihat [Privasi](#privasi)).
+**markpiw** (dari *Markdown Preview*) adalah editor markdown WYSIWYG: edit langsung di tampilan jadi (seperti Notion), file `.md` tetap bersih untuk di-review di git. Tersedia sebagai **extension VS Code** dan **web app** (Chrome/Edge). Semuanya berjalan di komputer Anda; markpiw tidak mengirim data ke mana pun (lihat [Privasi](#privasi)).
 
 - [Pasang di VS Code](#pasang-di-vs-code)
 - [Memakai versi web](#memakai-versi-web)
@@ -73,6 +73,8 @@ Folder gambar bisa diganti lewat setting `markpiw.assetsFolder`.
 ### Update ke versi baru
 
 Extension yang dipasang dari `.vsix` **tidak diperbarui otomatis**. Saat ada rilis baru, unduh `.vsix` terbaru lalu pasang lagi dengan cara yang sama (versi lama otomatis tergantikan), kemudian **Reload Window**. Versi yang terpasang terlihat di halaman extension markpiw di panel Extensions.
+
+> **Dari versi 0.1.0:** ID extension berubah dari `markpiw-internal.markpiw` menjadi `avendisianipar.markpiw`, sehingga VS Code menganggapnya extension baru. Uninstall markpiw lama lebih dulu (panel **Extensions** → markpiw → **Uninstall**), lalu pasang yang baru. Setting `markpiw.assetsFolder` tetap terbawa; pilihan tema terang/gelap perlu dipilih ulang sekali.
 
 ### Menghapus
 

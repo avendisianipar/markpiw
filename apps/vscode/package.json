@@ -3,7 +3,7 @@
   "displayName": "markpiw",
   "description": "Editor markdown WYSIWYG: edit langsung di preview, file .md tetap bersih untuk git.",
   "version": "0.1.0",
-  "publisher": "markpiw-internal",
+  "publisher": "avendisianipar",
   "private": true,
   "license": "MIT",
   "repository": {
