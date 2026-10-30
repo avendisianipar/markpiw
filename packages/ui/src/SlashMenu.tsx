@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Slash menu (spesifikasi 5.2): portal, posisi via Floating UI, pola listbox dengan
-// aria-activedescendant di elemen editor; fokus tetap di editor.
-import type { EditorSnapshot } from '@markpiw/editor';
+// aria-activedescendant di elemen editor; fokus tetap di editor. Item dikelompokkan dan memakai
+// ikon/label yang sama dengan toolbar (lihat blocks.tsx).
+import type { EditorSnapshot, SlashItem } from '@markpiw/editor';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { BLOCK_SHORTCUT, BlockRow, blockLabel, groupLabel, tip } from './blocks';
 import { useController, useEditorSnapshot } from './context';
 import { t } from './strings/id';
 import { useFloatingAt } from './useFloating';
@@ -38,25 +40,46 @@ export function SlashMenu() {
   }, [activeId]);
 
   if (!slash) return null;
+  // Item sudah berurutan per kelompok; potong menjadi blok berjudul.
+  const groups: { id: SlashItem['group']; items: { item: SlashItem; index: number }[] }[] = [];
+  slash.items.forEach((item, index) => {
+    const last = groups[groups.length - 1];
+    if (last?.id === item.group) last.items.push({ item, index });
+    else groups.push({ id: item.group, items: [{ item, index }] });
+  });
   return createPortal(
     <div ref={ref} className="mp-slash" style={{ position: 'fixed', left: 0, top: 0 }}>
-      <ul id={LISTBOX_ID} role="listbox" aria-label={t('slash.label')} className="mp-slash-list">
-        {slash.items.map((item, index) => (
-          <li
-            key={item.id}
-            id={`mp-slash-${item.id}`}
-            role="option"
-            aria-selected={index === slash.selectedIndex}
-            className="mp-slash-item"
-            onMouseDown={(event) => {
-              event.preventDefault();
-              controller.runSlashItem(item.id);
-            }}
+      <div id={LISTBOX_ID} role="listbox" aria-label={t('slash.label')} className="mp-slash-list">
+        {groups.map((group) => (
+          <ul
+            key={group.id}
+            role="group"
+            aria-labelledby={`mp-slash-group-${group.id}`}
+            className="mp-slash-group"
           >
-            {item.label}
-          </li>
+            <li id={`mp-slash-group-${group.id}`} role="presentation" className="mp-slash-header">
+              {groupLabel(group.id)}
+            </li>
+            {group.items.map(({ item, index }) => (
+              <li
+                key={item.id}
+                id={`mp-slash-${item.id}`}
+                role="option"
+                aria-selected={index === slash.selectedIndex}
+                title={tip(blockLabel(item.id), BLOCK_SHORTCUT[item.id])}
+                className="mp-slash-item"
+                onMouseMove={() => controller.selectSlashItem(index)}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  controller.runSlashItem(item.id);
+                }}
+              >
+                <BlockRow id={item.id} />
+              </li>
+            ))}
+          </ul>
         ))}
-      </ul>
+      </div>
     </div>,
     document.body,
   );

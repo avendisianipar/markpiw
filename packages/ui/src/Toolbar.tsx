@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Toolbar (spesifikasi 5.2): React Aria Toolbar dengan roving focus; tombol toggle memakai
-// aria-pressed; tooltip memuat shortcut.
-import type { BlockTypeInfo, EditorSnapshot, ListKind, TableState } from '@markpiw/editor';
+// aria-pressed; tooltip memuat shortcut. Urutan: riwayat, jenis blok, format inline, list, blok,
+// sisipkan. Ikon dan label item blok sama dengan slash menu (lihat blocks.tsx).
+import {
+  type BlockTypeInfo,
+  type EditorSnapshot,
+  type ListKind,
+  SLASH_GROUPS,
+  type SlashItemId,
+  type TableState,
+} from '@markpiw/editor';
 import {
   AlignCenter,
   AlignLeft,
@@ -9,19 +17,10 @@ import {
   Bold,
   ChevronDown,
   Code,
-  Image,
   Italic,
-  Link,
-  List,
-  ListChecks,
-  ListOrdered,
-  Minus,
   Plus,
-  Quote,
   Redo2,
-  SquareCode,
   Strikethrough,
-  Table,
   Undo2,
   ZoomIn,
   ZoomOut,
@@ -29,33 +28,44 @@ import {
 import { type Key, type ReactNode, useRef, useState } from 'react';
 import {
   Button,
+  Header,
   Menu,
   MenuItem,
+  MenuSection,
   MenuTrigger,
   Popover,
   Separator,
   ToggleButton,
   Toolbar as AriaToolbar,
 } from 'react-aria-components';
+import {
+  BLOCK_SHORTCUT,
+  BlockIcon,
+  BlockRow,
+  blockLabel,
+  groupLabel,
+  ICON,
+  MOD,
+  tip,
+} from './blocks';
 import { useController, useEditorSnapshot } from './context';
 import { TableSizePicker } from './TableSizePicker';
 import { t } from './strings/id';
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad)/.test(navigator.platform);
-const MOD = isMac ? '⌘' : 'Ctrl';
-const ALT = isMac ? '⌥' : 'Alt';
-
-const ICON = { size: 16, strokeWidth: 2, 'aria-hidden': true } as const;
-
-function tip(label: string, shortcut?: string): string {
-  return shortcut ? `${label} (${shortcut})` : label;
+/** Item blok yang mewakili jenis blok kursor saat ini (untuk label dropdown). */
+function currentBlock(block: BlockTypeInfo): SlashItemId {
+  if (block.type === 'heading') return `h${block.level}`;
+  if (block.type === 'code_block') return 'code';
+  return 'text';
 }
 
-function blockLabel(block: BlockTypeInfo): string {
-  if (block.type === 'heading') return `${t('toolbar.heading')} ${block.level}`;
-  if (block.type === 'code_block') return t('toolbar.codeBlock');
-  return t('toolbar.paragraph');
-}
+const groupItems = (id: (typeof SLASH_GROUPS)[number]['id']) =>
+  SLASH_GROUPS.find((group) => group.id === id)?.items ?? [];
+
+/** Dropdown jenis blok: kelompok "Teks & heading" ditambah code block. */
+const BLOCK_TYPES: readonly SlashItemId[] = [...groupItems('text'), 'code'];
+/** Menu "Sisipkan lainnya": kelompok yang tidak punya tombol sendiri di toolbar. */
+const MORE_GROUPS = SLASH_GROUPS.filter((g) => g.id === 'callout' || g.id === 'advanced');
 
 const selectBlock = (s: EditorSnapshot) => s.blockType;
 const selectList = (s: EditorSnapshot) => s.listKind;
@@ -69,7 +79,7 @@ const selectReadOnly = (s: EditorSnapshot) => s.readOnly !== null;
 
 function ToolButton(props: {
   label: string;
-  shortcut?: string;
+  shortcut?: string | undefined;
   onPress: () => void;
   isDisabled?: boolean;
   children: ReactNode;
@@ -90,7 +100,7 @@ function ToolButton(props: {
 
 function ToolToggle(props: {
   label: string;
-  shortcut?: string;
+  shortcut?: string | undefined;
   isSelected: boolean;
   onChange: () => void;
   isDisabled?: boolean;
@@ -110,8 +120,6 @@ function ToolToggle(props: {
     </ToggleButton>
   );
 }
-
-const CALLOUTS = ['note', 'tip', 'important', 'warning', 'caution'] as const;
 
 /** Aksi tabel yang tidak berlaku di posisi kursor (di luar tabel: semua kecuali sisipkan). */
 function tableDisabledKeys(table: TableState | null): string[] {
@@ -145,28 +153,16 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
   const inTable = table !== null;
   const canUndo = useEditorSnapshot(selectUndo);
   const canRedo = useEditorSnapshot(selectRedo);
-  const zoom = useEditorSnapshot(selectZoom);
   const readOnly = useEditorSnapshot(selectReadOnly);
   const tableButton = useRef<HTMLButtonElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   // Sel tabel GFM hanya berisi teks satu baris: aksi blok tidak berlaku di dalamnya.
   const blockDisabled = readOnly || inTable;
+  const current = currentBlock(block);
 
   const list = (kind: ListKind) => () => c.wrapList(kind);
-  const blockMenu = (key: Key) => {
-    const value = String(key);
-    if (value === 'paragraph') c.setBlock({ type: 'paragraph' });
-    else if (value === 'code_block') c.setBlock({ type: 'code_block' });
-    else c.setBlock({ type: 'heading', level: Number(value.slice(1)) as 1 | 2 | 3 | 4 | 5 | 6 });
-  };
-  const insertMenu = (key: Key) => {
-    const value = String(key);
-    if (value === 'mathInline') c.insertMathInline();
-    else if (value === 'math') c.insertMathBlock();
-    else if (value === 'mermaid') c.insertMermaid();
-    else if ((CALLOUTS as readonly string[]).includes(value))
-      c.insertCallout(value as (typeof CALLOUTS)[number]);
-  };
+  // Item menu blok menjalankan aksi yang sama persis dengan slash menu.
+  const runBlock = (key: Key) => controller.runSlashItem(String(key) as SlashItemId);
   const tableMenu = (key: Key) => {
     switch (String(key)) {
       case 'insert':
@@ -204,6 +200,17 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
         break;
     }
   };
+  const listToggle = (kind: ListKind) => (
+    <ToolToggle
+      label={blockLabel(kind)}
+      shortcut={BLOCK_SHORTCUT[kind]}
+      isSelected={listKind === kind}
+      onChange={list(kind)}
+      isDisabled={blockDisabled}
+    >
+      <BlockIcon id={kind} />
+    </ToolToggle>
+  );
 
   return (
     <AriaToolbar aria-label={t('toolbar.label')} className="mp-toolbar">
@@ -226,79 +233,36 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
         </ToolButton>
       </div>
       <Separator orientation="vertical" className="mp-tool-sep" />
-      <div className="mp-tool-group">
-        <ToolButton label={t('toolbar.zoomOut')} onPress={() => c.setZoom(zoom - 10)}>
-          <ZoomOut {...ICON} />
-        </ToolButton>
-        <Button
-          className="mp-tool mp-zoom"
-          aria-label={t('toolbar.zoomReset')}
-          onPress={() => c.setZoom(100)}
-        >
-          {zoom}%
-        </Button>
-        <ToolButton label={t('toolbar.zoomIn')} onPress={() => c.setZoom(zoom + 10)}>
-          <ZoomIn {...ICON} />
-        </ToolButton>
-      </div>
-      <Separator orientation="vertical" className="mp-tool-sep" />
       <MenuTrigger>
         <Button
           className="mp-tool mp-tool-menu"
           aria-label={t('toolbar.block')}
           isDisabled={blockDisabled}
         >
-          {blockLabel(block)} <ChevronDown {...ICON} size={14} />
+          <span title={t('toolbar.block')} className="mp-tool-inner mp-tool-menu-inner">
+            <BlockIcon id={current} />
+            <span className="mp-tool-menu-label">{blockLabel(current)}</span>
+          </span>
+          <ChevronDown {...ICON} size={14} />
         </Button>
         <Popover className="mp-popover" placement="bottom start">
-          <Menu className="mp-menu" onAction={blockMenu} aria-label={t('toolbar.block')}>
-            <MenuItem id="paragraph" className="mp-menu-item">
-              {t('toolbar.paragraph')}
-            </MenuItem>
-            {([1, 2, 3, 4, 5, 6] as const).map((level) => (
-              <MenuItem key={level} id={`h${level}`} className={`mp-menu-item mp-menu-h${level}`}>
-                {t('toolbar.heading')} {level}
-                <kbd>
-                  {MOD}+{ALT}+{level}
-                </kbd>
+          <Menu className="mp-menu" onAction={runBlock} aria-label={t('toolbar.block')}>
+            {BLOCK_TYPES.map((id) => (
+              <MenuItem
+                key={id}
+                id={id}
+                textValue={blockLabel(id)}
+                className="mp-menu-item mp-menu-block"
+                data-active={id === current ? '' : undefined}
+              >
+                <span title={tip(blockLabel(id), BLOCK_SHORTCUT[id])} className="mp-block-row">
+                  <BlockRow id={id} />
+                </span>
               </MenuItem>
             ))}
-            <MenuItem id="code_block" className="mp-menu-item">
-              {t('toolbar.codeBlock')}
-            </MenuItem>
           </Menu>
         </Popover>
       </MenuTrigger>
-      <Separator orientation="vertical" className="mp-tool-sep" />
-      <div className="mp-tool-group">
-        <ToolToggle
-          label={t('toolbar.bullet')}
-          shortcut={`${MOD}+Shift+8`}
-          isSelected={listKind === 'bullet'}
-          onChange={list('bullet')}
-          isDisabled={blockDisabled}
-        >
-          <List {...ICON} />
-        </ToolToggle>
-        <ToolToggle
-          label={t('toolbar.ordered')}
-          shortcut={`${MOD}+Shift+7`}
-          isSelected={listKind === 'ordered'}
-          onChange={list('ordered')}
-          isDisabled={blockDisabled}
-        >
-          <ListOrdered {...ICON} />
-        </ToolToggle>
-        <ToolToggle
-          label={t('toolbar.task')}
-          shortcut={`${MOD}+Shift+9`}
-          isSelected={listKind === 'task'}
-          onChange={list('task')}
-          isDisabled={blockDisabled}
-        >
-          <ListChecks {...ICON} />
-        </ToolToggle>
-      </div>
       <Separator orientation="vertical" className="mp-tool-sep" />
       <div className="mp-tool-group">
         <ToolToggle
@@ -337,35 +301,41 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
         >
           <Code {...ICON} />
         </ToolToggle>
-      </div>
-      <Separator orientation="vertical" className="mp-tool-sep" />
-      <div className="mp-tool-group">
         <ToolToggle
-          label={t('toolbar.link')}
-          shortcut={`${MOD}+K`}
+          label={blockLabel('link')}
+          shortcut={BLOCK_SHORTCUT.link}
           isSelected={marks.has('link')}
           onChange={() => controller.openLinkEditor()}
           isDisabled={readOnly}
         >
-          <Link {...ICON} />
+          <BlockIcon id="link" />
         </ToolToggle>
+      </div>
+      <Separator orientation="vertical" className="mp-tool-sep" />
+      <div className="mp-tool-group">
+        {listToggle('bullet')}
+        {listToggle('ordered')}
+        {listToggle('task')}
+      </div>
+      <Separator orientation="vertical" className="mp-tool-sep" />
+      <div className="mp-tool-group">
         <ToolToggle
-          label={t('toolbar.quote')}
+          label={blockLabel('quote')}
           isSelected={inQuote}
           onChange={() => c.toggleQuote()}
           isDisabled={blockDisabled}
         >
-          <Quote {...ICON} />
+          <BlockIcon id="quote" />
         </ToolToggle>
         <ToolToggle
-          label={t('toolbar.codeBlock')}
+          label={blockLabel('code')}
           isSelected={block.type === 'code_block'}
           onChange={() =>
             c.setBlock(block.type === 'code_block' ? { type: 'paragraph' } : { type: 'code_block' })
           }
           isDisabled={blockDisabled}
         >
-          <SquareCode {...ICON} />
+          <BlockIcon id="code" />
         </ToolToggle>
       </div>
       <Separator orientation="vertical" className="mp-tool-sep" />
@@ -374,11 +344,11 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           <Button
             ref={tableButton}
             className="mp-tool"
-            aria-label={t('toolbar.table')}
+            aria-label={blockLabel('table')}
             isDisabled={readOnly}
           >
-            <span title={t('toolbar.table')} className="mp-tool-inner">
-              <Table {...ICON} />
+            <span title={blockLabel('table')} className="mp-tool-inner">
+              <BlockIcon id="table" />
               <ChevronDown {...ICON} size={12} />
             </span>
           </Button>
@@ -386,7 +356,7 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
             <Menu
               className="mp-menu"
               onAction={tableMenu}
-              aria-label={t('toolbar.table')}
+              aria-label={blockLabel('table')}
               disabledKeys={tableDisabledKeys(table)}
             >
               <MenuItem id="insert" className="mp-menu-item">
@@ -441,15 +411,15 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           onOpenChange={setPickerOpen}
           onPick={(rows, cols) => c.insertTable(rows, cols)}
         />
-        <ToolButton label={t('toolbar.image')} onPress={onPickImage} isDisabled={readOnly}>
-          <Image {...ICON} />
+        <ToolButton label={blockLabel('image')} onPress={onPickImage} isDisabled={readOnly}>
+          <BlockIcon id="image" />
         </ToolButton>
         <ToolButton
-          label={t('toolbar.hr')}
+          label={blockLabel('hr')}
           onPress={() => c.insertHorizontalRule()}
           isDisabled={readOnly}
         >
-          <Minus {...ICON} />
+          <BlockIcon id="hr" />
         </ToolButton>
         <MenuTrigger>
           <Button className="mp-tool" aria-label={t('toolbar.insert')} isDisabled={readOnly}>
@@ -461,29 +431,53 @@ export function Toolbar({ onPickImage }: { onPickImage: () => void }) {
           <Popover className="mp-popover" placement="bottom end">
             <Menu
               className="mp-menu"
-              onAction={insertMenu}
+              onAction={runBlock}
               aria-label={t('toolbar.insert')}
-              disabledKeys={inTable ? ['math', 'mermaid', ...CALLOUTS] : []}
+              disabledKeys={inTable ? ['math', 'mermaid', ...groupItems('callout')] : []}
             >
-              <MenuItem id="mathInline" className="mp-menu-item">
-                {t('toolbar.mathInline')}
-              </MenuItem>
-              <MenuItem id="math" className="mp-menu-item">
-                {t('toolbar.mathBlock')}
-              </MenuItem>
-              <MenuItem id="mermaid" className="mp-menu-item">
-                {t('toolbar.mermaid')}
-              </MenuItem>
-              <Separator className="mp-menu-sep" />
-              {CALLOUTS.map((type) => (
-                <MenuItem key={type} id={type} className="mp-menu-item">
-                  {t(`toolbar.callout.${type}`)}
-                </MenuItem>
+              {MORE_GROUPS.map((group) => (
+                <MenuSection key={group.id} id={group.id} className="mp-menu-section">
+                  <Header className="mp-menu-header">{groupLabel(group.id)}</Header>
+                  {group.items.map((id) => (
+                    <MenuItem
+                      key={id}
+                      id={id}
+                      textValue={blockLabel(id)}
+                      className="mp-menu-item mp-menu-block"
+                    >
+                      <BlockRow id={id} />
+                    </MenuItem>
+                  ))}
+                </MenuSection>
               ))}
             </Menu>
           </Popover>
         </MenuTrigger>
       </div>
     </AriaToolbar>
+  );
+}
+
+/** Zoom adalah pengaturan tampilan, bukan format: ditempatkan di kanan topbar dekat toggle tema. */
+export function ZoomControls() {
+  const controller = useController();
+  const zoom = useEditorSnapshot(selectZoom);
+  const c = controller.commands;
+  return (
+    <div role="group" aria-label={t('toolbar.zoom')} className="mp-tool-group">
+      <ToolButton label={t('toolbar.zoomOut')} onPress={() => c.setZoom(zoom - 10)}>
+        <ZoomOut {...ICON} />
+      </ToolButton>
+      <Button
+        className="mp-tool mp-zoom"
+        aria-label={t('toolbar.zoomReset')}
+        onPress={() => c.setZoom(100)}
+      >
+        <span title={t('toolbar.zoomReset')}>{zoom}%</span>
+      </Button>
+      <ToolButton label={t('toolbar.zoomIn')} onPress={() => c.setZoom(zoom + 10)}>
+        <ZoomIn {...ICON} />
+      </ToolButton>
+    </div>
   );
 }

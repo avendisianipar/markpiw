@@ -11,7 +11,7 @@ describe('slash menu', () => {
     const { c, view } = setup('');
     cursorAt(c);
     type(view, '/');
-    expect(c.getSnapshot().slash?.items).toHaveLength(20);
+    expect(c.getSnapshot().slash?.items).toHaveLength(24);
     expect(c.getSnapshot().slash?.query).toBe('');
   });
 
@@ -63,6 +63,42 @@ describe('slash menu', () => {
     type(view, '/gambar');
     press(view, 'Enter');
     expect(requests).toEqual(['image']);
+  });
+
+  it('lists items grouped in order, so groups stay contiguous', () => {
+    const { c, view } = setup('');
+    cursorAt(c);
+    type(view, '/');
+    const groups = c.getSnapshot().slash?.items.map((i) => i.group) ?? [];
+    const order = groups.filter((g, i) => g !== groups[i - 1]);
+    expect(order).toEqual(['text', 'list', 'block', 'insert', 'callout', 'advanced']);
+  });
+
+  it('offers heading 4–6 like the toolbar block menu', () => {
+    const { c, view } = setup('');
+    cursorAt(c);
+    type(view, '/h5');
+    press(view, 'Enter');
+    expect(md(c)).toBe('#####\n');
+  });
+
+  it('opens the link editor from the link item', () => {
+    const { c, view } = setup('');
+    cursorAt(c);
+    type(view, '/tautan');
+    press(view, 'Enter');
+    expect(c.getSnapshot().linkEditor).toBe(true);
+    expect(c.state.doc.textContent).toBe('');
+  });
+
+  it('moves the highlight to a hovered item', () => {
+    const { c, view } = setup('');
+    cursorAt(c);
+    type(view, '/');
+    c.selectSlashItem(5);
+    expect(c.getSnapshot().slash?.selectedIndex).toBe(5);
+    press(view, 'Enter');
+    expect(md(c)).toBe('#####\n');
   });
 });
 

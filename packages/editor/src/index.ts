@@ -17,5 +17,6 @@ export type {
 } from './snapshot';
 export type { TableAlign, TableState } from './table';
 export { DEFAULT_EDITOR_STRINGS } from './strings';
-export type { EditorStrings, SlashItemId } from './strings';
+export type { EditorStrings, SlashGroupId, SlashItemId } from './strings';
+export { SLASH_GROUPS } from './plugins/slash';
 export { isSafeHref, isSafeImageSrc } from './safety';
