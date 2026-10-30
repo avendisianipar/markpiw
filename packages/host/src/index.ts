@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 
 /** Hasil operasi yang bisa gagal tanpa melempar exception. */
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

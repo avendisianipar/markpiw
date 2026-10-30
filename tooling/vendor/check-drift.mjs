@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Bandingkan versi ProseMirror yang di-vendor dengan versi terbaru di npm.
 // Exit 1 jika ada paket yang tertinggal satu rilis minor atau lebih (SLA ≤ 3 bulan).
 import { execFileSync } from 'node:child_process';

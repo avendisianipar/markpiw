@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { schema } from '@markpiw/markdown';
 import { Plugin } from 'prosemirror-state';
 import type { EditorController } from '../controller';

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: LicenseRef-Proprietary */
+/* SPDX-License-Identifier: MIT */
 /* Tema markpiw (spesifikasi 5.3): palet terang/gelap sendiri, atau warna --vscode-* di VS Code. */
 @import '../../../vendor/prosemirror/prosemirror-view/style/prosemirror.css';
 @import '../../../vendor/prosemirror/prosemirror-gapcursor/style/gapcursor.css';

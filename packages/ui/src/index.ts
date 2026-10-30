@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 export { MarkpiwEditor } from './MarkpiwEditor';
 export type { MarkpiwEditorProps } from './MarkpiwEditor';
 export type { BannerAction } from './ReadOnlyBanner';

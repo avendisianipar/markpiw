@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 interface VsCodeApi {
   postMessage(message: unknown): void;
   getState(): unknown;

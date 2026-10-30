@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { ChevronDown, ChevronRight, FileText, Folder } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { listMarkdownTree, type TreeEntry } from '../fs/tree';

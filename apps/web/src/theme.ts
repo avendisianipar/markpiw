@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Tema web: "sistem" = prefers-color-scheme OS, pilihan pengguna disimpan di localStorage.
 import { createThemeStore, type ColorScheme, type ThemeStore } from '@markpiw/ui';
 

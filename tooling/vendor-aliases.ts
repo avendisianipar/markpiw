@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Alias nama paket prosemirror-* → source yang di-vendor, untuk resolve.alias Vite/Vitest.
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

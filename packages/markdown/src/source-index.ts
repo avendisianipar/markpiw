@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { SourceEntry, SourceIndex, SrcKey } from './types';
 
 /** Indeks source yang diisi saat parse. Key berurutan mulai dari 1. */

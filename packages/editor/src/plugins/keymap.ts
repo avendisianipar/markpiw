@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { schema } from '@markpiw/markdown';
 import { baseKeymap, chainCommands } from 'prosemirror-commands';
 import { undoInputRule } from 'prosemirror-inputrules';

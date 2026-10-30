@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Impor satu paket ProseMirror dari tag kanonik ke vendor/prosemirror/<pkg>/.
 // Usage: node tooling/vendor/import.mjs <pkg>
 import { execFileSync } from 'node:child_process';

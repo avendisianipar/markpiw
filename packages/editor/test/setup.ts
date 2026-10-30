@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // jsdom tidak punya layout; ProseMirror memanggil API geometri saat scroll/fokus.
 const emptyRects = () => Object.assign([], { item: () => null }) as unknown as DOMRectList;
 const zeroRect = () => new DOMRect(0, 0, 0, 0);

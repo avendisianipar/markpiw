@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Adapter File System Access API (Chromium) ke DirectoryLike.
 import { type DirectoryLike, type FileLike, type FileSnapshot, NotFoundError } from './types';
 

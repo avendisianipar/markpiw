@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Shortcut markdown (spesifikasi 4.2). Delimiter/marker yang diketik disimpan ke atribut
 // sehingga serializer menulis gaya yang sama.
 import { schema } from '@markpiw/markdown';

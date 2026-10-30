@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { EditorSnapshot } from '@markpiw/editor';
 import { useState } from 'react';
 import { useEditorSnapshot } from './context';

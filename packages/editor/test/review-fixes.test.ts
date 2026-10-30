@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Regresi dari review akhir Fase 2–4.
 import { describe, expect, it } from 'vitest';
 import { EditorController } from '../src';

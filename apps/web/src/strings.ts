@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 export const webStrings = {
   title: 'markpiw',
   tagline: 'Editor markdown WYSIWYG untuk dokumentasi di repo git.',

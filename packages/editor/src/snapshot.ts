@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { GuardFailure, MarkName } from '@markpiw/markdown';
 import type { Node } from 'prosemirror-model';
 import { type EditorState, NodeSelection } from 'prosemirror-state';

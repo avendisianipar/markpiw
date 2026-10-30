@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Serialisasi ulang blok (rencana Fase 1, Task 9). Setiap baris non-pertama memakai `ctx.rest`;
 // baris kosong memakai `ctx.rest.trimEnd()`; semua line break memakai `profile.eol`.
 import type { Node } from 'prosemirror-model';

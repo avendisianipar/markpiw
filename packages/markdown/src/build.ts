@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // mdast → dokumen ProseMirror + indeks source (spesifikasi 3.2–3.3; aturan di rencana Fase 1,
 // Task 5 dan 6).
 import type {

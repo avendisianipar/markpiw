@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // "Sistem" di webview = jenis tema VS Code, dibaca dari class yang dipasang VS Code di <body>
 // dan ikut berubah saat pengguna mengganti tema.
 import type { ColorScheme, SchemeSource } from '@markpiw/ui';

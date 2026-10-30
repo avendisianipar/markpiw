@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Konteks prefix baris dan kontribusi container (blockquote, list_item).
 import type { Node } from 'prosemirror-model';
 import type { Contribution, Profile, SourceEntry, SourceIndex, SrcKey } from '../types';

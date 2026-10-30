@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Regresi dari review akhir Fase 1 (C = critical, I = important).
 import type { Node } from 'prosemirror-model';
 import { lift, joinBackward } from 'prosemirror-commands';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { describe, expectTypeOf, it } from 'vitest';
 import type { FileHost, Result, TextChange, HostError } from '@markpiw/host';
 

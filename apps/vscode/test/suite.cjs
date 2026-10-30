@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Dijalankan di extension host VS Code oleh @vscode/test-electron.
 const assert = require('node:assert/strict');
 const vscode = require('vscode');

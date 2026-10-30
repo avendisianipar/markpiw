@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest';
 import { MemoryDirectory, readTextAt } from '../src/fs/memory';
 import { WebFileHost } from '../src/host/web-host';

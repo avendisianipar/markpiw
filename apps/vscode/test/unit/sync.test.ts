@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { EditorController } from '@markpiw/editor';
 import { TextSelection } from 'prosemirror-state';
 import { afterEach, describe, expect, it, vi } from 'vitest';

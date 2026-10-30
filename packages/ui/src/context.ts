@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { EditorController, EditorSnapshot } from '@markpiw/editor';
 import { createContext, useCallback, useContext, useRef, useSyncExternalStore } from 'react';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Deteksi profil gaya file (spesifikasi 3.5): nilai terbanyak, default jika seri atau tanpa contoh.
 import type { Nodes, Root } from 'mdast';
 import type { MutableSourceIndex } from './source-index';

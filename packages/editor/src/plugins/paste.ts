@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Paste & drop (spesifikasi 4.3) dan clipboard teks sebagai markdown.
 import { parseMarkdown, schema, serializeMarkdown } from '@markpiw/markdown';
 import { Fragment, type Node, Slice } from 'prosemirror-model';

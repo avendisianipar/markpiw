@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Bentuk semantik sebuah node untuk perbandingan (escape minimal dan guard round-trip).
 // Membuang informasi gaya penulisan yang tidak mengubah arti markdown.
 import type { Mark, Node } from 'prosemirror-model';

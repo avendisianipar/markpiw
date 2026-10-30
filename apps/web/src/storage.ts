@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // IndexedDB: handle folder terakhir dan draf darurat (spesifikasi 6.1, 6.5).
 
 const DB = 'markpiw';

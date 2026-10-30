@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { FolderOpen, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { forgetFolder, type RecentFolder, recentFolders, rememberFolder } from '../storage';

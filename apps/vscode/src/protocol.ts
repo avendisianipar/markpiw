@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Protokol pesan webview ↔ extension (spesifikasi 7.2), divalidasi Valibot di kedua arah.
 import * as v from 'valibot';
 

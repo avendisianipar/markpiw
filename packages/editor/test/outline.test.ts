@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it } from 'vitest';
 import { cursorAt, setup, type } from './util';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Spesifikasi 2.5: terapkan dokumen hasil parse ulang teks dari luar (undo VS Code, git, editor
 // lain). Seluruh isi diganti agar indeks source baru konsisten dengan dokumen; seleksi dipetakan
 // lewat anak tingkat atas yang sama di awal (prefix) dan akhir (suffix).

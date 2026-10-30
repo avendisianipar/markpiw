@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 export { EditorController, clampZoom, ZOOM_MAX, ZOOM_MIN, ZOOM_STEP } from './controller';
 export type { EditorControllerOptions, UiRequest } from './controller';
 export type { BlockCommand, MarkCommandName } from './commands';

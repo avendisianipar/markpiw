@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Serialisasi tabel GFM: mode compact (dengan preservasi baris) dan aligned (re-padding).
 import type { Node } from 'prosemirror-model';
 import { schema } from '../schema';

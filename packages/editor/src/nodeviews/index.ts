@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // NodeView vanilla (spesifikasi 4.4). Tidak ada HTML dari dokumen yang masuk ke DOM sebagai HTML.
 import type { Node } from 'prosemirror-model';
 import type { EditorProps, EditorView, NodeView } from 'prosemirror-view';

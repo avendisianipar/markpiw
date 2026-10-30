@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Sinkronisasi webview → TextDocument (spesifikasi 7.3): debounce 200 ms → serialize → guard →
 // diffText → `edits`. Hanya satu batch yang dikirim sampai dikonfirmasi, sehingga baseVersion
 // selalu versi terakhir yang dikenal extension.

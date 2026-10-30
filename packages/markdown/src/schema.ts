@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Schema GFM markpiw (spesifikasi 3.2). Atribut gaya bernilai `null` artinya "pakai profil".
 import { Schema, type DOMOutputSpec, type MarkSpec, type NodeSpec } from 'prosemirror-model';
 import type { MarkName, NodeName } from './types';

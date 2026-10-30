@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import * as vscode from 'vscode';
 import { MarkpiwEditorProvider, VIEW_TYPE } from './provider';
 

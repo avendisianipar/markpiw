@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { EditorController } from '@markpiw/editor';
 import { memo, useLayoutEffect, useRef } from 'react';
 

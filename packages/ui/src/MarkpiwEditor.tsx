@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Komposisi editor lengkap: toolbar, halaman, popover, slash menu, banner, notifikasi.
 import type { EditorController, EditorSnapshot } from '@markpiw/editor';
 import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';

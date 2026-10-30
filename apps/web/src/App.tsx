@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import { useState } from 'react';
 import { readTextAt } from './fs/memory';
 import { AccessDirectory } from './fs/fs-access';

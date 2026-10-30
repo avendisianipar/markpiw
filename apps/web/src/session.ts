@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Satu file yang sedang dibuka: editor + simpan otomatis + deteksi konflik (spesifikasi 6.2–6.3).
 import { EditorController } from '@markpiw/editor';
 import { editorStrings } from '@markpiw/ui';

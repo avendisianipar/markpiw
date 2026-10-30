@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { FileHost, HostError, Result, UiState } from '@markpiw/host';
 
 /** Host palsu di memori untuk test editor. */

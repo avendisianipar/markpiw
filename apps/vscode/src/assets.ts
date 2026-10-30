@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Aturan nama aset yang sama dengan web: image-<8 hex SHA-256>.<ext>.
 import { createHash } from 'node:crypto';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Toolbar (spesifikasi 5.2): React Aria Toolbar dengan roving focus; tombol toggle memakai
 // aria-pressed; tooltip memuat shortcut.
 import type { BlockTypeInfo, EditorSnapshot, ListKind } from '@markpiw/editor';

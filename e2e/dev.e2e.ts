@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Dev server Vite memuat modul ESM satu per satu (berbeda dari build); pastikan aplikasi tetap
 // tampil tanpa error di mode dev (regresi: halaman putih karena re-export tipe ProseMirror).
 import { type ChildProcess, spawn } from 'node:child_process';

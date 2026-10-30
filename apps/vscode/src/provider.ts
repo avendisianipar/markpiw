@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Custom text editor markpiw (spesifikasi 7). TextDocument adalah sumber kebenaran: webview
 // mengirim edit minimal, extension menerapkannya dan mengabaikan echo-nya; perubahan lain
 // (undo native, git, editor lain) dikirim balik sebagai externalChange.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 // Daftar isi melayang di kanan canvas: garis tipis per heading; panel daftar muncul saat
 // hover/fokus. Heading aktif mengikuti posisi gulir canvas.
 import type { EditorSnapshot, HeadingInfo } from '@markpiw/editor';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Proprietary
+// SPDX-License-Identifier: MIT
 import type { Node } from 'prosemirror-model';
 
 export type BlockNodeName =
