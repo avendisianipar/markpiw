@@ -102,6 +102,16 @@ const nodes: Record<NodeName, NodeSpec> = {
     parseDOM: [{ tag: 'hr' }],
     toDOM: (): DOMOutputSpec => ['hr'],
   },
+  math_block: {
+    group: 'block',
+    content: 'text*',
+    marks: '',
+    code: true,
+    defining: true,
+    attrs: { fenceLength: { default: null }, srcKey },
+    parseDOM: [{ tag: 'pre[data-math]', preserveWhitespace: 'full' }],
+    toDOM: (): DOMOutputSpec => ['pre', { 'data-math': '', class: 'mp-math-source' }, ['code', 0]],
+  },
   raw_block: {
     group: 'block',
     content: 'text*',
@@ -159,6 +169,24 @@ const nodes: Record<NodeName, NodeSpec> = {
     leafText: () => ' ',
     parseDOM: [{ tag: 'span.mp-soft-break' }],
     toDOM: (): DOMOutputSpec => ['span', { class: 'mp-soft-break' }, ' '],
+  },
+  math_inline: {
+    group: 'inline',
+    inline: true,
+    atom: true,
+    attrs: { latex: { default: '' }, delim: { default: '$' } },
+    leafText: (node) => `$${node.attrs.latex as string}$`,
+    parseDOM: [
+      {
+        tag: 'span[data-math-inline]',
+        getAttrs: (dom) => ({ latex: attr(dom, 'data-latex') ?? '' }),
+      },
+    ],
+    toDOM: (node): DOMOutputSpec => [
+      'span',
+      { 'data-math-inline': '', 'data-latex': node.attrs.latex as string, class: 'mp-math-inline' },
+      node.attrs.latex as string,
+    ],
   },
   raw_inline: {
     group: 'inline',

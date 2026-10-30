@@ -68,6 +68,48 @@ const tables = `# Tabel & list
 - [ ] tugas berikutnya
 `;
 
+const advanced = `# Fitur lanjutan
+
+Semua yang ada di sini tetap markdown biasa dan tampil benar di GitHub.
+
+> [!TIP]
+> Callout dibuat dari menu \`/\` (ketik \`/callout\`) atau tombol **+** di toolbar.
+
+> [!WARNING]
+> Teks marker \`[!WARNING]\` bisa diedit untuk mengganti jenis callout.
+
+## Rumus
+
+Rumus inline seperti $E = mc^2$ dibuat dengan mengetik \`$…$\`. Klik rumus untuk mengedit LaTeX-nya.
+
+$$
+\\int_0^1 x^2 \\, dx = \\frac{1}{3}
+$$
+
+## Diagram
+
+\`\`\`mermaid
+flowchart LR
+  A[Tulis .md] --> B[Edit di markpiw]
+  B --> C[Review di git]
+\`\`\`
+
+## Kode
+
+\`\`\`ts
+export function halo(nama: string): string {
+  return \`Halo, \${nama}!\`; // syntax highlighting
+}
+\`\`\`
+
+## Tabel
+
+| Kolom kiri | Tengah | Kanan |
+|:---|:---:|---:|
+| baris pertama<br>dua baris | 10 | 1.000 |
+| Shift+Enter di sel | $x^2$ | 20 |
+`;
+
 const crlf =
   '# Catatan CRLF\r\n\r\nFile ini memakai line ending Windows (CRLF).\r\nBaris yang tidak diedit tetap CRLF.\r\n';
 
@@ -78,7 +120,11 @@ export function createDemoFolder(): MemoryDirectory {
     {
       'Selamat datang.md': welcome,
       'catatan-crlf.md': crlf,
-      panduan: { 'format-teks.md': formatting, 'tabel-dan-list.md': tables },
+      panduan: {
+        'format-teks.md': formatting,
+        'tabel-dan-list.md': tables,
+        'fitur-lanjutan.md': advanced,
+      },
       assets: { 'logo.svg': new TextEncoder().encode(logo) },
     },
     'demo-markpiw',

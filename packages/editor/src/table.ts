@@ -2,7 +2,7 @@
 // Perintah tabel dasar (tanpa seleksi multi-sel) dan navigasi sel dengan Tab.
 import { schema } from '@markpiw/markdown';
 import type { Node } from 'prosemirror-model';
-import { type Command, type EditorState, TextSelection } from 'prosemirror-state';
+import { type Command, type EditorState, Selection, TextSelection } from 'prosemirror-state';
 
 export type TableAlign = 'left' | 'center' | 'right' | null;
 
@@ -26,6 +26,24 @@ export function findCell(state: EditorState): CellInfo | null {
     }
   }
   return null;
+}
+
+/** Status tabel di bawah kursor untuk UI: aksi mana yang berlaku. */
+export interface TableState {
+  readonly canDeleteRow: boolean;
+  readonly canDeleteColumn: boolean;
+  /** Rata kolom tempat kursor berada. */
+  readonly align: TableAlign;
+}
+
+export function tableStateOf(state: EditorState): TableState | null {
+  const info = findCell(state);
+  if (!info) return null;
+  return {
+    canDeleteRow: tableCommands.deleteRow()(state),
+    canDeleteColumn: tableCommands.deleteColumn()(state),
+    align: (info.table.attrs.align as TableAlign[])[info.colIndex] ?? null,
+  };
 }
 
 /** Posisi awal konten sel (baris r, kolom c) di tabel pada `tablePos`. */
@@ -149,6 +167,38 @@ export const tableCommands = {
       align[info.colIndex] = value;
       if (dispatch)
         dispatch(state.tr.setNodeMarkup(info.tablePos, null, { ...info.table.attrs, align }));
+      return true;
+    };
+  },
+  /** Hapus seluruh tabel; kursor pindah ke blok terdekat. */
+  deleteTable(): Command {
+    return (state, dispatch) => {
+      const info = findCell(state);
+      if (!info) return false;
+      if (dispatch) {
+        const end = info.tablePos + info.table.nodeSize;
+        // Dokumen wajib berisi minimal satu blok.
+        const tr =
+          state.doc.childCount === 1
+            ? state.tr.replaceWith(info.tablePos, end, schema.nodes.paragraph.create())
+            : state.tr.delete(info.tablePos, end);
+        const at = Math.min(info.tablePos, tr.doc.content.size);
+        dispatch(tr.setSelection(Selection.near(tr.doc.resolve(at))).scrollIntoView());
+      }
+      return true;
+    };
+  },
+  /**
+   * Baris baru di dalam sel. Sel GFM hanya satu baris, jadi dipakai HTML `<br>` (tampil benar di
+   * GitHub/GitLab) sebagai `raw_inline`.
+   */
+  lineBreak(): Command {
+    return (state, dispatch) => {
+      if (!findCell(state)) return false;
+      if (dispatch) {
+        const br = schema.nodes.raw_inline.create({ source: '<br>' });
+        dispatch(state.tr.replaceSelectionWith(br).scrollIntoView());
+      }
       return true;
     };
   },

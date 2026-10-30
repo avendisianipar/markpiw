@@ -48,6 +48,19 @@ const taskRule = new InputRule(/^\[([ xX])\]\s$/, (state, match, start, end) => 
   return tr;
 });
 
+/** `$x^2$` → rumus inline. Isi tidak diawali/diakhiri spasi agar harga (`$5 dan $10`) aman. */
+const mathInlineRule = new InputRule(
+  /(?:^|[^$\\])(\$([^$\s](?:[^$]*[^$\s])?)\$)$/,
+  (state, match, start, end) => {
+    const full = match[1] as string;
+    const from = start + (match[0].length - full.length);
+    if (state.doc.resolve(from).parent.type.spec.code) return null;
+    if (state.doc.rangeHasMark(from, end, schema.marks.code)) return null;
+    const node = schema.nodes.math_inline.create({ latex: match[2] as string });
+    return state.tr.replaceWith(from, end, node);
+  },
+);
+
 const URL_END = /[\s<]/;
 const TRAILING = /[.,:;!?'")*_~]+$/;
 
@@ -101,6 +114,7 @@ export function markdownInputRules(): Plugin {
       markRule(/(?:^|[^_\w])(_([^_\s](?:[^_]*[^_\s])?)_)$/, em, '_', { delim: '_' }),
       markRule(/(?:^|[^~])(~~([^~\s](?:[^~]*[^~\s])?)~~)$/, strike, '~~', null),
       autolinkRule,
+      mathInlineRule,
     ],
   });
 }

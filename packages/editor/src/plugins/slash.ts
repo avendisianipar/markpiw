@@ -19,6 +19,14 @@ export const SLASH_ITEMS: readonly SlashItemId[] = [
   'table',
   'image',
   'hr',
+  'note',
+  'tip',
+  'important',
+  'warning',
+  'caution',
+  'math',
+  'mathInline',
+  'mermaid',
 ];
 
 export interface SlashMatch {
@@ -155,6 +163,22 @@ export function runSlashItem(controller: EditorController, id: SlashItemId): voi
       break;
     case 'hr':
       c.insertHorizontalRule();
+      break;
+    case 'note':
+    case 'tip':
+    case 'important':
+    case 'warning':
+    case 'caution':
+      c.insertCallout(id);
+      break;
+    case 'math':
+      c.insertMathBlock();
+      break;
+    case 'mathInline':
+      c.insertMathInline();
+      break;
+    case 'mermaid':
+      c.insertMermaid();
       break;
   }
 }

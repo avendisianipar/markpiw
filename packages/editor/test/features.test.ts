@@ -11,7 +11,7 @@ describe('slash menu', () => {
     const { c, view } = setup('');
     cursorAt(c);
     type(view, '/');
-    expect(c.getSnapshot().slash?.items).toHaveLength(12);
+    expect(c.getSnapshot().slash?.items).toHaveLength(20);
     expect(c.getSnapshot().slash?.query).toBe('');
   });
 

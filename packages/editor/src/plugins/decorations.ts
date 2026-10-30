@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { schema } from '@markpiw/markdown';
+import type { Node } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 
@@ -19,6 +20,49 @@ export function placeholder(text: string): Plugin {
             'data-placeholder': text,
           }),
         ]);
+      },
+    },
+  });
+}
+
+/** Dekorasi class rata kolom (`mp-align-*`) untuk setiap sel tabel di `doc`. */
+function alignmentDecorations(doc: Node): DecorationSet {
+  const decorations: Decoration[] = [];
+  doc.descendants((node, pos) => {
+    if (node.type !== schema.nodes.table) return !node.isTextblock;
+    const align = node.attrs.align as readonly (string | null)[];
+    if (align.every((a) => a === null)) return false;
+    let rowPos = pos + 1;
+    node.forEach((row) => {
+      let cellPos = rowPos + 1;
+      row.forEach((cell, _offset, c) => {
+        const value = align[c];
+        if (value)
+          decorations.push(
+            Decoration.node(cellPos, cellPos + cell.nodeSize, { class: `mp-align-${value}` }),
+          );
+        cellPos += cell.nodeSize;
+      });
+      rowPos += row.nodeSize;
+    });
+    return false;
+  });
+  return DecorationSet.create(doc, decorations);
+}
+
+/**
+ * Rata kolom tabel GFM tersimpan di atribut `align` tabel, bukan di sel; tampilkan lewat class
+ * (CSP melarang atribut `style` inline).
+ */
+export function tableAlignment(): Plugin<DecorationSet> {
+  return new Plugin<DecorationSet>({
+    state: {
+      init: (_config, state) => alignmentDecorations(state.doc),
+      apply: (tr, prev) => (tr.docChanged ? alignmentDecorations(tr.doc) : prev),
+    },
+    props: {
+      decorations(state) {
+        return this.getState(state);
       },
     },
   });

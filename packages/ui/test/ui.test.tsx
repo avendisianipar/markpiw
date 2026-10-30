@@ -81,7 +81,7 @@ describe('MarkpiwEditor', () => {
       type(controller.editorView!, '/');
     });
     const options = document.querySelectorAll('[role="option"]');
-    expect(options).toHaveLength(12);
+    expect(options).toHaveLength(20);
     expect(controller.editorView?.dom.getAttribute('aria-activedescendant')).toBe('mp-slash-text');
   });
 

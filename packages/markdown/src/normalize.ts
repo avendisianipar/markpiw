@@ -66,6 +66,8 @@ function flatten(block: Node): Item[] {
       items.push(softBreak());
     } else if (child.type.name === 'hard_break') {
       items.push({ br: 'hard' });
+    } else if (child.type.name === 'math_inline' && child.attrs.latex === '') {
+      // Rumus kosong (baru disisipkan, belum diisi) tidak ditulis ke file.
     } else {
       items.push({ node: child.type.name, attrs: semanticAttrs(child.attrs) ?? {}, marks });
     }

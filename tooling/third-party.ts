@@ -34,6 +34,8 @@ SOFTWARE.`;
 const LICENSE_OVERRIDES: Record<string, string> = {
   // Lisensi hanya disebut di Readme.md paket (format@0.2.2, dependensi `fault`).
   format: `MIT License\n\nCopyright 2010 - 2014 Sami Samhuri <sami@samhuri.net>\n\n${MIT_TEMPLATE}`,
+  // Lisensi hanya di README.md paket (fastdom@1.0.12, dependensi `mermaid`); package.json: MIT.
+  fastdom: `MIT License\n\nCopyright (c) 2016 Wilson Page <wilsonpage@me.com>\n\n${MIT_TEMPLATE}`,
 };
 
 /** Direktori paket pihak ketiga pemilik sebuah modul bundle, atau null untuk kode markpiw. */

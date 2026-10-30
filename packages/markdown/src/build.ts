@@ -14,6 +14,7 @@ import type {
   RootContent,
   Table,
 } from 'mdast';
+import type { InlineMath, Math } from 'mdast-util-math';
 import type { Mark, Node } from 'prosemirror-model';
 import { LINE_BREAK, LineIndex, countLineBreaks } from './lines';
 import { schema } from './schema';
@@ -95,6 +96,8 @@ export class DocBuilder {
   private readonly index = new MutableSourceIndex();
   /** Prefix lanjutan container untuk blok yang konten inline-nya sedang dibangun. */
   private inlineRest = '';
+  /** Sedang membangun isi sel tabel. */
+  private inCell = false;
 
   constructor(private readonly source: string) {
     this.lines = new LineIndex(source);
@@ -207,6 +210,11 @@ export class DocBuilder {
   /** Raw di dalam container: pakai `value` jika ada, selain itu slice tanpa prefix lanjutan. */
   private nestedRaw(kind: RawKind, node: Nodes, ctx: BuildCtx): Node {
     if ('value' in node && typeof node.value === 'string') return this.raw(kind, node.value);
+    return this.sliceRaw(kind, node, ctx);
+  }
+
+  /** Source node apa adanya, tanpa prefix lanjutan container. */
+  private sliceRaw(kind: RawKind, node: Nodes, ctx: BuildCtx): Node {
     const [first = '', ...others] = this.source.slice(start(node), end(node)).split(LINE_BREAK);
     const text = [first, ...others.map((line) => stripPrefix(line, ctx.rest))].join('\n');
     return this.raw(kind, text);
@@ -229,6 +237,8 @@ export class DocBuilder {
         return this.keyed(this.list(node, ctx), node, sib);
       case 'code':
         return this.keyed(this.code(node), node, sib);
+      case 'math':
+        return this.keyed(this.math(node, ctx), node, sib);
       case 'thematicBreak': {
         const marker = this.source.slice(start(node), end(node)).trim();
         return this.keyed(schema.nodes.horizontal_rule.create({ marker }), node, sib);
@@ -338,13 +348,32 @@ export class DocBuilder {
     );
   }
 
+  /** `$$` blok. Info setelah fence pembuka (`$$ meta`) tidak dimodelkan: tetap mentah. */
+  private math(node: Math, ctx: BuildCtx): Node {
+    if (node.meta) return this.sliceRaw('unknown', node, ctx);
+    let i = start(node);
+    while (this.source[i] === '$') i++;
+    return schema.nodes.math_block.create(
+      { fenceLength: i - start(node) },
+      node.value === '' ? null : schema.text(node.value),
+    );
+  }
+
   private table(node: Table, ctx: BuildCtx, sib: Sibling): Node {
     const rows = node.children.map((row, r) =>
       schema.nodes.table_row.create(
         null,
-        row.children.map((cell) =>
-          schema.nodes.table_cell.create({ header: r === 0 }, this.inline(cell.children, [])),
-        ),
+        row.children.map((cell) => {
+          this.inCell = true;
+          try {
+            return schema.nodes.table_cell.create(
+              { header: r === 0 },
+              this.inline(cell.children, []),
+            );
+          } finally {
+            this.inCell = false;
+          }
+        }),
       ),
     );
     const [first = '', ...others] = this.source
@@ -432,6 +461,25 @@ export class DocBuilder {
           refLabel,
         });
         out.push(...this.inline(node.children, withMark(link)));
+        return;
+      }
+      case 'inlineMath': {
+        const math = node as InlineMath;
+        if (math.value === '') {
+          out.push(this.rawInline(node, marks));
+          return;
+        }
+        let i = start(node);
+        while (this.source[i] === '$') i++;
+        // Seperti GitHub: `\|` di sel tabel adalah pipa yang di-escape, juga di dalam rumus.
+        const latex = this.inCell ? math.value.replace(/\\\|/g, '|') : math.value;
+        out.push(
+          schema.nodes.math_inline.create(
+            { latex, delim: '$'.repeat(i - start(node)) },
+            null,
+            marks,
+          ),
+        );
         return;
       }
       case 'image':

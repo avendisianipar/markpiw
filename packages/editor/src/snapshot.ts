@@ -3,6 +3,7 @@ import type { GuardFailure, MarkName } from '@markpiw/markdown';
 import type { Node } from 'prosemirror-model';
 import { type EditorState, NodeSelection } from 'prosemirror-state';
 import type { SlashItemId } from './strings';
+import type { TableState } from './table';
 
 export type BlockTypeInfo =
   | { readonly type: 'paragraph' }
@@ -63,6 +64,8 @@ export interface EditorSnapshot {
   readonly listKind: ListKind | null;
   readonly inQuote: boolean;
   readonly inTable: boolean;
+  /** Tabel di bawah kursor (aksi yang berlaku, rata kolom), atau null. */
+  readonly table: TableState | null;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly slash: SlashState | null;
@@ -224,6 +227,7 @@ export function stabilize(prev: EditorSnapshot | null, next: EditorSnapshot): Ed
     prev.listKind === next.listKind &&
     prev.inQuote === next.inQuote &&
     prev.inTable === next.inTable &&
+    JSON.stringify(prev.table) === JSON.stringify(next.table) &&
     prev.canUndo === next.canUndo &&
     prev.canRedo === next.canRedo &&
     JSON.stringify(prev.slash) === JSON.stringify(next.slash) &&

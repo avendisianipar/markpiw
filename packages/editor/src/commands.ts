@@ -15,6 +15,7 @@ import {
   type Transaction,
 } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
+import { calloutMarker, type CalloutType } from './plugins/callout';
 import { isSafeHref, isSafeImageSrc } from './safety';
 import { findList, hasAncestor, linkAt, type ListKind } from './snapshot';
 import { findCell, tableCommands, type TableAlign } from './table';
@@ -101,6 +102,34 @@ export class EditorCommands {
     return wrapped;
   }
 
+  /**
+   * Bungkus paragraf aktif menjadi callout GitHub: blockquote yang baris pertamanya marker
+   * `[!NOTE]` dkk. Isi paragraf pindah ke baris kedua.
+   */
+  insertCallout(type: CalloutType): boolean {
+    const state = this.ctx.getState();
+    const { $from } = state.selection;
+    const para = $from.parent;
+    if (para.type !== schema.nodes.paragraph || $from.depth < 1) return false;
+    const container = $from.node(-1);
+    const index = $from.index(-1);
+    if (!container.canReplaceWith(index, index + 1, schema.nodes.blockquote)) return false;
+    const marker = schema.text(calloutMarker(type));
+    const content = [marker, schema.nodes.soft_break.create(), ...childrenOf(para)];
+    const quote = schema.nodes.blockquote.create(
+      null,
+      schema.nodes.paragraph.create(null, content),
+    );
+    const at = $from.before();
+    const tr = state.tr.replaceWith(at, $from.after(), quote);
+    // Kursor di posisi yang sama dalam teks paragraf, kini setelah marker dan pindah baris.
+    const cursor = at + 2 + marker.nodeSize + 1 + $from.parentOffset;
+    tr.setSelection(TextSelection.create(tr.doc, cursor)).scrollIntoView();
+    this.ctx.dispatch(tr);
+    this.ctx.getView()?.focus();
+    return true;
+  }
+
   liftList(): boolean {
     return this.run(liftListItem(schema.nodes.list_item));
   }
@@ -133,6 +162,45 @@ export class EditorCommands {
       ...Array.from({ length: Math.max(1, rows - 1) }, () => row(false)),
     ]);
     return this.insertBlock(table, (tr, at) => TextSelection.create(tr.doc, at + 3));
+  }
+
+  /** Blok rumus `$$`: paragraf kosong diubah, selain itu disisipkan setelah blok aktif. */
+  insertMathBlock(): boolean {
+    const { $from } = this.ctx.getState().selection;
+    if ($from.parent.type === schema.nodes.paragraph && $from.parent.content.size === 0)
+      return this.run(setBlockType(schema.nodes.math_block));
+    return this.insertBlock(schema.nodes.math_block.create(), (tr, at) =>
+      TextSelection.create(tr.doc, at + 1),
+    );
+  }
+
+  /** Rumus inline dari teks terpilih (atau kosong); langsung dipilih agar input LaTeX terbuka. */
+  insertMathInline(): boolean {
+    const state = this.ctx.getState();
+    const { from, to, $from } = state.selection;
+    if ($from.parent.type.spec.code || !$from.parent.inlineContent) return false;
+    const latex = state.doc.textBetween(from, to, ' ').trim();
+    const tr = state.tr.replaceWith(from, to, schema.nodes.math_inline.create({ latex }));
+    tr.setSelection(NodeSelection.create(tr.doc, from)).scrollIntoView();
+    this.ctx.dispatch(tr);
+    return true;
+  }
+
+  /** Code block ```mermaid dengan contoh diagram; pratinjau tampil di bawahnya. */
+  insertMermaid(): boolean {
+    const sample = 'flowchart TD\n  A[Mulai] --> B[Selesai]';
+    const node = schema.nodes.code_block.create({ lang: 'mermaid' }, schema.text(sample));
+    const state = this.ctx.getState();
+    const { $from } = state.selection;
+    if ($from.parent.type === schema.nodes.paragraph && $from.parent.content.size === 0) {
+      const at = $from.before();
+      const tr = state.tr.replaceWith(at, $from.after(), node);
+      tr.setSelection(TextSelection.create(tr.doc, at + 1)).scrollIntoView();
+      this.ctx.dispatch(tr);
+      this.ctx.getView()?.focus();
+      return true;
+    }
+    return this.insertBlock(node, (tr, at) => TextSelection.create(tr.doc, at + 1));
   }
 
   insertHorizontalRule(): boolean {
@@ -200,6 +268,9 @@ export class EditorCommands {
   }
   tableSetAlign(align: TableAlign): boolean {
     return this.run(tableCommands.setAlign(align));
+  }
+  tableDelete(): boolean {
+    return this.run(tableCommands.deleteTable());
   }
   inTable(): boolean {
     return findCell(this.ctx.getState()) !== null;
@@ -355,6 +426,12 @@ function convertList(
     if (item.attrs.checked !== checked) tr.setNodeMarkup(itemPos, null, { ...item.attrs, checked });
   });
   return tr;
+}
+
+function childrenOf(node: Node): Node[] {
+  const out: Node[] = [];
+  node.forEach((child) => out.push(child));
+  return out;
 }
 
 function findImage(doc: Node, src: string): number | null {

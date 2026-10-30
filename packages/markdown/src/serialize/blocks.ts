@@ -101,6 +101,18 @@ function codeBlock(node: Node, ctx: Ctx, s: SerializerState): string {
   return prefixLines(lines.join(s.eol), ctx, s.eol);
 }
 
+function mathBlock(node: Node, ctx: Ctx, s: SerializerState): string {
+  const content = node.textContent;
+  // Fence penutup minimal sepanjang pembuka: pakai fence lebih panjang dari `$` terpanjang isi.
+  let longest = 0;
+  for (const run of content.match(/\$+/g) ?? []) longest = Math.max(longest, run.length);
+  const marker = '$'.repeat(Math.max((node.attrs.fenceLength as number | null) ?? 2, longest + 1));
+  const lines = [marker];
+  if (content !== '') lines.push(relines(content, s.eol));
+  lines.push(marker);
+  return prefixLines(lines.join(s.eol), ctx, s.eol);
+}
+
 function blockquote(node: Node, ctx: Ctx, stable: boolean, s: SerializerState): string {
   const e = entryOf(node, s.index);
   const c = e?.contribution ?? DEFAULT_BLOCKQUOTE;
@@ -142,6 +154,8 @@ export function serializeFreshBlock(
       return heading(node, ctx, s);
     case 'code_block':
       return codeBlock(node, ctx, s);
+    case 'math_block':
+      return mathBlock(node, ctx, s);
     case 'horizontal_rule':
       return ctx.first + ((node.attrs.marker as string | null) ?? '---');
     case 'raw_block':
