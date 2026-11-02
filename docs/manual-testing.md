@@ -120,7 +120,7 @@ Panel **Extensions** → markpiw → **Uninstall**.
 | 9 | Tempel dari Google Docs / Word | Tebal, miring, link, dan list ikut; tanpa gaya/warna asing |
 | 10 | Tempel teks markdown (mis. dari README) | Menjadi heading/list sesungguhnya |
 | 11 | File CRLF (Windows): edit satu baris | Baris lain tetap CRLF |
-| 12 | Blok HTML / frontmatter YAML | Tampil sebagai kotak "Markdown mentah" dan tetap utuh |
+| 12 | Blok HTML / frontmatter YAML | Tampil sebagai kotak "Markdown mentah" dan tetap utuh; blok HTML lengkap sederhana (`<p align="center"><em>…</em></p>`) tampil ter-render seperti GitHub, source muncul saat diklik |
 | 13 | Centang checkbox task | `[ ]` ↔ `[x]` di file |
 | 14 | Zoom −/+ di toolbar | Ukuran teks berubah, file tidak berubah |
 | 15 | VS Code: ketik dua kata dengan jeda, tekan Cmd/Ctrl+Z sekali | Hanya satu langkah yang diurungkan |

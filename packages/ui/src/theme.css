@@ -898,6 +898,24 @@
   text-align: left;
 }
 .mp-content th.mp-align-center,
+/* Blok HTML lengkap (<p align="center"><em>…</em></p>) dirender seperti GitHub. */
+.mp-raw.mp-preview-only {
+  border: 0;
+  background: none;
+}
+.mp-raw.mp-preview-only > .mp-raw-label {
+  display: none;
+}
+.mp-preview-html {
+  text-align: start;
+}
+.mp-preview-html[hidden] {
+  display: none;
+}
+.mp-preview-html > :last-child {
+  margin-bottom: 0;
+}
+
 .mp-content td.mp-align-center {
   text-align: center;
 }

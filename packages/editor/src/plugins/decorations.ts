@@ -3,6 +3,7 @@ import { schema } from '@markpiw/markdown';
 import type { Node } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
+import { renderHtmlBlock } from '../html-render';
 import { previewKindOf } from '../nodeviews';
 import { selectionTouches } from './active';
 
@@ -129,13 +130,17 @@ export function emptyTableHeader(): Plugin<{ from: number; to: number }[]> {
   });
 }
 
-/** Blok yang punya pratinjau (```mermaid, ```math, `$$`). */
+/** Blok yang punya pratinjau (```mermaid, ```math, `$$`, blok HTML lengkap yang aman). */
 function previewBlockRanges(doc: Node): { from: number; to: number }[] {
   const ranges: { from: number; to: number }[] = [];
   doc.descendants((node, pos) => {
     const preview =
       node.type === schema.nodes.math_block ||
-      (node.type === schema.nodes.code_block && previewKindOf(node.attrs.lang as string) !== null);
+      (node.type === schema.nodes.code_block &&
+        previewKindOf(node.attrs.lang as string) !== null) ||
+      (node.type === schema.nodes.raw_block &&
+        node.attrs.kind === 'html' &&
+        renderHtmlBlock(node.textContent) !== null);
     if (preview) ranges.push({ from: pos, to: pos + node.nodeSize });
     return !node.isTextblock;
   });

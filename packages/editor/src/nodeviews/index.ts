@@ -4,6 +4,7 @@ import type { Node } from 'prosemirror-model';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorProps, EditorView, NodeView } from 'prosemirror-view';
 import type { EditorController } from '../controller';
+import { renderHtmlBlock } from '../html-render';
 import { renderMath, renderMermaid } from '../render';
 import { isRelativePath, isSafeImageSrc } from '../safety';
 
@@ -508,9 +509,14 @@ class MathInlineView implements NodeView {
 class RawBlockView implements NodeView {
   readonly dom: HTMLElement;
   readonly contentDOM: HTMLElement;
+  /** Hasil render blok HTML lengkap (`<p align="center">…</p>`), seperti GitHub. */
+  private readonly preview: HTMLElement | null = null;
+  private source: string | null = null;
 
   constructor(
     private node: Node,
+    view: EditorView,
+    getPos: GetPos,
     controller: EditorController,
   ) {
     this.dom = el('div', 'mp-raw');
@@ -521,11 +527,27 @@ class RawBlockView implements NodeView {
     this.contentDOM = el('code');
     pre.append(this.contentDOM);
     this.dom.append(label, pre);
+    if (node.attrs.kind === 'html') {
+      this.preview = el('div', 'mp-preview mp-preview-html');
+      this.preview.contentEditable = 'false';
+      editOnClick(this.preview, view, getPos, controller);
+      this.dom.append(this.preview);
+      this.renderPreview();
+    }
+  }
+
+  private renderPreview(): void {
+    if (!this.preview || this.node.textContent === this.source) return;
+    this.source = this.node.textContent;
+    const rendered = renderHtmlBlock(this.source);
+    this.preview.hidden = rendered === null;
+    this.preview.replaceChildren(...(rendered ? [rendered.dom] : []));
   }
 
   update(node: Node): boolean {
     if (node.type !== this.node.type || node.attrs.kind !== this.node.attrs.kind) return false;
     this.node = node;
+    this.renderPreview();
     return true;
   }
 
@@ -570,7 +592,7 @@ export function createNodeViews(
       return new TaskItemView(node, view, getPos, controller);
     },
     code_block: (node, view, getPos) => new CodeBlockView(node, view, getPos, controller),
-    raw_block: (node) => new RawBlockView(node, controller),
+    raw_block: (node, view, getPos) => new RawBlockView(node, view, getPos, controller),
     raw_inline: (node) => rawInlineView(node),
     math_block: (node, view, getPos) => new MathBlockView(node, view, getPos, controller),
     math_inline: (node, view, getPos) =>
