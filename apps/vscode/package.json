@@ -102,6 +102,12 @@
         "when": "activeCustomEditorId == 'markpiw.editor'"
       },
       {
+        "key": "ctrl+f",
+        "mac": "cmd+f",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
         "key": "ctrl+k",
         "mac": "cmd+k",
         "command": "markpiw.claimShortcut",

@@ -52,6 +52,14 @@ export const id = {
   'notice.dismiss': 'Tutup',
   'outline.label': 'Daftar isi',
   'outline.untitled': 'Tanpa judul',
+  'search.open': 'Cari',
+  'search.label': 'Cari di dokumen',
+  'search.placeholder': 'Cari',
+  'search.count': '{current} dari {total}',
+  'search.none': 'Tidak ada hasil',
+  'search.prev': 'Hasil sebelumnya',
+  'search.next': 'Hasil berikutnya',
+  'search.close': 'Tutup pencarian',
 } as const;
 
 export type StringKey = keyof typeof id;

@@ -16,6 +16,14 @@ import { EditorCommands } from './commands';
 import { applyExternalText } from './external';
 import { createNodeViews } from './nodeviews';
 import { createPlugins, slashKey } from './plugins';
+import {
+  EMPTY_SEARCH,
+  findMatches,
+  firstFrom,
+  revealMatch,
+  searchKey,
+  withSearch,
+} from './plugins/search';
 import { filterItems, runSlashItem } from './plugins/slash';
 import { isRelativePath } from './safety';
 import {
@@ -29,13 +37,14 @@ import {
   type Notice,
   outlineOf,
   type ReadOnlyState,
+  type SearchState,
   type SlashState,
   stabilize,
 } from './snapshot';
 import { DEFAULT_EDITOR_STRINGS, type EditorStrings, type SlashItemId } from './strings';
 import { tableStateOf } from './table';
 
-export type UiRequest = 'image';
+export type UiRequest = 'image' | 'search';
 
 export interface EditorControllerOptions {
   /** Isi file markdown. */
@@ -65,6 +74,7 @@ export class EditorController {
   private noticeValue: Notice | null = null;
   private noticeId = 0;
   private linkEditorOpen = false;
+  private searchOpen = false;
   private uploads = 0;
   private readonly uiListeners = new Set<(request: UiRequest) => void>();
   private readonly imageCache = new Map<string, Promise<string | null>>();
@@ -204,6 +214,56 @@ export class EditorController {
     this.refreshSnapshot();
   }
 
+  /**
+   * Buka pencarian (Ctrl/⌘+F atau tombol topbar). Teks yang sedang dipilih (satu baris) menjadi
+   * kata kunci awal. UI diminta memfokuskan kotak cari.
+   */
+  openSearch(): void {
+    const { from, to, empty } = this.editorState.selection;
+    // Saat sudah terbuka, selection adalah hasil aktif: jangan dijadikan kata kunci lagi.
+    const picked = empty || this.searchOpen ? '' : this.editorState.doc.textBetween(from, to, '\n');
+    this.searchOpen = true;
+    if (picked !== '' && !picked.includes('\n')) this.setSearchQuery(picked);
+    else this.refreshSnapshot();
+    this.requestUi('search');
+  }
+
+  /** Ganti kata kunci; hasil aktif adalah yang terdekat mulai dari selection saat ini. */
+  setSearchQuery(query: string): void {
+    const state = this.editorState;
+    const matches = findMatches(state.doc, query);
+    const current = firstFrom(matches, state.selection.from);
+    this.dispatch(withSearch(state.tr, { query, matches, current }));
+    this.revealSearchMatch();
+  }
+
+  /** Pindah ke hasil berikutnya (1) atau sebelumnya (-1), berputar di ujung. */
+  searchStep(direction: 1 | -1): void {
+    const search = searchKey.getState(this.editorState);
+    if (!search || search.matches.length === 0) return;
+    const total = search.matches.length;
+    const current = (Math.max(search.current, 0) + direction + total) % total;
+    this.dispatch(withSearch(this.editorState.tr, { ...search, current }));
+    this.revealSearchMatch();
+  }
+
+  /**
+   * Gulir ke hasil aktif. `scrollIntoView` ProseMirror diabaikan selama fokus ada di kotak cari
+   * (seleksi DOM di luar editor), jadi hasil digulir manual.
+   */
+  private revealSearchMatch(): void {
+    const search = searchKey.getState(this.editorState);
+    const match = search?.matches[search.current];
+    if (this.view && match) revealMatch(this.view, match);
+  }
+
+  /** Tutup pencarian; hasil terakhir tetap terpilih dan editor mendapat fokus. */
+  closeSearch(): void {
+    this.searchOpen = false;
+    this.dispatch(this.editorState.tr.setMeta(searchKey, EMPTY_SEARCH));
+    this.view?.focus();
+  }
+
   setReadOnly(state: ReadOnlyState | null): void {
     this.readOnlyState = state;
     this.view?.setProps({});
@@ -314,7 +374,14 @@ export class EditorController {
       dirty: this.dirtyFlag,
       notice: this.noticeValue,
       outline: outlineOf(state.doc),
+      search: this.searchSnapshot(),
     };
+  }
+
+  private searchSnapshot(): SearchState | null {
+    if (!this.searchOpen) return null;
+    const search = searchKey.getState(this.editorState) ?? EMPTY_SEARCH;
+    return { query: search.query, total: search.matches.length, current: search.current };
   }
 }
 

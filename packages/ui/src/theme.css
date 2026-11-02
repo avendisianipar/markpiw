@@ -28,6 +28,8 @@
   --mp-selected-node: #bfdbfe;
   --mp-border-muted: #d1d9e0b3;
   --mp-code-inline-bg: #818b981f;
+  --mp-search-match: #fde04780;
+  --mp-search-current: #f59e0b99;
   --mp-font: var(--vscode-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
   --mp-mono: var(--vscode-editor-font-family, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
   --mp-radius: 6px;
@@ -56,6 +58,8 @@
   --mp-selected-node: #1e3a5f;
   --mp-border-muted: #3d444db3;
   --mp-code-inline-bg: #656c7633;
+  --mp-search-match: #ca8a0459;
+  --mp-search-current: #f59e0ba6;
 }
 
 /* VS Code: selama skema markpiw sama dengan jenis tema VS Code, pakai warna tema itu
@@ -84,6 +88,8 @@
   --mp-selected-node: var(--vscode-editor-selectionBackground, #bfdbfe);
   --mp-border-muted: color-mix(in srgb, var(--mp-border) 70%, transparent);
   --mp-code-inline-bg: color-mix(in srgb, var(--mp-muted) 20%, transparent);
+  --mp-search-match: var(--vscode-editor-findMatchHighlightBackground, #fde04780);
+  --mp-search-current: var(--vscode-editor-findMatchBackground, #f59e0b99);
 }
 
 .mp-root {
@@ -892,6 +898,24 @@
   cursor: pointer;
 }
 
+/* Blok HTML lengkap (<p align="center"><em>…</em></p>) dirender seperti GitHub. */
+.mp-raw.mp-preview-only {
+  border: 0;
+  background: none;
+}
+.mp-raw.mp-preview-only > .mp-raw-label {
+  display: none;
+}
+.mp-preview-html {
+  text-align: start;
+}
+.mp-preview-html[hidden] {
+  display: none;
+}
+.mp-preview-html > :last-child {
+  margin-bottom: 0;
+}
+
 /* Rata kolom GFM (|:---:|) dari dekorasi tableAlignment. */
 .mp-content th.mp-align-left,
 .mp-content td.mp-align-left {
@@ -1237,6 +1261,58 @@
   .mp-outline-panel {
     transition: none;
   }
+}
+
+/* Kotak cari (Ctrl/⌘+F) di kanan atas area dokumen, sebelah kiri rel daftar isi. */
+.mp-search {
+  position: absolute;
+  top: 8px;
+  right: 40px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: calc(100% - 56px);
+  padding: 4px;
+}
+
+.mp-search-input {
+  width: 200px;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--mp-input-border);
+  border-radius: 4px;
+  background: var(--mp-input-bg);
+  color: var(--mp-fg);
+  font: 13px var(--mp-font);
+}
+
+.mp-search-input:focus {
+  border-color: var(--mp-accent);
+  outline: none;
+}
+
+.mp-search-count {
+  min-width: 84px;
+  padding: 0 6px;
+  color: var(--mp-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.mp-search-count[data-empty] {
+  color: var(--mp-danger-fg);
+}
+
+.mp-content .mp-search-match {
+  border-radius: 2px;
+  background: var(--mp-search-match);
+}
+
+.mp-content .mp-search-current {
+  background: var(--mp-search-current);
+  outline: 1px solid var(--mp-search-current);
 }
 
 /* Popover link & gambar */

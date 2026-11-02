@@ -12,6 +12,7 @@ export type {
   ListKind,
   Notice,
   ReadOnlyState,
+  SearchState,
   SlashItem,
   SlashState,
 } from './snapshot';

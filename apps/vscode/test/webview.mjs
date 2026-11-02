@@ -262,6 +262,33 @@ try {
     await documentWhere((t) => t.includes('$$\na+b\n$$'), 'blok $$ di file');
     expectTrue((await count('.mp-math-block .mp-preview math')) === 2, 'pratinjau blok baru');
   });
+  await test('Cmd/Ctrl+F: kotak cari markpiw, hasil terhitung, file tidak berubah', async () => {
+    const before = await documentText();
+    await caretAfter('Fitur');
+    await page.keyboard.press(`${process.platform === 'darwin' ? 'Meta' : 'Control'}+f`);
+    await waitFor(
+      async () => (await activeClass()) === 'mp-search-input',
+      'fokus kotak cari',
+      3000,
+    );
+    await page.keyboard.type('paragraf');
+    const counted = await frame.textContent('.mp-search-count');
+    expectTrue(counted === '1 dari 2', `hitungan: ${counted}`);
+    expectTrue((await count('.mp-search-match')) === 2, 'sorotan hasil');
+    await page.keyboard.press('Enter');
+    const next = await frame.textContent('.mp-search-count');
+    expectTrue(next === '2 dari 2', `setelah Enter: ${next}`);
+    const visible = await frame.$eval('.mp-search-current', (el) => {
+      const r = el.getBoundingClientRect();
+      const c = document.querySelector('.mp-canvas').getBoundingClientRect();
+      return r.top >= c.top && r.bottom <= c.bottom;
+    });
+    expectTrue(visible, 'hasil aktif tidak digulir ke layar');
+    await page.screenshot({ path: join(shots, 'vscode-search.png') });
+    await page.keyboard.press('Escape');
+    expectTrue(!(await has('.mp-search')), 'kotak cari tidak tertutup');
+    expectTrue((await documentText()) === before, 'dokumen berubah');
+  });
   await test('tidak masuk mode baca-saja setelah semua edit', async () => {
     expectTrue(!(await has('.mp-banner')), 'banner baca-saja muncul');
   });
