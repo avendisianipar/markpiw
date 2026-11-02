@@ -7,6 +7,19 @@ rilis mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-02
+
+### Added
+
+- Pencarian di dokumen: Ctrl/⌘+F atau tombol cari di toolbar membuka kotak cari dengan sorotan
+  semua hasil, hitungan "x dari y", dan navigasi Enter / Shift+Enter. Hasil di bagian yang
+  tersembunyi (isi `<details>` tertutup, source diagram/rumus/HTML) ikut ditampilkan.
+
+### Changed
+
+- Blok HTML lengkap sederhana seperti `<p align="center"><em>…</em></p>` tampil ter-render
+  seperti di GitHub (hanya teks dan tag inline yang aman); source-nya muncul saat diklik.
+
 ## [1.1.0] - 2026-11-02
 
 ### Changed
@@ -52,7 +65,8 @@ rilis mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Mode aman baca-saja ketika edit tidak dapat diserialisasi tanpa mengubah makna dokumen.
 - Web app lokal dengan mode demo.
 
-[Unreleased]: https://github.com/avendisianipar/markpiw/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/avendisianipar/markpiw/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/avendisianipar/markpiw/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/avendisianipar/markpiw/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/avendisianipar/markpiw/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/avendisianipar/markpiw/releases/tag/v0.1.0
