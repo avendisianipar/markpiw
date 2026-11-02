@@ -1,24 +1,28 @@
 name: CI
 
+# PR ke main: verify + E2E web + test VS Code.
+# Push ke main (merge PR): sama, lalu job `release` menerbitkan versi baru secara otomatis jika
+# versi di apps/vscode/package.json belum punya tag. Lihat docs/releasing.md.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Run di main tidak dibatalkan agar rilis yang sedang berjalan tidak terputus.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
     name: Verify
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -40,3 +44,159 @@ jobs:
 
       - name: Verify
         run: pnpm verify
+
+      - name: Check release info
+        run: node tooling/release-info.mjs > /dev/null
+
+  e2e:
+    name: E2E web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: E2E (Chrome headless)
+        run: pnpm test:e2e
+
+  vscode:
+    name: VS Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Integration + webview test (VS Code stable, layar virtual)
+        run: xvfb-run -a pnpm test:vscode
+        env:
+          MARKPIW_SHOTS: ${{ runner.temp }}/vscode-shots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-screenshots
+          path: ${{ runner.temp }}/vscode-shots
+          if-no-files-found: ignore
+
+  release:
+    name: Release
+    needs: [verify, e2e, vscode]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Read version and release notes
+        id: info
+        run: node tooling/release-info.mjs
+
+      - name: Check whether this version is already released
+        id: exists
+        env:
+          TAG: ${{ steps.info.outputs.tag }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG sudah ada; naikkan versi di apps/vscode/package.json untuk rilis baru."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.exists.outputs.released == 'false'
+        run: pnpm install --frozen-lockfile
+
+      - name: Package VSIX
+        if: steps.exists.outputs.released == 'false'
+        run: pnpm package:vscode
+
+      - name: Publish GitHub Release
+        if: steps.exists.outputs.released == 'false'
+        env:
+          TAG: ${{ steps.info.outputs.tag }}
+          VERSION: ${{ steps.info.outputs.version }}
+          NOTES: ${{ steps.info.outputs.notes_file }}
+        run: |
+          gh release create "$TAG" apps/vscode/markpiw.vsix \
+            --target "$GITHUB_SHA" \
+            --title "Release $VERSION" \
+            --notes-file "$NOTES" \
+            --latest
+
+      # Pembaruan otomatis di VS Code hanya lewat marketplace. Aktif setelah secret dipasang:
+      # VSCE_PAT (Visual Studio Marketplace) dan/atau OVSX_PAT (Open VSX, untuk VSCodium/Cursor).
+      # Secret hanya diberikan ke step yang memakainya, bukan ke seluruh job.
+      - name: Check marketplace tokens
+        id: tokens
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          echo "vsce=$([ -n "$VSCE_PAT" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "ovsx=$([ -n "$OVSX_PAT" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to Visual Studio Marketplace
+        if: steps.exists.outputs.released == 'false' && steps.tokens.outputs.vsce == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        working-directory: apps/vscode
+        run: pnpm exec vsce publish --packagePath markpiw.vsix
+
+      - name: Publish to Open VSX
+        if: steps.exists.outputs.released == 'false' && steps.tokens.outputs.ovsx == 'true'
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: pnpm dlx ovsx@0.10.1 publish apps/vscode/markpiw.vsix
