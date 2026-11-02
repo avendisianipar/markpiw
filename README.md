@@ -2,110 +2,98 @@
 
 # markpiw
 
-**Edit Markdown seperti dokumen biasa, tanpa mengorbankan source dan git diff.**
+**Edit Markdown seperti dokumen biasa, tanpa mengorbankan source dan Git diff.**
 
 [![Latest release](https://img.shields.io/github/v/release/avendisianipar/markpiw?display_name=tag&sort=semver)](https://github.com/avendisianipar/markpiw/releases/latest)
 [![CI](https://github.com/avendisianipar/markpiw/actions/workflows/ci.yml/badge.svg)](https://github.com/avendisianipar/markpiw/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/avendisianipar/markpiw)](LICENSE)
 ![VS Code >= 1.95](https://img.shields.io/badge/VS_Code-%E2%89%A5_1.95-007ACC?logo=visualstudiocode&logoColor=white)
 
-[Unduh extension](https://github.com/avendisianipar/markpiw/releases/latest) ·
-[Lihat fitur](#fitur-utama) ·
-[Mulai berkontribusi](CONTRIBUTING.md) ·
+[Pasang di VS Code](#quick-start) ·
+[Lihat fitur](#features) ·
+[Mulai berkontribusi](#for-contributors) ·
 [Laporkan masalah](https://github.com/avendisianipar/markpiw/issues/new/choose)
 
 </div>
 
-markpiw adalah editor Markdown WYSIWYG lokal untuk VS Code dan browser berbasis Chromium.
-Anda mengedit langsung di tampilan jadi—seperti editor dokumen modern—sementara file `.md`
-tetap menjadi sumber utama dan mudah di-review di Git.
+markpiw adalah ekstensi VS Code untuk mengedit Markdown secara visual seperti dokumen biasa.
+File `.md` tetap menjadi sumber utama, dapat dibuka tanpa markpiw, dan mudah ditinjau melalui
+Git diff.
 
-> [!NOTE]
-> Rilis stabil terbaru adalah `v1.1.0`. File tetap disimpan sebagai Markdown biasa sehingga
-> dapat dibuka dan di-review tanpa markpiw.
+![Editor visual markpiw di VS Code menampilkan callout, rumus, diagram Mermaid, kode, dan tabel](docs/assets/markpiw-vscode.png)
 
-## Mengapa markpiw?
+<p align="center"><em>Markdown biasa, pengalaman mengedit visual, dan hasil yang tetap ramah Git.</em></p>
 
-| | |
-|---|---|
-| **Markdown tetap Markdown** | Tidak ada format dokumen tersembunyi atau lock-in. |
-| **Diff tetap terarah** | Hanya blok yang Anda edit yang diserialisasi ulang; bagian lain dipertahankan. |
-| **Lokal dan privat** | Tidak ada server, telemetri, atau analytics. |
-| **Menyatu dengan VS Code** | Save, undo, redo, dan file workflow memakai mekanisme bawaan VS Code. |
-| **Gagal dengan aman** | Jika perubahan tidak dapat disimpan tanpa mengubah makna dokumen, editor tidak menulis file. |
+## Quick Start
 
-```mermaid
-flowchart LR
-    A[File .md lokal] --> B[Edit secara visual]
-    B --> C{Bisa dipreservasi?}
-    C -->|Ya| D[Simpan Markdown]
-    C -->|Tidak| E[Mode baca-saja]
-    D --> F[Git diff terarah]
-```
+1. [Unduh `markpiw.vsix`](https://github.com/avendisianipar/markpiw/releases/latest/download/markpiw.vsix).
+2. Di VS Code, buka panel **Extensions** (Ctrl/⌘+Shift+X).
+3. Klik menu **`…`** di bagian atas panel Extensions.
+4. Pilih **Install from VSIX…**, lalu pilih file `markpiw.vsix` yang telah diunduh.
+5. Di panel Explorer, klik kanan file `.md`, lalu pilih **Buka dengan markpiw**.
 
-## Fitur utama
+Selesai—Anda dapat mengedit Markdown secara visual dan menyimpannya seperti file biasa.
 
-- Toolbar dan shortcut untuk heading, list, kutipan, task, tebal, miring, kode, dan coret.
-- Slash menu (`/`) untuk tabel, code block, gambar, dan blok lainnya.
-- Paste atau drag-and-drop gambar ke folder aset lokal.
-- Dukungan GitHub Flavored Markdown (GFM), termasuk tabel dan task list.
-- Preservasi source untuk menjaga perubahan di Git tetap mudah di-review.
-- Tema terang dan gelap.
-- Web app dengan mode demo yang tidak menyentuh file lokal.
+> [!IMPORTANT]
+> Ekstensi yang dipasang dari `.vsix` tidak diperbarui otomatis. Untuk memperbarui markpiw,
+> unduh rilis terbaru dan pasang file `.vsix` dengan langkah yang sama.
 
 <details>
-<summary><strong>Lihat cara pakai singkat</strong></summary>
+<summary><strong>Set markpiw as the Default Editor</strong></summary>
 
-| Ingin | Caranya |
-|---|---|
-| Heading, list, kutipan, task | Ketik `# `, `- `, `1. `, `> `, atau `[ ] ` di awal baris |
-| Tebal, miring, kode, coret | Ketik `**teks**`, `_teks_`, `` `teks` ``, `~~teks~~`, atau gunakan toolbar |
-| Menu blok | Ketik `/` di baris kosong |
-| Link | Pilih teks lalu tekan Ctrl/⌘+K |
-| Gambar | Paste atau seret gambar ke editor |
-| Simpan, undo, redo | Ctrl/⌘+S, Ctrl/⌘+Z, Ctrl/⌘+Shift+Z |
+Buka file `.md`, jalankan **View: Reopen Editor With…** dari Command Palette, lalu pilih
+**Configure default editor for '*.md'…** → **markpiw**.
+
+Atau tambahkan properti berikut di dalam objek utama `settings.json`. Sesuaikan tanda koma
+jika file sudah berisi pengaturan lain.
+
+```json
+"workbench.editorAssociations": {
+  "*.md": "markpiw.editor"
+}
+```
 
 </details>
 
-## Mulai cepat di VS Code
+<details>
+<summary><strong>Terminal Installation</strong></summary>
 
-Yang Anda butuhkan hanya **VS Code 1.95 atau lebih baru**. Node, pnpm, dan clone
-repository tidak diperlukan untuk memakai extension.
-
-1. Unduh `markpiw.vsix` dari [rilis terbaru](https://github.com/avendisianipar/markpiw/releases/latest).
-2. Buka panel **Extensions** di VS Code (Ctrl/⌘+Shift+X).
-3. Klik **`…`** → **Install from VSIX…** lalu pilih file yang diunduh.
-4. Klik kanan file `.md` → **Buka dengan markpiw**.
-
-Atau unduh dan pasang lewat terminal:
+Opsi ini memerlukan [GitHub CLI](https://cli.github.com/) dan perintah `code` yang tersedia
+di `PATH`:
 
 ```bash
-gh release download --repo avendisianipar/markpiw --pattern '*.vsix'
-code --install-extension markpiw.vsix
+gh release download --repo avendisianipar/markpiw --pattern 'markpiw.vsix' --clobber &&
+  code --install-extension ./markpiw.vsix --force
 ```
 
-Untuk menjadikan markpiw sebagai editor default file Markdown, tambahkan konfigurasi berikut
-ke `settings.json`:
+Perintah tersebut selalu mengambil aset dari rilis terbaru, menimpa file unduhan lama, dan
+hanya menjalankan instalasi jika unduhan berhasil.
 
-```json
-"workbench.editorAssociations": { "*.md": "markpiw.editor" }
-```
+Jika perintah `code` tidak ditemukan di macOS, buka Command Palette, jalankan
+**Shell Command: Install 'code' command in PATH**, lalu buka terminal baru.
 
-Folder gambar default adalah `assets/` di samping file `.md`. Ubah melalui setting
-`markpiw.assetsFolder` jika diperlukan.
+</details>
 
 <details>
-<summary><strong>Update, migrasi dari versi lama, dan uninstall</strong></summary>
+<summary><strong>Image Folder Settings</strong></summary>
+
+Secara default, gambar yang ditempel atau diseret ke editor disimpan di folder `assets/`
+di samping file `.md`. Ubah melalui pengaturan `markpiw.assetsFolder` jika diperlukan.
+
+</details>
+
+<details>
+<summary><strong>Update, Migration, and Uninstall</strong></summary>
 
 ### Update
 
-Extension yang dipasang dari `.vsix` tidak diperbarui otomatis. Unduh `.vsix` terbaru,
-pasang dengan cara yang sama, lalu jalankan **Developer: Reload Window** jika diminta.
+Unduh `.vsix` terbaru, pasang dengan cara yang sama, lalu jalankan **Developer: Reload
+Window** jika diminta.
 
-### Migrasi dari versi 0.1.0 lama
+### Migrate from Version 0.1.0
 
-ID extension berubah dari `markpiw-internal.markpiw` menjadi `avendisianipar.markpiw`.
-Uninstall extension dengan ID lama sebelum memasang versi baru. Setting
+ID ekstensi berubah dari `markpiw-internal.markpiw` menjadi `avendisianipar.markpiw`.
+Uninstall ekstensi dengan ID lama sebelum memasang versi baru. Pengaturan
 `markpiw.assetsFolder` tetap terbawa; tema mungkin perlu dipilih ulang sekali.
 
 ### Uninstall
@@ -117,60 +105,130 @@ Buka panel **Extensions**, pilih **markpiw**, lalu klik **Uninstall**.
 <details>
 <summary><strong>Troubleshooting</strong></summary>
 
-- **markpiw tidak muncul di Open With.** Pastikan extension aktif, lalu jalankan
+- **markpiw tidak muncul di Open With.** Pastikan ekstensi aktif, lalu jalankan
   **Developer: Reload Window**.
 - **Instalasi ditolak karena versi VS Code.** Perbarui VS Code ke versi 1.95 atau lebih baru.
 - **Editor menampilkan banner merah dan menjadi baca-saja.** Ada edit yang tidak dapat
   disimpan sebagai Markdown tanpa mengubah makna dokumen. markpiw tidak menulis perubahan
   tersebut. Pilih **Muat ulang dari file** untuk melanjutkan.
-- **Perintah `code` tidak ditemukan di macOS.** Buka Command Palette dan jalankan
-  **Shell Command: Install 'code' command in PATH**, lalu buka terminal baru.
 
 Masih mengalami masalah? Buat [bug report](https://github.com/avendisianipar/markpiw/issues/new/choose)
-dan sertakan langkah reproduksi, `git diff`, serta keluaran **Salin info diagnostik**.
+dan sertakan langkah reproduksi, versi VS Code, serta keluaran **Salin info diagnostik**.
+Tambahkan contoh Markdown dan `git diff` jika aman dan relevan.
 
 </details>
 
-## Versi web
+## Quick Usage
 
-Versi web belum di-host. Jalankan dari source dengan Chrome atau Edge:
+| Ingin | Caranya |
+|---|---|
+| Heading, list, kutipan, atau task | Ketik `# `, `- `, `1. `, `> `, atau `[ ] ` di awal baris |
+| Tebal, miring, kode, atau coret | Pilih teks, lalu gunakan toolbar atau shortcut |
+| Menu blok | Ketik `/` di baris kosong |
+| Link | Pilih teks, lalu tekan Ctrl/⌘+K |
+| Gambar | Tempel atau seret gambar ke editor |
+| Simpan, undo, atau redo | Ctrl/⌘+S, Ctrl/⌘+Z, atau Ctrl/⌘+Shift+Z |
 
-```bash
-pnpm dev:web
+## Why markpiw?
+
+| | |
+|---|---|
+| **Markdown tetap Markdown** | Tidak ada format dokumen tersembunyi atau ketergantungan pada markpiw. |
+| **Git diff tetap terarah** | Hanya blok yang diedit yang diserialisasi ulang; bagian lain dipertahankan. |
+| **Diproses secara lokal** | markpiw tidak memiliki server, telemetri, atau analitik. |
+| **Menyatu dengan VS Code** | Simpan, undo, redo, dan pengelolaan file memakai mekanisme bawaan VS Code. |
+| **Gagal dengan aman** | Jika perubahan tidak dapat disimpan tanpa mengubah makna, editor tidak menulis file. |
+
+<details>
+<summary><strong>How markpiw Protects Markdown Files</strong></summary>
+
+```mermaid
+flowchart LR
+    A[File .md lokal] --> B[Edit secara visual]
+    B --> C{Bisa dipreservasi?}
+    C -->|Ya| D[Simpan Markdown]
+    C -->|Tidak| E[Mode baca-saja]
+    D --> F[Git diff terarah]
 ```
 
-Buka `http://localhost:5173`. Tambahkan `?demo` untuk mencoba folder contoh tanpa menyentuh
-file lokal. Lihat [panduan uji manual](docs/manual-testing.md) untuk skenario lengkap.
+</details>
 
-## Dukungan
+## Features
+
+- Tampilan dokumen menyerupai GitHub untuk heading, list, tabel, callout, dan blok HTML umum
+  seperti `<details>` dan `<summary>`.
+- Toolbar, shortcut, dan menu `/` untuk format teks, list, tabel, kutipan, gambar, dan blok
+  lainnya.
+- Outline dokumen untuk berpindah antar-heading dengan cepat.
+- Pratinjau rumus KaTeX, diagram Mermaid, dan pewarnaan sintaks pada blok kode.
+- Dukungan GitHub Flavored Markdown (GFM), termasuk tabel dan task list.
+- Tempel atau seret gambar langsung ke folder aset lokal.
+- Preservasi source agar perubahan tetap mudah ditinjau melalui Git diff.
+- Tema terang dan gelap.
+
+## Compatibility and Limitations
 
 | Target | Status |
 |---|---|
-| VS Code 1.95+ | Didukung |
-| Chrome dan Edge | Didukung untuk web app |
+| VS Code 1.95 atau lebih baru | Didukung |
+| VS Code Marketplace | Belum tersedia; pasang `.vsix` dari GitHub Releases |
+| Pembaruan otomatis | Belum tersedia untuk instalasi `.vsix` |
+| Web app di Chrome dan Edge | Tersedia dari source untuk pengembangan dan pengujian lokal |
 | Firefox dan Safari | Belum didukung untuk membuka folder lokal |
-| VS Code Marketplace | Belum tersedia; gunakan file `.vsix` dari Releases |
 
-## Pengembangan lokal
+Jika suatu perubahan tidak dapat diserialisasi tanpa mengubah makna dokumen, markpiw masuk
+ke mode baca-saja dan tidak menulis perubahan tersebut. Instruksi pemulihan akan ditampilkan
+langsung di editor.
 
-Prasyarat: Node 24 dan pnpm 10 melalui Corepack.
+## Privacy
+
+markpiw tidak memiliki telemetri, analitik, atau server. Isi dokumen tidak pernah dikirim
+ke layanan markpiw.
+
+- **Web app** membuka folder melalui File System Access API. Handle folder terakhir dan draf
+  darurat disimpan di IndexedDB; tema dan state tampilan disimpan di localStorage.
+- **Ekstensi VS Code** hanya membaca dan menulis file yang Anda buka. Tema dan status tampilan
+  disimpan melalui storage VS Code.
+- **Gambar eksternal** (`![](https://…)`) dimuat langsung dari server asal, seperti preview
+  Markdown di GitHub atau VS Code. Gambar yang ditempel disimpan sebagai file lokal.
+
+## For Contributors
+
+Kontribusi berupa bug report, usulan fitur, dokumentasi, pengujian, dan kode diterima. Sebelum
+memulai, baca [panduan kontribusi](CONTRIBUTING.md) dan cari
+[issue yang sudah ada](https://github.com/avendisianipar/markpiw/issues). Semua partisipan
+wajib mengikuti [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Kerentanan keamanan jangan dilaporkan melalui issue publik. Ikuti
+[kebijakan keamanan](SECURITY.md) untuk pelaporan privat.
+
+### Local Development
+
+Prasyarat: Node.js 24 atau lebih baru, pnpm 10 melalui Corepack, dan Git.
 
 ```bash
+git clone https://github.com/avendisianipar/markpiw.git
+cd markpiw
 corepack enable
 pnpm install
-pnpm dev:web          # web app di http://localhost:5173
-pnpm package:vscode   # menghasilkan apps/vscode/markpiw.vsix
+pnpm verify
 ```
 
-### Verifikasi
+Perintah yang paling sering digunakan:
 
 ```bash
-pnpm verify        # typecheck + lint + format + unit/property/upstream tests
-pnpm test:e2e      # E2E web di Chrome (headless)
-pnpm test:vscode   # integration test di VS Code
+pnpm dev:web          # web app lokal di http://localhost:5173
+pnpm package:vscode   # menghasilkan apps/vscode/markpiw.vsix
+pnpm test:e2e         # E2E web di Chrome headless
+pnpm test:vscode      # uji integrasi di VS Code
 ```
 
-### Struktur repository
+Web app belum di-host. Setelah menjalankan `pnpm dev:web`, buka `http://localhost:5173` di
+Chrome atau Edge. Tambahkan `?demo` untuk menggunakan folder contoh di memori tanpa memilih
+folder lokal.
+
+<details>
+<summary><strong>Repository Structure</strong></summary>
 
 | Path | Isi |
 |---|---|
@@ -180,39 +238,23 @@ pnpm test:vscode   # integration test di VS Code
 | `packages/ui` | Komponen React, toolbar, slash menu, popover, dan tema |
 | `packages/host` | Interface `FileHost` |
 | `apps/web` | SPA web untuk folder lokal dan mode demo |
-| `apps/vscode` | Extension VS Code berbasis custom editor |
+| `apps/vscode` | Ekstensi VS Code berbasis editor khusus |
 
-### Dokumentasi teknis
+</details>
+
+<details>
+<summary><strong>Technical Documentation</strong></summary>
 
 - [Panduan uji manual](docs/manual-testing.md)
 - [Spesifikasi desain](docs/superpowers/specs/2026-10-28-markpiw-design.md)
 - [Roadmap](docs/superpowers/plans/2026-10-28-markpiw-roadmap.md)
 - [Architecture Decision Records](docs/adr/)
-- [Panduan rilis extension](docs/releasing.md)
+- [Panduan rilis ekstensi](docs/releasing.md)
 - [Dependensi dan lisensi pihak ketiga](docs/third-party.md)
 
-## Berkontribusi
+</details>
 
-Kontribusi dalam bentuk bug report, usulan fitur, dokumentasi, dan kode diterima. Baca
-[panduan kontribusi](CONTRIBUTING.md) sebelum membuka pull request. Semua partisipan wajib
-mengikuti [Code of Conduct](CODE_OF_CONDUCT.md).
-
-Kerentanan keamanan jangan dilaporkan melalui issue publik. Ikuti
-[kebijakan keamanan](SECURITY.md) untuk pelaporan privat.
-
-## Privasi
-
-markpiw tidak memiliki telemetri, analytics, atau server. Isi dokumen tidak pernah dikirim
-ke layanan markpiw.
-
-- **Web app** membuka folder melalui File System Access API. Handle folder terakhir dan draf
-  darurat disimpan di IndexedDB; tema dan state tampilan disimpan di localStorage.
-- **Extension VS Code** hanya membaca dan menulis file yang Anda buka. Tema dan state tampilan
-  disimpan melalui storage VS Code.
-- **Gambar eksternal** (`![](https://…)`) dimuat langsung dari server asal, seperti preview
-  Markdown di GitHub atau VS Code. Gambar yang ditempel disimpan sebagai file lokal.
-
-## Terima kasih kepada open source 💙
+## Open Source Acknowledgements 💙
 
 markpiw tidak mungkin terwujud tanpa karya para maintainer dan kontributor open source.
 Terima kasih sebesar-besarnya kepada proyek-proyek berikut yang menjadi fondasi editor ini:
@@ -228,16 +270,16 @@ Terima kasih sebesar-besarnya kepada proyek-proyek berikut yang menjadi fondasi 
 | [KaTeX](https://katex.org) | Pratinjau rumus matematika. |
 | [Mermaid](https://mermaid.js.org) | Pratinjau diagram langsung dari code block Markdown. |
 | [lowlight](https://github.com/wooorm/lowlight) dan [highlight.js](https://highlightjs.org) | Syntax highlighting untuk code block. |
-| [Valibot](https://valibot.dev) | Validasi pesan antara extension VS Code dan webview. |
+| [Valibot](https://valibot.dev) | Validasi pesan antara ekstensi VS Code dan webview. |
 
 <details>
-<summary><strong>Terima kasih juga kepada toolchain pengembangan</strong></summary>
+<summary><strong>Development Toolchain Acknowledgements</strong></summary>
 
 [TypeScript](https://www.typescriptlang.org), [Vite](https://vite.dev),
 [esbuild](https://esbuild.github.io), [pnpm](https://pnpm.io),
 [Vitest](https://vitest.dev), [fast-check](https://fast-check.dev),
 [Playwright](https://playwright.dev), [jsdom](https://github.com/jsdom/jsdom),
-[ESLint](https://eslint.org), [Prettier](https://prettier.io), serta tooling extension dari
+[ESLint](https://eslint.org), [Prettier](https://prettier.io), serta tooling ekstensi dari
 [Visual Studio Code](https://github.com/microsoft/vscode).
 
 </details>
@@ -249,6 +291,6 @@ Daftar lengkap seluruh komponen yang benar-benar masuk ke bundle—termasuk depe
 transitif—beserta versi dan teks lisensinya dibuat otomatis sebagai `THIRD_PARTY_NOTICES.txt`
 di setiap rilis. Ringkasan lisensi tersedia di [dokumentasi pihak ketiga](docs/third-party.md).
 
-## Lisensi
+## License
 
 [MIT](LICENSE) © 2026 Avendi Sianipar dan kontributor markpiw.
