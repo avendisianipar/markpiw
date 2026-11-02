@@ -3,9 +3,17 @@ import { gapCursor } from 'prosemirror-gapcursor';
 import { history } from 'prosemirror-history';
 import type { Plugin } from 'prosemirror-state';
 import type { EditorController } from '../controller';
+import { activeSelection } from './active';
 import { callouts } from './callout';
 import { syntaxHighlight } from './highlight';
-import { placeholder, tableAlignment, trailingParagraph } from './decorations';
+import {
+  emptyTableHeader,
+  placeholder,
+  previewBlocks,
+  tableAlignment,
+  trailingParagraph,
+} from './decorations';
+import { htmlLayout } from './html';
 import { markdownInputRules } from './inputrules';
 import { baseKeys, editorKeymap } from './keymap';
 import { linkClicks } from './link';
@@ -27,8 +35,12 @@ export function createPlugins(controller: EditorController): Plugin[] {
     linkClicks(controller),
     placeholder(controller.strings.placeholder),
     trailingParagraph(),
+    activeSelection(),
     tableAlignment(),
+    emptyTableHeader(),
     callouts(controller.strings),
+    htmlLayout(controller.strings.detailsToggle),
+    previewBlocks(),
     syntaxHighlight(),
     gapCursor(),
     baseKeys(),

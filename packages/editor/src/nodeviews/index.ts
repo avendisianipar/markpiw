@@ -211,6 +211,28 @@ export class Preview {
   }
 }
 
+/**
+ * Saat hanya pratinjau yang tampil (`mp-preview-only`, seperti GitHub), klik pratinjau
+ * memindahkan kursor ke dalam blok sehingga source-nya muncul untuk diedit.
+ */
+function editOnClick(
+  preview: HTMLElement,
+  view: EditorView,
+  getPos: GetPos,
+  controller: EditorController,
+): void {
+  preview.addEventListener('mousedown', (event) => {
+    if (!preview.parentElement?.classList.contains('mp-preview-only')) return;
+    const pos = getPos();
+    if (pos === undefined) return;
+    event.preventDefault();
+    controller.dispatch(
+      view.state.tr.setSelection(TextSelection.create(view.state.doc, pos + 1)).scrollIntoView(),
+    );
+    view.focus();
+  });
+}
+
 class CodeBlockView implements NodeView {
   readonly dom: HTMLElement;
   readonly contentDOM: HTMLElement;
@@ -219,8 +241,8 @@ class CodeBlockView implements NodeView {
 
   constructor(
     private node: Node,
-    view: EditorView,
-    getPos: GetPos,
+    private readonly view: EditorView,
+    private readonly getPos: GetPos,
     private readonly controller: EditorController,
   ) {
     this.dom = el('div', 'mp-code');
@@ -261,6 +283,7 @@ class CodeBlockView implements NodeView {
     }
     if (kind && !this.preview) {
       this.preview = new Preview(kind, this.controller.strings);
+      editOnClick(this.preview.dom, this.view, this.getPos, this.controller);
       this.dom.append(this.preview.dom);
     }
     this.preview?.update(this.node.textContent);
@@ -297,6 +320,8 @@ class MathBlockView implements NodeView {
 
   constructor(
     private node: Node,
+    view: EditorView,
+    getPos: GetPos,
     controller: EditorController,
   ) {
     this.dom = el('div', 'mp-code mp-math-block');
@@ -309,6 +334,7 @@ class MathBlockView implements NodeView {
     this.contentDOM = el('code');
     pre.append(this.contentDOM);
     this.preview = new Preview('math', controller.strings);
+    editOnClick(this.preview.dom, view, getPos, controller);
     this.dom.append(bar, pre, this.preview.dom);
     this.preview.update(node.textContent);
   }
@@ -546,7 +572,7 @@ export function createNodeViews(
     code_block: (node, view, getPos) => new CodeBlockView(node, view, getPos, controller),
     raw_block: (node) => new RawBlockView(node, controller),
     raw_inline: (node) => rawInlineView(node),
-    math_block: (node) => new MathBlockView(node, controller),
+    math_block: (node, view, getPos) => new MathBlockView(node, view, getPos, controller),
     math_inline: (node, view, getPos) =>
       new MathInlineView(node, view, getPos as GetPos, controller),
   };

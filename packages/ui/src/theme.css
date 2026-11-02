@@ -26,6 +26,8 @@
   --mp-danger-border: #fca5a5;
   --mp-danger-fg: #b91c1c;
   --mp-selected-node: #bfdbfe;
+  --mp-border-muted: #d1d9e0b3;
+  --mp-code-inline-bg: #818b981f;
   --mp-font: var(--vscode-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
   --mp-mono: var(--vscode-editor-font-family, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
   --mp-radius: 6px;
@@ -52,6 +54,8 @@
   --mp-danger-border: #7f1d1d;
   --mp-danger-fg: #fca5a5;
   --mp-selected-node: #1e3a5f;
+  --mp-border-muted: #3d444db3;
+  --mp-code-inline-bg: #656c7633;
 }
 
 /* VS Code: selama skema markpiw sama dengan jenis tema VS Code, pakai warna tema itu
@@ -78,6 +82,8 @@
   --mp-danger-border: var(--vscode-inputValidation-errorBorder, #fca5a5);
   --mp-danger-fg: var(--vscode-errorForeground, #b91c1c);
   --mp-selected-node: var(--vscode-editor-selectionBackground, #bfdbfe);
+  --mp-border-muted: color-mix(in srgb, var(--mp-border) 70%, transparent);
+  --mp-code-inline-bg: color-mix(in srgb, var(--mp-muted) 20%, transparent);
 }
 
 .mp-root {
@@ -405,40 +411,48 @@
   min-height: 0;
 }
 
+/* Tata letak meniru tampilan file Markdown di GitHub: kotak ber-border tipis, padding 32px,
+   lebar konten maksimal 1012px (container-lg). */
 .mp-canvas {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 32px 16px 96px;
+  padding: 16px 16px 96px;
 }
 
 .mp-page {
-  max-width: 760px;
+  max-width: calc(1012px + 2 * 32px);
   margin: 0 auto;
-  padding: 48px 64px;
+  padding: 32px;
   background: var(--mp-page);
   border: 1px solid var(--mp-border);
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+  border-radius: 6px;
 }
 
 @media (max-width: 720px) {
+  .mp-canvas {
+    padding: 8px 8px 96px;
+  }
   .mp-page {
-    padding: 24px 20px;
+    padding: 16px;
   }
 }
 
-/* Konten editor */
+/* Konten editor: ukuran, jarak, dan warna mengikuti .markdown-body GitHub. */
 .mp-content {
   font-size: calc(16px * var(--mp-zoom));
-  line-height: 1.65;
+  line-height: 1.5;
   outline: none;
   min-height: 300px;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .mp-content > :first-child {
-  margin-top: 0;
+  margin-top: 0 !important;
+}
+
+.mp-content > :last-child {
+  margin-bottom: 0 !important;
 }
 
 .mp-content h1,
@@ -447,12 +461,17 @@
 .mp-content h4,
 .mp-content h5,
 .mp-content h6 {
-  margin: 1.4em 0 0.4em;
+  margin: 24px 0 16px;
   line-height: 1.25;
-  font-weight: 700;
+  font-weight: 600;
   scroll-margin-top: 24px;
 }
 
+.mp-content h1,
+.mp-content h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--mp-border-muted);
+}
 .mp-content h1 {
   font-size: 2em;
 }
@@ -463,78 +482,145 @@
   font-size: 1.25em;
 }
 .mp-content h4 {
-  font-size: 1.1em;
-}
-.mp-content h5,
-.mp-content h6 {
   font-size: 1em;
 }
+.mp-content h5 {
+  font-size: 0.875em;
+}
+.mp-content h6 {
+  font-size: 0.85em;
+  color: var(--mp-muted);
+}
 
-.mp-content p {
-  margin: 0.5em 0;
+.mp-content p,
+.mp-content blockquote,
+.mp-content ul,
+.mp-content ol,
+.mp-content table,
+.mp-content pre {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.mp-content strong {
+  font-weight: 600;
 }
 
 .mp-content a {
   color: var(--mp-link);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 0.2rem;
   cursor: text;
 }
 
 .mp-content code {
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
-  background: var(--mp-code-bg);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  background: var(--mp-code-inline-bg);
+  color: inherit;
   font-family: var(--mp-mono);
-  font-size: 0.88em;
+  font-size: 85%;
+  white-space: break-spaces;
 }
 
+.mp-content h1 code,
+.mp-content h2 code,
+.mp-content h3 code,
+.mp-content h4 code,
+.mp-content h5 code,
+.mp-content h6 code {
+  padding: 0 0.2em;
+  font-size: inherit;
+}
+
+/* background/border-color dinetralkan: webview VS Code memberi blockquote latar bawaan. */
 .mp-content blockquote {
-  margin: 0.8em 0;
+  margin-left: 0;
+  margin-right: 0;
   padding: 0 1em;
-  border-left: 3px solid var(--mp-border);
+  background: none;
+  border-left: 0.25em solid var(--mp-border);
   color: var(--mp-muted);
+}
+
+.mp-content blockquote > :last-child {
+  margin-bottom: 0;
 }
 
 .mp-content ul,
 .mp-content ol {
-  margin: 0.4em 0;
-  padding-left: 1.6em;
+  padding-left: 2em;
+}
+
+.mp-content ul ul,
+.mp-content ul ol,
+.mp-content ol ol,
+.mp-content ol ul {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .mp-content li > p {
-  margin: 0.15em 0;
+  margin: 0;
+}
+
+.mp-content li + li {
+  margin-top: 0.25em;
 }
 
 .mp-content hr {
-  margin: 1.5em 0;
+  height: 1px;
+  margin: 24px 0;
+  padding: 0;
   border: 0;
-  border-top: 1px solid var(--mp-border);
+  background: var(--mp-border);
 }
 
 .mp-content hr.ProseMirror-selectednode {
   outline: 2px solid var(--mp-accent);
 }
 
+/* Tabel GitHub: selebar isinya (maks. lebar halaman, sisanya di-scroll), baris genap belang. */
 .mp-content table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  border-spacing: 0;
   border-collapse: collapse;
-  margin: 1em 0;
-  width: 100%;
-  table-layout: fixed;
+  font-variant: tabular-nums;
+}
+
+.mp-content tr {
+  background: var(--mp-page);
+  border-top: 1px solid var(--mp-border-muted);
+}
+
+/* Baris header ada di tbody yang sama, jadi baris isi ke-2, ke-4, … adalah anak ke-3, ke-5, … */
+.mp-content tr:nth-child(2n + 3) {
+  background: var(--mp-code-bg);
 }
 
 .mp-content th,
 .mp-content td {
   border: 1px solid var(--mp-border);
-  padding: 6px 10px;
-  vertical-align: top;
+  padding: 6px 13px;
   min-width: 48px;
 }
 
 .mp-content th {
-  background: var(--mp-code-bg);
   font-weight: 600;
-  text-align: left;
+  text-align: center;
+}
+
+.mp-content td > :last-child {
+  margin-bottom: 0;
+}
+
+/* Header tabel yang semua selnya kosong (| | |) dibuat setipis di GitHub selama tidak diedit. */
+.mp-content tr.mp-empty-header > th {
+  font-size: 0;
+  line-height: 0;
 }
 
 /* Pratinjau ```mermaid, ```math, dan blok $$ (di bawah source, tidak bisa diedit). */
@@ -676,21 +762,33 @@
   font-weight: 600;
 }
 
-/* Callout GitHub (> [!NOTE] dkk.): blockquote biasa yang diberi kotak dan label. */
+/* Callout GitHub (> [!NOTE] dkk.): sama seperti .markdown-alert GitHub — garis kiri berwarna,
+   judul berikon, tanpa latar. Marker [!NOTE] disembunyikan kecuali sedang diedit. */
 .mp-content blockquote.mp-callout {
-  --mp-callout: var(--mp-accent);
-  border-left: 4px solid var(--mp-callout);
-  border-radius: 0 var(--mp-radius) var(--mp-radius) 0;
-  background: color-mix(in srgb, var(--mp-callout) 8%, transparent);
-  color: var(--mp-fg);
-  padding: 8px 14px;
+  --mp-callout: #0969da;
+  padding: 8px 16px;
+  border-left: 0.25em solid var(--mp-callout);
+  color: inherit;
 }
-.mp-content blockquote.mp-callout::before {
-  content: attr(data-callout-label);
-  display: block;
+.mp-callout-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
   color: var(--mp-callout);
-  font-weight: 600;
-  font-size: 0.9em;
+  font-weight: 500;
+  line-height: 1;
+  user-select: none;
+}
+.mp-callout-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .mp-callout-tip {
   --mp-callout: #1a7f37;
@@ -704,11 +802,14 @@
 .mp-callout-caution {
   --mp-callout: #cf222e;
 }
+:root[data-theme='dark'] .mp-callout-note {
+  --mp-callout: #4493f8;
+}
 :root[data-theme='dark'] .mp-callout-tip {
   --mp-callout: #3fb950;
 }
 :root[data-theme='dark'] .mp-callout-important {
-  --mp-callout: #a371f7;
+  --mp-callout: #ab7df8;
 }
 :root[data-theme='dark'] .mp-callout-warning {
   --mp-callout: #d29922;
@@ -720,6 +821,75 @@
   color: var(--mp-muted);
   font-family: var(--mp-mono);
   font-size: 0.8em;
+}
+.mp-callout-marker-hidden {
+  display: none;
+}
+/* Saat terlihat, pindah baris setelah marker benar-benar memisah baris seperti di source. */
+.mp-callout-break.mp-callout-marker-shown {
+  display: block;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Tag HTML blok (<div align>, <details>, penutupnya) tidak terlihat seperti di GitHub; saat kursor
+   di wilayahnya, source tag tampil ringkas satu baris agar bisa diedit. */
+.mp-raw.mp-html-tag {
+  display: none;
+}
+.mp-raw.mp-html-tag.mp-html-tag-active {
+  display: block;
+  margin: 0 0 4px;
+  border: 0;
+  background: none;
+  opacity: 0.75;
+}
+.mp-raw.mp-html-tag-active .mp-raw-label {
+  display: none;
+}
+.mp-raw.mp-html-tag-active pre {
+  padding: 0;
+  color: var(--mp-muted);
+}
+.mp-content .mp-html-align-left {
+  text-align: left;
+}
+.mp-content .mp-html-align-center {
+  text-align: center;
+}
+.mp-content .mp-html-align-right {
+  text-align: right;
+}
+
+/* <details>/<summary> GitHub: segitiga + ringkasan, isi terlipat sampai dibuka. */
+.mp-details-summary {
+  display: list-item;
+  list-style: disclosure-closed inside;
+  margin: 0 0 16px;
+  cursor: pointer;
+  user-select: none;
+}
+.mp-details-summary[data-open='true'] {
+  margin-bottom: 0;
+  list-style-type: disclosure-open;
+}
+.mp-html-collapsed {
+  display: none !important;
+}
+
+/* Diagram/rumus di luar kursor: hanya hasil render, seperti GitHub. */
+.mp-code.mp-preview-only {
+  background: none;
+}
+.mp-preview-only > .mp-code-bar,
+.mp-preview-only > pre {
+  display: none;
+}
+.mp-preview-only > .mp-preview {
+  padding: 0;
+  border-top: 0;
+  background: none;
+  cursor: pointer;
 }
 
 /* Rata kolom GFM (|:---:|) dari dekorasi tableAlignment. */
@@ -762,8 +932,9 @@
 }
 
 .mp-image img {
+  box-sizing: content-box;
   max-width: 100%;
-  border-radius: 4px;
+  vertical-align: middle;
 }
 
 .mp-image.ProseMirror-selectednode img {
@@ -810,25 +981,28 @@
 .mp-code,
 .mp-raw {
   position: relative;
-  margin: 0.8em 0;
-  border-radius: var(--mp-radius);
+  margin: 0 0 16px;
+  border-radius: 6px;
   background: var(--mp-code-bg);
 }
 
 .mp-code pre,
 .mp-raw pre {
   margin: 0;
-  padding: 12px 16px;
+  padding: 16px;
   overflow-x: auto;
   white-space: pre;
+  font-size: 85%;
+  line-height: 1.45;
 }
 
 .mp-code code,
 .mp-raw code {
   padding: 0;
+  border-radius: 0;
   background: none;
   font-family: var(--mp-mono);
-  font-size: 0.88em;
+  font-size: 100%;
   white-space: pre;
 }
 
