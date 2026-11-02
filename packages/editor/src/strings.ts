@@ -42,6 +42,8 @@ export interface EditorStrings {
   readonly mathBlockLabel: string;
   readonly mathInlineLabel: string;
   readonly mathInlinePlaceholder: string;
+  /** Tooltip ringkasan `<details>` yang bisa diklik untuk membuka/menutup isinya. */
+  readonly detailsToggle: string;
   /** Label kotak callout GitHub per jenis. */
   readonly callouts: Readonly<Record<'note' | 'tip' | 'important' | 'warning' | 'caution', string>>;
   readonly slash: Readonly<Record<SlashItemId, { label: string; aliases: readonly string[] }>>;
@@ -59,6 +61,7 @@ export const DEFAULT_EDITOR_STRINGS: EditorStrings = {
   mathBlockLabel: 'Rumus (LaTeX)',
   mathInlineLabel: 'Rumus LaTeX',
   mathInlinePlaceholder: 'rumus',
+  detailsToggle: 'Klik untuk membuka/menutup',
   callouts: {
     note: 'Catatan',
     tip: 'Tips',

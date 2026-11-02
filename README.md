@@ -21,7 +21,7 @@ Anda mengedit langsung di tampilan jadi—seperti editor dokumen modern—sement
 tetap menjadi sumber utama dan mudah di-review di Git.
 
 > [!NOTE]
-> Rilis stabil terbaru adalah `v1.0.0`. File tetap disimpan sebagai Markdown biasa sehingga
+> Rilis stabil terbaru adalah `v1.1.0`. File tetap disimpan sebagai Markdown biasa sehingga
 > dapat dibuka dan di-review tanpa markpiw.
 
 ## Mengapa markpiw?
