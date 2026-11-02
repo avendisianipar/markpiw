@@ -2,6 +2,7 @@
 // Tampilan meniru GitHub: callout, tag HTML blok, <details>, header tabel kosong, pratinjau.
 import { TextSelection } from 'prosemirror-state';
 import { describe, expect, it } from 'vitest';
+import { renderHtmlBlock } from '../src/html-render';
 import { findRegions, parseOpener } from '../src/plugins/html';
 import { cursorAt, md, setup } from './util';
 
@@ -71,6 +72,58 @@ describe('tag HTML blok seperti GitHub', () => {
     const { el } = setup('</div>\n\nteks\n');
     expect(el.querySelector('.mp-html-tag')).toBeNull();
     expect(el.querySelector('.mp-raw')).not.toBeNull();
+  });
+});
+
+describe('blok HTML lengkap seperti GitHub', () => {
+  const text = 'Awal\n\n<p align="center"><em>Teks <b>tebal</b> miring.</em></p>\n\nAkhir\n';
+
+  it('mengenali blok yang bisa dirender dan menolak sisanya', () => {
+    expect(renderHtmlBlock('<p align="center"><em>x</em></p>')?.block).toEqual({
+      tag: 'p',
+      align: 'center',
+    });
+    expect(renderHtmlBlock('<h1 align="right">Judul</h1>')?.block).toEqual({
+      tag: 'h1',
+      align: 'right',
+    });
+    expect(renderHtmlBlock('<div>a<br>b</div>')?.block).toEqual({ tag: 'div', align: null });
+    expect(renderHtmlBlock('<div align="center">')).toBeNull();
+    expect(renderHtmlBlock('<p align="center"><img src="x.png"></p>')).toBeNull();
+    expect(renderHtmlBlock('<p>a</p>\n<p>b</p>')).toBeNull();
+    expect(renderHtmlBlock('<p align="center"></p>')).toBeNull();
+    expect(renderHtmlBlock('<table><tr><td>x</td></tr></table>')).toBeNull();
+  });
+
+  it('hanya menampilkan hasil render di luar kursor; klik membuka source', () => {
+    const { c, el } = setup(text);
+    const raw = el.querySelector('.mp-raw') as HTMLElement;
+    expect(raw.className).toContain('mp-preview-only');
+    const rendered = raw.querySelector('.mp-preview-html > p') as HTMLElement;
+    expect(rendered.className).toBe('mp-html-align-center');
+    expect(rendered.querySelector('em > b')?.textContent).toBe('tebal');
+    expect(rendered.textContent).toBe('Teks tebal miring.');
+
+    mousedown(raw.querySelector('.mp-preview-html') as HTMLElement);
+    expect(c.state.selection.$from.parent.type.name).toBe('raw_block');
+    expect((el.querySelector('.mp-raw') as HTMLElement).className).not.toContain('mp-preview-only');
+    expect(md(c)).toBe(text);
+  });
+
+  it('tidak memasukkan atribut atau tag berbahaya', () => {
+    const { el } = setup(
+      '<p align="center"><a href="javascript:x()" onclick="x()">Tautan</a></p>\n',
+    );
+    const link = el.querySelector('.mp-preview-html a') as HTMLElement;
+    expect(link.attributes).toHaveLength(0);
+    expect(renderHtmlBlock('<p><em onmouseover="x()">a</em><script>x()</script></p>')).toBeNull();
+  });
+
+  it('blok HTML lain tetap tampil sebagai source', () => {
+    const { el } = setup('<p align="center"><img src="x.png"></p>\n');
+    const raw = el.querySelector('.mp-raw') as HTMLElement;
+    expect(raw.className).not.toContain('mp-preview-only');
+    expect((raw.querySelector('.mp-preview-html') as HTMLElement).hidden).toBe(true);
   });
 });
 

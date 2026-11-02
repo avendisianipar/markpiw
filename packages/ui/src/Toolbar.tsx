@@ -20,6 +20,7 @@ import {
   Italic,
   Plus,
   Redo2,
+  Search,
   Strikethrough,
   Undo2,
   ZoomIn,
@@ -479,5 +480,19 @@ export function ZoomControls() {
         <ZoomIn {...ICON} />
       </ToolButton>
     </div>
+  );
+}
+
+/** Tombol cari di kanan topbar; membuka kotak cari seperti Ctrl/⌘+F. */
+export function SearchButton() {
+  const controller = useController();
+  return (
+    <ToolButton
+      label={t('search.open')}
+      shortcut={`${MOD}+F`}
+      onPress={() => controller.openSearch()}
+    >
+      <Search {...ICON} />
+    </ToolButton>
   );
 }

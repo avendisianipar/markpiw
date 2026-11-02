@@ -14,6 +14,7 @@ import {
   type Transaction,
 } from 'prosemirror-state';
 import { Decoration, DecorationSet, type EditorView } from 'prosemirror-view';
+import { renderSummary } from '../html-render';
 import { selectionTouches } from './active';
 
 type Align = 'left' | 'center' | 'right';
@@ -120,28 +121,6 @@ interface HtmlState {
 
 export const htmlLayoutKey = new PluginKey<HtmlState>('markpiwHtmlLayout');
 
-const SAFE_INLINE = new Set(['STRONG', 'B', 'EM', 'I', 'CODE', 'DEL', 'S', 'KBD', 'SUB', 'SUP']);
-
-/**
- * Isi `<summary>` dibangun ulang dari DOM inert: hanya teks dan tag inline yang aman yang
- * dibuat ulang lewat createElement; atribut dan tag lain dibuang.
- */
-function summaryContent(html: string, into: HTMLElement): void {
-  const parsed = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html').body;
-  const copy = (from: globalThis.Node, to: HTMLElement) => {
-    from.childNodes.forEach((child) => {
-      if (child.nodeType === 3) to.append(child.textContent ?? '');
-      else if (child.nodeType === 1) {
-        const tag = (child as Element).tagName;
-        const target = SAFE_INLINE.has(tag) ? document.createElement(tag.toLowerCase()) : to;
-        copy(child, target);
-        if (target !== to) to.append(target);
-      }
-    });
-  };
-  copy(parsed, into);
-}
-
 function summaryDOM(
   view: EditorView,
   region: HtmlRegion,
@@ -158,7 +137,7 @@ function summaryDOM(
   const text = document.createElement('span');
   if (region.opener.summary === null || region.opener.summary.trim() === '')
     text.textContent = 'Details';
-  else summaryContent(region.opener.summary, text);
+  else renderSummary(region.opener.summary, text);
   summary.append(text);
   summary.addEventListener('mousedown', (event) => {
     event.preventDefault();

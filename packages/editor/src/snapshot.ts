@@ -45,6 +45,14 @@ export type ReadOnlyState =
   | { readonly reason: 'guard'; readonly failure: GuardFailure }
   | { readonly reason: 'host'; readonly message: string };
 
+/** Kotak cari yang sedang terbuka. */
+export interface SearchState {
+  readonly query: string;
+  readonly total: number;
+  /** Indeks hasil aktif (dari 0), atau -1 jika tidak ada hasil. */
+  readonly current: number;
+}
+
 export interface Notice {
   readonly kind: 'error' | 'info';
   readonly message: string;
@@ -80,6 +88,8 @@ export interface EditorSnapshot {
   readonly notice: Notice | null;
   /** Semua heading dokumen, berurutan (untuk daftar isi). */
   readonly outline: readonly HeadingInfo[];
+  /** Pencarian (Ctrl/⌘+F), atau null jika kotak cari tertutup. */
+  readonly search: SearchState | null;
 }
 
 const MARKS: readonly MarkName[] = ['strong', 'em', 'strike', 'code', 'link'];
@@ -239,6 +249,7 @@ export function stabilize(prev: EditorSnapshot | null, next: EditorSnapshot): Ed
     prev.readOnly === next.readOnly &&
     prev.dirty === next.dirty &&
     prev.notice === next.notice &&
+    JSON.stringify(prev.search) === JSON.stringify(next.search) &&
     sameOutline(prev.outline, next.outline);
   if (same) return prev;
   // Pertahankan referensi outline lama jika isinya sama (komponen daftar isi tidak re-render).

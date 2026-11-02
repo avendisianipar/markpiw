@@ -126,6 +126,7 @@ Tambahkan contoh Markdown dan `git diff` jika aman dan relevan.
 | Tebal, miring, kode, atau coret | Pilih teks, lalu gunakan toolbar atau shortcut |
 | Menu blok | Ketik `/` di baris kosong |
 | Link | Pilih teks, lalu tekan Ctrl/⌘+K |
+| Cari di dokumen | Ctrl/⌘+F atau tombol cari di toolbar; Enter / Shift+Enter untuk hasil berikutnya / sebelumnya |
 | Gambar | Tempel atau seret gambar ke editor |
 | Simpan, undo, atau redo | Ctrl/⌘+S, Ctrl/⌘+Z, atau Ctrl/⌘+Shift+Z |
 

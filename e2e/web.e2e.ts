@@ -259,6 +259,45 @@ describe('web demo: fitur lanjutan (CSP produksi aktif)', () => {
     expect(await page.locator('.ProseMirror table').count()).toBe(2);
   });
 
+  it('Ctrl/⌘+F searches the document, reveals hidden source and leaves the file unchanged', async () => {
+    const before = await fileWhere(() => true);
+    const count = () => page.textContent('.mp-search-count');
+    const currentVisible = () =>
+      page.$eval('.mp-search-current', (el) => {
+        const r = el.getBoundingClientRect();
+        const c = document.querySelector('.mp-canvas')!.getBoundingClientRect();
+        return r.top >= c.top && r.bottom <= c.bottom;
+      });
+    await caretAfter('Fitur lanjutan');
+    await page.keyboard.press(`${mod}+f`);
+    await page.waitForSelector('.mp-search-input:focus');
+    await page.keyboard.type('baris');
+    expect(await count()).toBe('1 dari 3');
+    expect(await page.locator('.mp-search-match').count()).toBe(3);
+    await page.keyboard.press('Enter');
+    expect(await count()).toBe('2 dari 3');
+    expect(await currentVisible()).toBe(true);
+    await page.keyboard.press('Shift+Enter');
+    await page.keyboard.press('Shift+Enter');
+    expect(await count()).toBe('3 dari 3');
+    await page.fill('.mp-search-input', 'review');
+    expect(await count()).toBe('1 dari 1');
+    expect(await currentVisible()).toBe(true);
+    // Source mermaid yang tadinya hanya tampil sebagai gambar ikut terbuka.
+    const mermaid = page.locator('.mp-code', { has: page.locator('.mp-preview-mermaid') });
+    expect(await mermaid.getAttribute('class')).not.toContain('mp-preview-only');
+    await page.screenshot({ path: `${SHOTS}06-search.png` });
+    await page.keyboard.press('Escape');
+    expect(await page.locator('.mp-search').count()).toBe(0);
+    expect(await page.locator('.mp-search-match').count()).toBe(0);
+    await page.click('[aria-label="Cari"]');
+    await page.waitForSelector('.mp-search-input:focus');
+    await page.fill('.mp-search-input', 'tidak-ada-di-dokumen');
+    expect(await count()).toBe('Tidak ada hasil');
+    await page.click('[aria-label="Tutup pencarian"]');
+    expect(await read(FILE)).toBe(before);
+  });
+
   it('insert menu → inline math focuses the LaTeX input and saves', async () => {
     await caretAfter('baris dua');
     await toolbarButton('Sisipkan lainnya').click();

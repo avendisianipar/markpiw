@@ -18,6 +18,7 @@ import { markdownInputRules } from './inputrules';
 import { baseKeys, editorKeymap } from './keymap';
 import { linkClicks } from './link';
 import { pastePlugin } from './paste';
+import { searchPlugin } from './search';
 import { slashPlugin } from './slash';
 
 export { slashKey } from './slash';
@@ -41,6 +42,7 @@ export function createPlugins(controller: EditorController): Plugin[] {
     callouts(controller.strings),
     htmlLayout(controller.strings.detailsToggle),
     previewBlocks(),
+    searchPlugin(),
     syntaxHighlight(),
     gapCursor(),
     baseKeys(),

@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { editorStrings, t } from './strings/id';
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad)/.test(navigator.platform);
+export const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad)/.test(navigator.platform);
 export const MOD = isMac ? '⌘' : 'Ctrl';
 export const ALT = isMac ? '⌥' : 'Alt';
 

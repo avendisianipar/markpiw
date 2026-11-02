@@ -10,9 +10,10 @@ import { LinkPopover } from './LinkPopover';
 import { Notice } from './Notice';
 import { Outline } from './Outline';
 import { type BannerAction, ReadOnlyBanner } from './ReadOnlyBanner';
+import { SearchBar } from './SearchBar';
 import { SlashMenu } from './SlashMenu';
 import { type ColorScheme, ThemeToggle } from './ThemeToggle';
-import { Toolbar, ZoomControls } from './Toolbar';
+import { SearchButton, Toolbar, ZoomControls } from './Toolbar';
 
 export interface MarkpiwEditorProps {
   readonly controller: EditorController;
@@ -52,6 +53,8 @@ function Surface({
         {topBar}
         <Toolbar onPickImage={pickImage} />
         <div className="mp-topbar-end">
+          <SearchButton />
+          <span className="mp-tool-sep" aria-hidden="true" />
           <ZoomControls />
           <span className="mp-tool-sep" aria-hidden="true" />
           <ThemeToggle scheme={colorScheme} onChange={onColorSchemeChange} />
@@ -65,6 +68,7 @@ function Surface({
           </article>
         </main>
         <Outline canvas={canvas} />
+        <SearchBar />
       </div>
       <SlashMenu />
       <LinkPopover />

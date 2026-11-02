@@ -2,7 +2,7 @@
   "name": "markpiw",
   "displayName": "markpiw",
   "description": "Editor markdown WYSIWYG: edit langsung di preview, file .md tetap bersih untuk git.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "avendisianipar",
   "private": true,
   "license": "MIT",
@@ -98,6 +98,12 @@
       {
         "key": "ctrl+shift+x",
         "mac": "cmd+shift+x",
+        "command": "markpiw.claimShortcut",
+        "when": "activeCustomEditorId == 'markpiw.editor'"
+      },
+      {
+        "key": "ctrl+f",
+        "mac": "cmd+f",
         "command": "markpiw.claimShortcut",
         "when": "activeCustomEditorId == 'markpiw.editor'"
       },

@@ -107,6 +107,10 @@ export function editorKeymap(controller: EditorController): Plugin {
       controller.openLinkEditor();
       return true;
     },
+    'Mod-f': () => {
+      controller.openSearch();
+      return true;
+    },
     'Mod-Alt-0': () => c.setBlock({ type: 'paragraph' }),
     'Mod-Alt-1': heading(1),
     'Mod-Alt-2': heading(2),

@@ -120,7 +120,7 @@ Panel **Extensions** → markpiw → **Uninstall**.
 | 9 | Tempel dari Google Docs / Word | Tebal, miring, link, dan list ikut; tanpa gaya/warna asing |
 | 10 | Tempel teks markdown (mis. dari README) | Menjadi heading/list sesungguhnya |
 | 11 | File CRLF (Windows): edit satu baris | Baris lain tetap CRLF |
-| 12 | Blok HTML / frontmatter YAML | Tampil sebagai kotak "Markdown mentah" dan tetap utuh |
+| 12 | Blok HTML / frontmatter YAML | Tampil sebagai kotak "Markdown mentah" dan tetap utuh; blok HTML lengkap sederhana (`<p align="center"><em>…</em></p>`) tampil ter-render seperti GitHub, source muncul saat diklik |
 | 13 | Centang checkbox task | `[ ]` ↔ `[x]` di file |
 | 14 | Zoom −/+ di toolbar | Ukuran teks berubah, file tidak berubah |
 | 15 | VS Code: ketik dua kata dengan jeda, tekan Cmd/Ctrl+Z sekali | Hanya satu langkah yang diurungkan |
@@ -130,6 +130,7 @@ Panel **Extensions** → markpiw → **Uninstall**.
 | 19 | Menu tabel di baris header / tabel 1 baris isi / tabel 1 kolom | "Hapus baris" / "Hapus kolom" nonaktif (abu-abu), bukan diam saja |
 | 20 | Menu tabel → Sisipkan tabel… → pilih ukuran di grid | Tabel baris × kolom sesuai pilihan (baris pertama header) |
 | 21 | Menu tabel → Tambah baris di atas / kolom di kiri / Hapus tabel | Sesuai label; Hapus tabel memindahkan kursor ke blok terdekat |
+| 22 | Ctrl/⌘+F (atau tombol cari) → ketik kata → Enter / Shift+Enter → Esc | Semua hasil tersorot, "x dari y" benar, hasil aktif digulir ke layar (isi `<details>` tertutup dan source diagram ikut terbuka); Esc menutup dan kursor di hasil terakhir; file tidak berubah; di VS Code find widget bawaan tidak ikut muncul |
 | 22 | Shift+Enter di paragraf; Shift+Enter di sel tabel | Paragraf: baris baru (`\` di akhir baris). Sel: `<br>` di file, tampil sebagai baris baru |
 | 23 | Ketik `/callout` atau menu **+** → Callout | Kotak berlabel; di file `> [!NOTE]` dst. (tampil sebagai alert di GitHub) |
 | 24 | Ketik `$x^2$`, lalu klik rumusnya | Menjadi rumus; klik membuka input LaTeX, Enter menyimpan, Esc membatalkan |
