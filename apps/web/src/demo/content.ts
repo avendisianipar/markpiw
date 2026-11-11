@@ -113,6 +113,70 @@ export function halo(nama: string): string {
 const crlf =
   '# Catatan CRLF\r\n\r\nFile ini memakai line ending Windows (CRLF).\r\nBaris yang tidak diedit tetap CRLF.\r\n';
 
+const specRequirements = `# Requirements: Ekspor CSV
+
+## User Stories
+
+### Sebagai admin, saya ingin mengekspor daftar task ke CSV
+Agar saya bisa mengolah data di spreadsheet.
+
+## Requirements
+
+### FR-1: Ekspor daftar task
+
+WHEN admin mengirim GET ke \`/api/v1/tasks/export\`
+THE SYSTEM SHALL mengembalikan file CSV dengan header \`id,title,status\`
+
+### FR-2: Filter status
+
+WHEN parameter \`status\` dikirim
+THE SYSTEM SHALL hanya mengekspor task dengan status tersebut
+
+### FR-3: Batas ukuran
+
+WHEN hasil ekspor melebihi 50.000 baris
+THE SYSTEM SHALL menolak dengan 413 \`export_too_large\`
+`;
+
+const specDesign = `# Design: Ekspor CSV
+
+Referensi: [requirements](requirements.md), [tasks](tasks.md)
+
+## Endpoint
+
+\`GET /api/v1/tasks/export\` mengalirkan CSV baris demi baris (FR-1). Parameter \`status\` diteruskan ke query (FR-2).
+
+## Batas dan Error
+
+Penghitungan baris dilakukan sebelum streaming dimulai; bila melebihi batas, kembalikan \`export_too_large\`.
+`;
+
+const specTasks = `# Tasks: Ekspor CSV
+
+Status: \`[ ]\` belum dimulai · \`[~]\` in progress · \`[x]\` selesai
+
+### T1 — Endpoint ekspor
+**Requirements:** FR-1, FR-2  
+**Status:** \`[x]\`
+
+- [x] Handler \`/api/v1/tasks/export\`
+- [x] Filter \`status\`
+
+### T2 — Batas ukuran
+**Requirements:** FR-3  
+**Status:** \`[~]\`  
+**Dependensi:** T1
+
+- [x] Hitung baris sebelum streaming
+- [ ] Error \`export_too_large\`
+
+### T3 — Tombol ekspor di UI
+**Dependensi:** T1  
+**Status:** \`[ ]\`
+
+- [ ] Tombol "Ekspor CSV" di daftar task
+`;
+
 const logo = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="64" viewBox="0 0 240 64"><rect width="240" height="64" rx="12" fill="#2563eb"/><text x="120" y="42" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#fff" text-anchor="middle">markpiw</text></svg>`;
 
 export function createDemoFolder(): MemoryDirectory {
@@ -124,6 +188,11 @@ export function createDemoFolder(): MemoryDirectory {
         'format-teks.md': formatting,
         'tabel-dan-list.md': tables,
         'fitur-lanjutan.md': advanced,
+      },
+      'spec-ekspor': {
+        'requirements.md': specRequirements,
+        'design.md': specDesign,
+        'tasks.md': specTasks,
       },
       assets: { 'logo.svg': new TextEncoder().encode(logo) },
     },

@@ -72,13 +72,20 @@ export function Workspace(props: {
   const opening = useRef<Promise<void>>(Promise.resolve());
 
   const open = useCallback(
-    (path: string[]) => {
+    (path: string[], fragment?: string) => {
       opening.current = opening.current.then(async () => {
-        if (current.current?.path.join('/') === path.join('/')) return;
+        if (current.current?.path.join('/') === path.join('/')) {
+          if (fragment) current.current.controller.revealHeading(fragment);
+          return;
+        }
         setError(null);
         await current.current?.close();
         try {
-          const next = await FileSession.open(props.root, path, { onOpenFile: (p) => open(p) });
+          const next = await FileSession.open(props.root, path, {
+            onOpenFile: (p, f) => open(p, f),
+          });
+          // Anchor dari link `file.md#slug`: dijalankan setelah editor terpasang.
+          if (fragment) next.controller.revealHeading(fragment);
           current.current = next;
           setSession(next);
           const found = props.demo ? null : await takeDraft(props.root.name, path.join('/'));
@@ -109,7 +116,10 @@ export function Workspace(props: {
       if (document.visibilityState === 'hidden') void current.current?.save();
     };
     const onBlur = () => void current.current?.save();
-    const onFocus = () => void current.current?.checkExternal();
+    const onFocus = () => {
+      void current.current?.checkExternal();
+      current.current?.host.notifySiblings();
+    };
     const onUnload = (event: BeforeUnloadEvent) => {
       const status = current.current?.status;
       if (status === 'dirty' || status === 'saving' || status === 'conflict') {
@@ -118,8 +128,10 @@ export function Workspace(props: {
       }
     };
     const poll = setInterval(() => {
-      if (document.visibilityState === 'visible' && document.hasFocus())
+      if (document.visibilityState === 'visible' && document.hasFocus()) {
         void current.current?.checkExternal();
+        current.current?.host.notifySiblings();
+      }
     }, EXTERNAL_POLL_MS);
     window.addEventListener('keydown', onKey);
     document.addEventListener('visibilitychange', onHide);

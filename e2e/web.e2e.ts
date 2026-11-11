@@ -332,3 +332,119 @@ describe('web demo: fitur lanjutan (CSP produksi aktif)', () => {
     await page.screenshot({ path: `${SHOTS}06-fitur-lanjutan-edit.png` });
   });
 });
+
+describe('web demo: trace spec (requirements ↔ design ↔ tasks)', () => {
+  const step = (label: string) => page.locator('.mp-spec-step', { hasText: label });
+
+  beforeAll(async () => {
+    await page.goto(DEMO_URL);
+    await page.waitForSelector('.ProseMirror h1');
+    await page.click('.web-tree-item:has-text("spec-ekspor")');
+    await page.click('.web-tree-item:has-text("tasks")');
+    await page.waitForSelector('.mp-specbar');
+    await page.waitForSelector('.mp-trace-id[data-trace-id="FR-3"]');
+  });
+
+  it('shows the spec bar with steps, task progress and requirement coverage', async () => {
+    expect(await page.textContent('.mp-specbar-name')).toBe('spec-ekspor');
+    expect(await step('Task list').getAttribute('aria-current')).toBe('page');
+    expect(await step('Requirements').isDisabled()).toBe(false);
+    expect(await page.textContent('.mp-spec-pill')).toBe('Task 1/3 selesai');
+    expect(await page.textContent('.mp-spec-pill-button')).toBe('Requirement tercakup 3/3');
+  });
+
+  it('decorates IDs without touching the file', async () => {
+    const before = await read('spec-ekspor/tasks.md');
+    const ids = await page.$$eval('.ProseMirror [data-trace-id]', (els) =>
+      els.map((el) => el.getAttribute('data-trace-id')),
+    );
+    expect(ids).toEqual(['T1', 'FR-1', 'FR-2', 'T2', 'FR-3', 'T1', 'T3', 'T1']);
+    expect(await page.locator('.web-status').textContent()).toBe('Tersimpan');
+    expect(await read('spec-ekspor/tasks.md')).toBe(before);
+  });
+
+  it('trace panel follows the cursor section', async () => {
+    await page.click('.ProseMirror h3:has-text("Batas ukuran")');
+    await page.waitForFunction(() =>
+      document.querySelector('.mp-trace-current')?.textContent?.includes('T2'),
+    );
+    const groups = await page.$$eval('.mp-trace-group', (els) =>
+      els.map((el) => [
+        el.querySelector('.mp-trace-group-title')?.firstChild?.textContent?.trim(),
+        [...el.querySelectorAll('.mp-trace-link-id')].map((n) => n.textContent),
+      ]),
+    );
+    expect(groups).toEqual([
+      ['Merujuk ke', ['FR-3', 'T1']],
+      ['Terkait (istilah kode sama)', []],
+    ]);
+    await page.screenshot({ path: `${SHOTS}06-trace-tasks.png` });
+  });
+
+  it('hover card opens the definition in the other file at its heading', async () => {
+    await page.hover('.ProseMirror .mp-trace-id[data-trace-id="FR-3"]');
+    await page.waitForSelector('.mp-trace-card');
+    expect(await page.textContent('.mp-trace-card-title')).toBe('FR-3Batas ukuran');
+    await page.click('.mp-trace-card-open');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('.web-filename')?.textContent === 'spec-ekspor / requirements.md',
+    );
+    await page.waitForFunction(() =>
+      document.querySelector('.mp-trace-current')?.textContent?.includes('FR-3'),
+    );
+    expect(await step('Requirements').getAttribute('aria-current')).toBe('page');
+    const incoming = await page.$$eval('.mp-trace-group .mp-trace-link-id', (els) =>
+      els.map((n) => n.textContent),
+    );
+    expect(incoming).toEqual(['T2']);
+  });
+
+  it('a trace link jumps back and Mod+click on a chip follows it', async () => {
+    await page.click('.mp-trace-link:has-text("T2")');
+    await page.waitForFunction(
+      () => document.querySelector('.web-filename')?.textContent === 'spec-ekspor / tasks.md',
+    );
+    await page.waitForFunction(() =>
+      document.querySelector('.mp-trace-current')?.textContent?.includes('T2'),
+    );
+    await page.click('.ProseMirror .mp-trace-id[data-trace-id="FR-1"]', { modifiers: [mod] });
+    await page.waitForFunction(() =>
+      document.querySelector('.mp-trace-current')?.textContent?.includes('FR-1'),
+    );
+    await step('Design').click();
+    await page.waitForFunction(
+      () => document.querySelector('.web-filename')?.textContent === 'spec-ekspor / design.md',
+    );
+  });
+
+  it('coverage tab lists requirements no task refers to, live while typing', async () => {
+    await step('Requirements').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('.web-filename')?.textContent === 'spec-ekspor / requirements.md',
+    );
+    await page.click('.ProseMirror h3:has-text("Batas ukuran")');
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('### FR-4: Kolom tambahan');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('.mp-spec-pill-button')?.textContent === 'Requirement tercakup 3/4',
+    );
+    await page.click('.mp-spec-pill-button');
+    const uncovered = await page.$$eval('.mp-trace-group .mp-trace-link-id', (els) =>
+      els.map((n) => n.textContent),
+    );
+    expect(uncovered).toEqual(['FR-4']);
+    await page.screenshot({ path: `${SHOTS}07-coverage.png` });
+  });
+
+  it('non-spec files show no spec UI', async () => {
+    await page.click('.web-tree-item:has-text("Selamat datang")');
+    await page.waitForSelector('.ProseMirror h1:has-text("Selamat datang")');
+    expect(await page.locator('.mp-specbar').count()).toBe(0);
+    expect(await page.locator('.mp-trace').count()).toBe(0);
+    expect(await page.locator('.mp-trace-id').count()).toBe(0);
+  });
+});

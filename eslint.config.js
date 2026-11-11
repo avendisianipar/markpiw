@@ -109,6 +109,34 @@ export default tseslint.config(
     },
   },
   {
+    files: ['packages/spec/src/**/*.ts'],
+    languageOptions: {
+      globals: {},
+    },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(?!@markpiw/host$|@markpiw/markdown$|prosemirror-model$|\\.{1,2}/).*',
+              message:
+                'packages/spec/src hanya boleh mengimpor @markpiw/host, @markpiw/markdown, prosemirror-model, dan modul relatif.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-globals': [
+        'error',
+        'document',
+        'window',
+        'navigator',
+        'localStorage',
+        'DOMParser',
+      ],
+    },
+  },
+  {
     files: ['packages/markdown/src/**/*.ts'],
     languageOptions: {
       globals: {},

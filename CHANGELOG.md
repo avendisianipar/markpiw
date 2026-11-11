@@ -7,6 +7,19 @@ rilis mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Trace spec ala Kiro: folder yang berisi `requirements.md`, `design.md`, dan/atau `tasks.md`
+  mendapat bar langkah **Requirements › Design › Task list**, progres task (`Status: [x]` atau
+  checkbox), dan cakupan requirement (requirement ber-ID yang dirujuk task).
+- ID di awal heading (`### FR-1: …`, `### T3 — …`) menjadi definisi; sebutan ID itu di file
+  spec mana pun tampil sebagai chip dengan kartu hover dan Mod+klik untuk lompat ke definisinya.
+- Panel **Trace** untuk bagian di kursor: rujukan keluar, rujukan masuk, dan bagian terkait di
+  dokumen lain lewat istilah kode yang sama (endpoint, nama tabel, kode error). Tab **Cakupan**
+  menampilkan requirement yang belum dirujuk task. Isi file `.md` tidak diubah sama sekali.
+- Link `file.md#anchor` membuka file lalu menggulir ke heading dengan anchor gaya GitHub;
+  link `#anchor` di dokumen yang sama juga berfungsi.
+
 ## [1.2.0] - 2026-11-02
 
 ### Added

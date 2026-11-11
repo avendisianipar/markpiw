@@ -1,0 +1,16 @@
+{
+  "name": "@markpiw/spec",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@markpiw/host": "workspace:*",
+    "@markpiw/markdown": "workspace:*",
+    "@markpiw/vendor-prosemirror": "workspace:*"
+  }
+}

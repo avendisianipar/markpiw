@@ -15,6 +15,7 @@ let root: Root | null = null;
 let host: VsCodeFileHost | null = null;
 let sync: WebviewSync | null = null;
 let theme: ThemeStore | null = null;
+let controllerRef: EditorController | null = null;
 
 function themeFor(init: Extract<ExtensionMessage, { type: 'init' }>): ThemeStore {
   if (theme) {
@@ -45,8 +46,14 @@ function Editor(props: { controller: EditorController; sync: WebviewSync; theme:
 }
 
 function start(init: Extract<ExtensionMessage, { type: 'init' }>): void {
-  host = new VsCodeFileHost(api, init.text, init.uiState);
+  host = new VsCodeFileHost(api, init.text, init.uiState, {
+    fileName: init.fileName,
+    folderName: init.folderName,
+  });
   const controller = new EditorController({ text: init.text, host, strings: editorStrings });
+  controllerRef = controller;
+  // Dibuka lewat link `file.md#slug`: gulir ke heading itu setelah editor terpasang.
+  if (init.reveal) controller.revealHeading(init.reveal);
   const currentHost = host;
   sync = new WebviewSync(
     controller,
@@ -95,7 +102,14 @@ window.addEventListener('message', (event: MessageEvent) => {
       break;
     case 'assetSaved':
     case 'imagesResolved':
+    case 'siblingsRead':
       host?.handleReply(message);
+      break;
+    case 'siblingsChanged':
+      host?.notifySiblings();
+      break;
+    case 'reveal':
+      controllerRef?.revealHeading(message.slug);
       break;
     case 'theme':
       theme?.adopt(message.theme);

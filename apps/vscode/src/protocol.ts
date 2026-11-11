@@ -37,6 +37,12 @@ export const WebviewMessage = v.variant('type', [
   v.object({ type: v.literal('undo') }),
   v.object({ type: v.literal('redo') }),
   v.object({ type: v.literal('setTheme'), theme: Theme }),
+  /** Baca file lain di folder yang sama (trace spec). */
+  v.object({
+    type: v.literal('readSiblings'),
+    requestId: v.number(),
+    names: v.array(v.string()),
+  }),
 ]);
 
 export const ExtensionMessage = v.variant('type', [
@@ -48,6 +54,11 @@ export const ExtensionMessage = v.variant('type', [
     config: v.object({ assetsFolder: v.string() }),
     /** Pilihan tema tersimpan; null = ikut tema VS Code. */
     theme: v.nullable(Theme),
+    /** Nama file dan folder dokumen (untuk mendeteksi spec). */
+    fileName: v.string(),
+    folderName: v.string(),
+    /** Anchor heading yang harus dituju setelah terbuka (link `file.md#slug`), atau null. */
+    reveal: v.nullable(v.string()),
   }),
   v.object({ type: v.literal('editsApplied'), version: v.number() }),
   v.object({ type: v.literal('externalChange'), text: v.string(), version: v.number() }),
@@ -66,6 +77,15 @@ export const ExtensionMessage = v.variant('type', [
   }),
   /** Tema dipilih di panel lain; diterapkan tanpa disimpan ulang. */
   v.object({ type: v.literal('theme'), theme: Theme }),
+  v.object({
+    type: v.literal('siblingsRead'),
+    requestId: v.number(),
+    files: v.record(v.string(), v.nullable(v.string())),
+  }),
+  /** File spec saudara mungkin berubah: baca ulang. */
+  v.object({ type: v.literal('siblingsChanged') }),
+  /** Gulir ke heading dengan anchor `slug`. */
+  v.object({ type: v.literal('reveal'), slug: v.string() }),
 ]);
 
 export type WebviewMessage = v.InferOutput<typeof WebviewMessage>;

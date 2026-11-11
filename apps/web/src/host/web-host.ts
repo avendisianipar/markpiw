@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // FileHost untuk web (spesifikasi 6): satu file .md di dalam folder yang dibuka.
-import type { Disposable, FileHost, HostError, Result, UiState } from '@markpiw/host';
+import type { Disposable, FileHost, HostError, Result, SiblingFiles, UiState } from '@markpiw/host';
 import { type DirectoryLike, type FileLike, NotFoundError } from '../fs/types';
 
 export interface WebHostOptions {
-  /** Buka file .md lain di dalam folder (path segmen dari root). */
-  onOpenFile(path: string[]): void;
+  /** Buka file .md lain di dalam folder (path segmen dari root), opsional ke anchor heading. */
+  onOpenFile(path: string[], fragment?: string): void;
 }
 
 interface DiskMeta {
@@ -54,6 +54,14 @@ export function resolveRelative(base: readonly string[], target: string): string
   return out;
 }
 
+function safeDecode(text: string): string {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return text;
+  }
+}
+
 async function walk(root: DirectoryLike, segments: readonly string[]): Promise<DirectoryLike> {
   let dir = root;
   for (const segment of segments) dir = await dir.getDirectory(segment);
@@ -65,6 +73,8 @@ export class WebFileHost implements FileHost {
   private meta: DiskMeta | null = null;
   private readonly urls = new Map<string, Promise<string | null>>();
   private readonly created: string[] = [];
+  private readonly siblingListeners = new Set<() => void>();
+  readonly siblings: SiblingFiles;
 
   private constructor(
     private readonly root: DirectoryLike,
@@ -72,7 +82,35 @@ export class WebFileHost implements FileHost {
     private readonly dir: DirectoryLike,
     private readonly file: FileLike,
     private readonly options: WebHostOptions,
-  ) {}
+  ) {
+    this.siblings = {
+      fileName: path[path.length - 1] ?? '',
+      folderName: path.length > 1 ? (path[path.length - 2] as string) : root.name,
+      read: (name) => this.readSibling(name),
+      onChange: (cb) => {
+        this.siblingListeners.add(cb);
+        return { dispose: () => this.siblingListeners.delete(cb) };
+      },
+    };
+  }
+
+  /** Isi file lain di folder yang sama (null bila tidak ada atau bukan UTF-8). */
+  private async readSibling(name: string): Promise<string | null> {
+    if (name.includes('/') || name === this.siblings.fileName) return null;
+    try {
+      const bytes = new Uint8Array(
+        await (await (await this.dir.getFile(name)).getFile()).arrayBuffer(),
+      );
+      return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Minta pembaca file saudara memeriksa ulang (dipanggil saat fokus dan polling). */
+  notifySiblings(): void {
+    for (const listener of [...this.siblingListeners]) listener();
+  }
 
   static async open(
     root: DirectoryLike,
@@ -196,7 +234,10 @@ export class WebFileHost implements FileHost {
     if (target.startsWith('#')) return;
     const resolved = resolveRelative(this.dirPath, target);
     if (resolved && /\.(md|markdown)$/i.test(resolved[resolved.length - 1] ?? '')) {
-      this.options.onOpenFile(resolved);
+      const hash = target.indexOf('#');
+      const fragment = hash >= 0 ? safeDecode(target.slice(hash + 1)) : '';
+      if (fragment) this.options.onOpenFile(resolved, fragment);
+      else this.options.onOpenFile(resolved);
     }
   }
 

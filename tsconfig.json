@@ -17,6 +17,9 @@
       "path": "packages/editor"
     },
     {
+      "path": "packages/spec"
+    },
+    {
       "path": "packages/ui"
     },
     {

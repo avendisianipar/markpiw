@@ -17,3 +17,4 @@ export { parseMarkdown } from './parse';
 export { serializeMarkdown } from './serialize/serialize';
 export { verifyRoundTrip } from './guard';
 export { diffText } from './diff';
+export { headingSlugs, slugBase } from './slug';

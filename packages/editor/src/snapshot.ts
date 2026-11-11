@@ -88,6 +88,8 @@ export interface EditorSnapshot {
   readonly notice: Notice | null;
   /** Semua heading dokumen, berurutan (untuk daftar isi). */
   readonly outline: readonly HeadingInfo[];
+  /** Indeks (di `outline`) heading terakhir sebelum/di kursor, atau null bila di atas heading pertama. */
+  readonly section: number | null;
   /** Pencarian (Ctrl/⌘+F), atau null jika kotak cari tertutup. */
   readonly search: SearchState | null;
 }
@@ -212,6 +214,18 @@ export function outlineOf(doc: Node): readonly HeadingInfo[] {
   return outline;
 }
 
+/** Indeks heading (urutan daftar isi) yang memuat kursor: heading terakhir di/sebelum kursor. */
+export function sectionAt(state: EditorState): number | null {
+  const outline = outlineOf(state.doc);
+  const from = state.selection.from;
+  let found: number | null = null;
+  for (let i = 0; i < outline.length; i++) {
+    if ((outline[i] as HeadingInfo).pos >= from) break;
+    found = i;
+  }
+  return found;
+}
+
 function sameOutline(a: readonly HeadingInfo[], b: readonly HeadingInfo[]): boolean {
   if (a === b) return true;
   if (a.length !== b.length) return false;
@@ -250,6 +264,7 @@ export function stabilize(prev: EditorSnapshot | null, next: EditorSnapshot): Ed
     prev.dirty === next.dirty &&
     prev.notice === next.notice &&
     JSON.stringify(prev.search) === JSON.stringify(next.search) &&
+    prev.section === next.section &&
     sameOutline(prev.outline, next.outline);
   if (same) return prev;
   // Pertahankan referensi outline lama jika isinya sama (komponen daftar isi tidak re-render).

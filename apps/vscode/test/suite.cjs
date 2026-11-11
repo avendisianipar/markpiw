@@ -188,6 +188,93 @@ exports.run = async function run() {
     assert.equal(doc.getText(), before);
   });
 
+  // ---- Trace spec: file saudara dan anchor ----
+  const specDir = vscode.Uri.joinPath(ws, 'spec');
+  const reqUri = vscode.Uri.joinPath(specDir, 'requirements.md');
+  const tasksUri = vscode.Uri.joinPath(specDir, 'tasks.md');
+  const postedFor = async (uri) =>
+    (await vscode.commands.executeCommand('markpiw._test.posted', uri.toString())) || [];
+  const sendTo = (uri, message) =>
+    vscode.commands.executeCommand('markpiw._test.send', uri.toString(), message);
+  const reqLog = [];
+  const drainReq = async () => {
+    reqLog.push(...(await postedFor(reqUri)));
+    return reqLog;
+  };
+
+  await test('spec: init carries file and folder names', async () => {
+    await vscode.commands.executeCommand('vscode.openWith', reqUri, 'markpiw.editor');
+    const init = await waitFor(
+      async () => (await drainReq()).find((m) => m.type === 'init'),
+      'init requirements',
+    );
+    assert.equal(init.fileName, 'requirements.md');
+    assert.equal(init.folderName, 'spec');
+    assert.equal(init.reveal, null);
+  });
+
+  await test('spec: readSiblings reads disk files and rejects paths outside the folder', async () => {
+    reqLog.length = 0;
+    await sendTo(reqUri, {
+      type: 'readSiblings',
+      requestId: 901,
+      names: ['tasks.md', 'design.md', '../doc.md', 'requirements.md'],
+    });
+    const reply = await waitFor(
+      async () => (await drainReq()).find((m) => m.type === 'siblingsRead' && m.requestId === 901),
+      'siblingsRead',
+    );
+    assert.match(reply.files['tasks.md'], /\*\*Requirements:\*\* FR-1/);
+    assert.equal(reply.files['design.md'], null);
+    assert.equal(reply.files['../doc.md'], null);
+    assert.equal(reply.files['requirements.md'], null);
+  });
+
+  await test('spec: unsaved sibling edits are read and announced', async () => {
+    reqLog.length = 0;
+    const tasks = await vscode.workspace.openTextDocument(tasksUri);
+    const original = tasks.getText();
+    const edit = new vscode.WorkspaceEdit();
+    edit.insert(tasksUri, tasks.positionAt(original.length), '\n### T2 — B\n');
+    await vscode.workspace.applyEdit(edit);
+    await waitFor(
+      async () => (await drainReq()).some((m) => m.type === 'siblingsChanged'),
+      'siblingsChanged',
+    );
+    await sendTo(reqUri, { type: 'readSiblings', requestId: 902, names: ['tasks.md'] });
+    const reply = await waitFor(
+      async () => (await drainReq()).find((m) => m.type === 'siblingsRead' && m.requestId === 902),
+      'siblingsRead unsaved',
+    );
+    assert.match(reply.files['tasks.md'], /T2 — B/);
+    const undo = new vscode.WorkspaceEdit();
+    undo.replace(
+      tasksUri,
+      new vscode.Range(tasks.positionAt(0), tasks.positionAt(tasks.getText().length)),
+      original,
+    );
+    await vscode.workspace.applyEdit(undo);
+    await tasks.save();
+  });
+
+  await test('spec: openLink with #anchor opens the sibling and reveals the heading', async () => {
+    await sendTo(reqUri, { type: 'openLink', target: 'tasks.md#t1--a' });
+    const init = await waitFor(
+      async () => (await postedFor(tasksUri)).find((m) => m.type === 'init'),
+      'init tasks with reveal',
+    );
+    assert.equal(init.reveal, 't1--a');
+    assert.equal(init.fileName, 'tasks.md');
+    // Panel sudah terbuka: anchor dikirim sebagai pesan reveal.
+    await vscode.commands.executeCommand('vscode.openWith', reqUri, 'markpiw.editor');
+    await sendTo(reqUri, { type: 'openLink', target: 'tasks.md#t1--a' });
+    await waitFor(
+      async () =>
+        (await postedFor(tasksUri)).some((m) => m.type === 'reveal' && m.slug === 't1--a'),
+      'reveal message',
+    );
+  });
+
   console.log(results.join('\n'));
   if (results.some((r) => r.startsWith('FAIL')))
     throw new Error(results.filter((r) => r.startsWith('FAIL')).join('\n'));

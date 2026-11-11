@@ -8,5 +8,5 @@
     "types": []
   },
   "include": ["src", "test"],
-  "references": [{ "path": "../host" }, { "path": "../editor" }]
+  "references": [{ "path": "../host" }, { "path": "../editor" }, { "path": "../spec" }]
 }
