@@ -62,6 +62,14 @@ async function documentText() {
   return readFileSync(file, 'utf8');
 }
 
+let opens = 0;
+/** Minta extension host membuka `relative` (path dari workspace) dengan markpiw. */
+async function openInMarkpiw(relative) {
+  const n = opens++;
+  writeFileSync(join(bridge, `open-${n}`), relative);
+  await waitFor(async () => existsSync(join(bridge, `opened-${n}`)), `open-${n}`);
+}
+
 /** Tunggu sampai batch edit webview (200 ms) sampai ke TextDocument dan memenuhi `check`. */
 const documentWhere = (check, label) =>
   waitFor(async () => {
@@ -293,6 +301,53 @@ try {
     expectTrue(!(await has('.mp-banner')), 'banner baca-saja muncul');
   });
   await page.screenshot({ path: join(shots, 'vscode-2-after-edits.png') });
+
+  const frameWith = (selector, label) =>
+    waitFor(async () => {
+      for (const f of page.frames()) if (await f.$(selector).catch(() => null)) return f;
+      return null;
+    }, label);
+
+  await test('spec: bar langkah, chip ID, panel trace, Mod+klik ke requirement', async () => {
+    await openInMarkpiw('spec/tasks.md');
+    const spec = await frameWith(
+      '.mp-spec-step[aria-current="page"] >> text=Task list',
+      'iframe tasks.md dengan bar spec',
+    );
+    const steps = await spec.$$eval('.mp-spec-step', (els) =>
+      els.map((el) => [el.textContent, el.getAttribute('aria-current'), el.disabled]),
+    );
+    expectTrue(
+      JSON.stringify(steps) ===
+        JSON.stringify([
+          ['1Requirements', null, false],
+          ['2Design', null, true],
+          ['3Task list', 'page', false],
+        ]),
+      `langkah: ${JSON.stringify(steps)}`,
+    );
+    await waitFor(() => spec.$('.mp-trace-id[data-trace-id="FR-1"]'), 'chip FR-1');
+    await spec.click('.ProseMirror h3');
+    await waitFor(
+      async () => (await spec.textContent('.mp-trace'))?.includes('Tulis'),
+      'panel trace menampilkan FR-1',
+    );
+    const coverage = await spec.textContent('.mp-spec-pill-button');
+    expectTrue(coverage === 'Requirement tercakup 1/1', `cakupan: ${coverage}`);
+    await page.screenshot({ path: join(shots, 'vscode-spec-tasks.png') });
+    await spec.click('.mp-trace-id[data-trace-id="FR-1"]', {
+      modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'],
+    });
+    const req = await frameWith(
+      '.mp-spec-step[aria-current="page"] >> text=Requirements',
+      'iframe requirements.md setelah Mod+klik',
+    );
+    await waitFor(
+      async () => (await req.textContent('.mp-trace-current'))?.includes('FR-1'),
+      'kursor di FR-1',
+    );
+    await page.screenshot({ path: join(shots, 'vscode-spec-requirements.png') });
+  });
 } catch (error) {
   results.push(`FAIL setup: ${error instanceof Error ? error.message : error}`);
 } finally {

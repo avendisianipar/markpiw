@@ -4,6 +4,7 @@
 import type { Disposable, FileHost, Result } from '@markpiw/host';
 import {
   type GuardFailure,
+  headingSlugs,
   type ParsedDoc,
   parseMarkdown,
   serializeMarkdown,
@@ -25,6 +26,7 @@ import {
   withSearch,
 } from './plugins/search';
 import { filterItems, runSlashItem } from './plugins/slash';
+import { traceKey } from './plugins/trace';
 import { isRelativePath } from './safety';
 import {
   activeMarks,
@@ -37,6 +39,7 @@ import {
   type Notice,
   outlineOf,
   type ReadOnlyState,
+  sectionAt,
   type SearchState,
   type SlashState,
   stabilize,
@@ -78,6 +81,9 @@ export class EditorController {
   private uploads = 0;
   private readonly uiListeners = new Set<(request: UiRequest) => void>();
   private readonly imageCache = new Map<string, Promise<string | null>>();
+  private readonly traceListeners = new Set<(id: string) => void>();
+  /** Heading yang diminta sebelum editor terpasang (mis. membuka file lewat link `#slug`). */
+  private pendingReveal: string | null = null;
 
   constructor(options: EditorControllerOptions) {
     this.host = options.host;
@@ -99,6 +105,7 @@ export class EditorController {
         for (const listener of [...this.docListeners]) listener();
       },
       imageSaveFailedMessage: this.strings.imageSaveFailed,
+      revealHeading: (slug) => this.revealHeading(slug),
     });
     this.editorState = EditorState.create({
       doc: this.parsedDoc.doc,
@@ -137,6 +144,16 @@ export class EditorController {
       attributes: { class: 'mp-content', spellcheck: 'true' },
     });
     this.refreshSnapshot();
+    const pending = this.pendingReveal;
+    if (pending !== null) {
+      this.pendingReveal = null;
+      // Tunggu satu frame agar tata letak (dan tinggi canvas) sudah ada sebelum menggulir.
+      const later =
+        typeof requestAnimationFrame === 'function' ? requestAnimationFrame : setTimeout;
+      later(() => {
+        if (this.view) this.revealHeading(pending);
+      });
+    }
   }
 
   unmount(): void {
@@ -201,6 +218,44 @@ export class EditorController {
     this.parsedDoc = parsed;
     this.dirtyFlag = false;
     this.dispatch(tr);
+  }
+
+  /**
+   * Lompat ke heading: `slug` = anchor gaya GitHub, atau angka = urutan heading di daftar isi.
+   * Sebelum editor terpasang, permintaan slug disimpan dan dijalankan setelah mount.
+   */
+  revealHeading(target: string | number): boolean {
+    const outline = outlineOf(this.editorState.doc);
+    let heading = typeof target === 'number' ? outline[target] : undefined;
+    if (typeof target === 'string') {
+      const slugs = headingSlugs(outline.map((h) => h.text));
+      const wanted = target.toLowerCase();
+      heading = outline[slugs.indexOf(wanted)];
+      if (!this.view) {
+        if (!heading) return false;
+        this.pendingReveal = target;
+        return true;
+      }
+    }
+    if (!heading) return false;
+    return this.commands.goToHeading(heading.pos);
+  }
+
+  /** ID trace yang dikenal (chip di dokumen). Tidak mengubah isi maupun riwayat undo. */
+  setTraceIds(ids: ReadonlySet<string>): void {
+    const current = traceKey.getState(this.editorState)?.ids;
+    if (current && current.size === ids.size && [...ids].every((id) => current.has(id))) return;
+    this.dispatch(this.editorState.tr.setMeta(traceKey, ids).setMeta('addToHistory', false));
+  }
+
+  /** Chip ID diaktifkan (Mod+klik atau dari UI). */
+  activateTrace(id: string): void {
+    for (const listener of [...this.traceListeners]) listener(id);
+  }
+
+  onTraceActivate(listener: (id: string) => void): Disposable {
+    this.traceListeners.add(listener);
+    return { dispose: () => this.traceListeners.delete(listener) };
   }
 
   /** Buka popover link (Mod-K atau tombol toolbar). */
@@ -374,6 +429,7 @@ export class EditorController {
       dirty: this.dirtyFlag,
       notice: this.noticeValue,
       outline: outlineOf(state.doc),
+      section: sectionAt(state),
       search: this.searchSnapshot(),
     };
   }

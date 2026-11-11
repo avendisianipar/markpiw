@@ -216,6 +216,18 @@ importers:
         specifier: ^4.10.2
         version: 4.10.2
 
+  packages/spec:
+    dependencies:
+      '@markpiw/host':
+        specifier: workspace:*
+        version: link:../host
+      '@markpiw/markdown':
+        specifier: workspace:*
+        version: link:../markdown
+      '@markpiw/vendor-prosemirror':
+        specifier: workspace:*
+        version: link:../../vendor/prosemirror
+
   packages/ui:
     dependencies:
       '@floating-ui/dom':
@@ -227,6 +239,9 @@ importers:
       '@markpiw/host':
         specifier: workspace:*
         version: link:../host
+      '@markpiw/spec':
+        specifier: workspace:*
+        version: link:../spec
       lucide-react:
         specifier: ^1.63.0
         version: 1.63.0(@types/react@19.3.0)(react@19.3.1)

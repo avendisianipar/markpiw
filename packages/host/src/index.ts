@@ -25,9 +25,26 @@ export interface UiState {
   selection: { anchor: number; head: number } | null;
 }
 
+/**
+ * Akses baca ke file lain di folder yang sama dengan file aktif (dipakai fitur trace spec:
+ * `requirements.md`, `design.md`, `tasks.md`).
+ */
+export interface SiblingFiles {
+  /** Nama file aktif, mis. `tasks.md`. */
+  readonly fileName: string;
+  /** Nama folder yang memuat file aktif (nama spec). */
+  readonly folderName: string;
+  /** Isi file `name` di folder yang sama (termasuk perubahan yang belum disimpan), atau null. */
+  read(name: string): Promise<string | null>;
+  /** Dipanggil saat file saudara mungkin berubah (dibuat, dihapus, diedit). */
+  onChange(cb: () => void): Disposable;
+}
+
 /** Port yang diimplementasikan setiap host (web, VS Code). Lihat spesifikasi 2.6. */
 export interface FileHost {
   readonly historyMode: 'editor' | 'host';
+  /** Opsional: file saudara di folder yang sama. */
+  readonly siblings?: SiblingFiles;
   readText(): Promise<Result<string, HostError>>;
   /** Dipakai host web; VS Code memakai `applyEdits`. */
   writeText(text: string): Promise<Result<void, HostError>>;

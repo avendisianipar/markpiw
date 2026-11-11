@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Komposisi editor lengkap: toolbar, halaman, popover, slash menu, banner, notifikasi.
 import type { EditorController, EditorSnapshot } from '@markpiw/editor';
-import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { EditorContext, useEditorSnapshot } from './context';
 import { EditorHost } from './EditorHost';
 import { EditorErrorBoundary } from './ErrorBoundary';
@@ -12,6 +12,10 @@ import { Outline } from './Outline';
 import { type BannerAction, ReadOnlyBanner } from './ReadOnlyBanner';
 import { SearchBar } from './SearchBar';
 import { SlashMenu } from './SlashMenu';
+import { SpecBar } from './spec/SpecBar';
+import { TraceHover } from './spec/TraceHover';
+import { type TraceTab, TracePanel } from './spec/TracePanel';
+import { useSpec } from './spec/useSpec';
 import { type ColorScheme, ThemeToggle } from './ThemeToggle';
 import { SearchButton, Toolbar, ZoomControls } from './Toolbar';
 
@@ -30,6 +34,16 @@ export interface MarkpiwEditorProps {
 
 const selectZoom = (s: EditorSnapshot) => s.zoom;
 
+/** Lebar minimum agar panel trace terbuka secara default (di bawahnya panel menutupi dokumen). */
+const TRACE_INLINE_MIN_WIDTH = 640;
+/**
+ * Panel trace terbuka/tertutup, diingat selama halaman hidup (mis. saat pindah file di web).
+ * Null = belum pernah dipilih: terbuka bila jendela cukup lebar.
+ */
+let traceOpenChoice: boolean | null = null;
+const traceOpenInitial = () =>
+  traceOpenChoice ?? (typeof window === 'undefined' || window.innerWidth > TRACE_INLINE_MIN_WIDTH);
+
 function Surface({
   controller,
   topBar,
@@ -40,6 +54,13 @@ function Surface({
   const zoom = useEditorSnapshot(selectZoom);
   const file = useRef<HTMLInputElement>(null);
   const canvas = useRef<HTMLElement>(null);
+  const spec = useSpec(controller);
+  const [traceOpen, setTraceOpenState] = useState(traceOpenInitial);
+  const [traceTab, setTraceTab] = useState<TraceTab>('section');
+  const setTraceOpen = (open: boolean) => {
+    traceOpenChoice = open;
+    setTraceOpenState(open);
+  };
   const pickImage = () => file.current?.click();
   useEffect(() => {
     const sub = controller.onUiRequest((request) => {
@@ -60,16 +81,38 @@ function Surface({
           <ThemeToggle scheme={colorScheme} onChange={onColorSchemeChange} />
         </div>
       </header>
+      {spec && (
+        <SpecBar
+          spec={spec}
+          traceOpen={traceOpen}
+          onToggleTrace={() => setTraceOpen(!traceOpen)}
+          onShowCoverage={() => {
+            setTraceTab('coverage');
+            setTraceOpen(true);
+          }}
+        />
+      )}
       <ReadOnlyBanner actions={recoveryActions ?? []} />
       <div className="mp-body">
-        <main ref={canvas} className="mp-canvas">
-          <article className="mp-page">
-            <EditorHost controller={controller} />
-          </article>
-        </main>
-        <Outline canvas={canvas} />
-        <SearchBar />
+        <div className="mp-body-main">
+          <main ref={canvas} className="mp-canvas">
+            <article className="mp-page">
+              <EditorHost controller={controller} />
+            </article>
+          </main>
+          <Outline canvas={canvas} />
+          <SearchBar />
+        </div>
+        {spec && traceOpen && (
+          <TracePanel
+            spec={spec}
+            tab={traceTab}
+            onTab={setTraceTab}
+            onClose={() => setTraceOpen(false)}
+          />
+        )}
       </div>
+      {spec && <TraceHover spec={spec} canvas={canvas} />}
       <SlashMenu />
       <LinkPopover />
       <ImagePopover />

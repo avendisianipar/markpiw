@@ -60,12 +60,61 @@ export const id = {
   'search.prev': 'Hasil sebelumnya',
   'search.next': 'Hasil berikutnya',
   'search.close': 'Tutup pencarian',
+  'spec.label': 'Dokumen spec',
+  'spec.kind.requirements': 'Requirements',
+  'spec.kind.design': 'Design',
+  'spec.kind.tasks': 'Task list',
+  'spec.short.requirements': 'R',
+  'spec.short.design': 'D',
+  'spec.short.tasks': 'T',
+  'spec.missing': '{file} belum ada di folder ini',
+  'spec.open': 'Buka {file}',
+  'spec.progress': 'Task {done}/{total} selesai',
+  'spec.progressHint': '{doing} sedang dikerjakan',
+  'spec.coverage': 'Requirement tercakup {covered}/{total}',
+  'spec.coverageHint': 'Requirement ber-ID yang sudah dirujuk minimal satu task',
+  'spec.traceToggle': 'Trace',
+  'spec.traceToggleHint': 'Tampilkan/sembunyikan panel trace',
+  'trace.label': 'Trace',
+  'trace.close': 'Tutup panel trace',
+  'trace.tabSection': 'Bagian ini',
+  'trace.tabCoverage': 'Cakupan',
+  'trace.noSection':
+    'Taruh kursor di sebuah bagian untuk melihat keterkaitannya dengan dokumen lain.',
+  'trace.outgoing': 'Merujuk ke',
+  'trace.incoming': 'Dirujuk oleh',
+  'trace.related': 'Terkait (istilah kode sama)',
+  'trace.empty':
+    'Belum ada keterkaitan. Sebut ID bagian ini di dokumen lain (mis. "Requirements: {id}"), atau pakai istilah kode yang sama.',
+  'trace.emptyNoId':
+    'Belum ada keterkaitan. Awali heading dengan ID (mis. "### FR-1: …") agar bisa dirujuk dari dokumen lain.',
+  'trace.uncovered': 'Requirement tanpa task',
+  'trace.allCovered': 'Semua requirement ber-ID sudah dirujuk task.',
+  'trace.noRequirementIds':
+    'Belum ada requirement ber-ID. Awali heading dengan ID, mis. "### FR-1: …".',
+  'trace.needBoth': 'Cakupan butuh requirements.md dan tasks.md di folder yang sama.',
+  'trace.coverageTip':
+    'Tambahkan baris seperti "**Requirements:** FR-1, FR-2" di task yang menanganinya.',
+  'trace.duplicate': 'ID ganda: {ids}. Tautan menuju definisi pertama.',
+  'trace.loading': 'Membaca dokumen spec…',
+  'trace.open': 'Buka',
+  'trace.modClick': '{mod}+klik untuk membuka',
+  'trace.definedHere': 'Didefinisikan di sini',
+  'trace.referencedBy': 'Dirujuk {count} bagian',
+  'trace.notReferenced': 'Belum dirujuk bagian lain',
+  'trace.status.todo': 'Belum dimulai',
+  'trace.status.doing': 'Sedang dikerjakan',
+  'trace.status.done': 'Selesai',
 } as const;
 
 export type StringKey = keyof typeof id;
 
-export function t(key: StringKey): string {
-  return id[key];
+export function t(key: StringKey, params?: Readonly<Record<string, string | number>>): string {
+  let text: string = id[key];
+  if (params)
+    for (const [name, value] of Object.entries(params))
+      text = text.replaceAll(`{${name}}`, String(value));
+  return text;
 }
 
 export const editorStrings: EditorStrings = DEFAULT_EDITOR_STRINGS;

@@ -21,7 +21,17 @@ exports.run = async function run() {
   // Orkestrator meminta teks dokumen terkini lewat file `ask-<n>` dan membaca `text-<n>`.
   const deadline = Date.now() + 180_000;
   let n = 0;
+  let opens = 0;
   while (Date.now() < deadline) {
+    // Orkestrator meminta file lain dibuka dengan markpiw lewat `open-<n>` (isi: path relatif).
+    const open = path.join(dir, `open-${opens}`);
+    if (fs.existsSync(open)) {
+      const target = vscode.Uri.joinPath(ws, ...fs.readFileSync(open, 'utf8').split('/'));
+      await vscode.commands.executeCommand('vscode.openWith', target, 'markpiw.editor');
+      fs.writeFileSync(path.join(dir, `opened-${opens}`), '');
+      opens++;
+      continue;
+    }
     if (fs.existsSync(path.join(dir, `ask-${n}`))) {
       fs.writeFileSync(path.join(dir, `text-${n}`), doc.getText());
       n++;

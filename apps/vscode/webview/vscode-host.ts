@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // FileHost di dalam webview VS Code: semua akses file lewat pesan ke extension.
-import type { Disposable, FileHost, HostError, Result, UiState } from '@markpiw/host';
+import type { Disposable, FileHost, HostError, Result, SiblingFiles, UiState } from '@markpiw/host';
 import type { ExtensionMessage, WebviewMessage } from '../src/protocol';
 
-type Reply = Extract<ExtensionMessage, { type: 'assetSaved' | 'imagesResolved' }>;
+type Reply = Extract<ExtensionMessage, { type: 'assetSaved' | 'imagesResolved' | 'siblingsRead' }>;
 
 function toBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -19,12 +19,37 @@ export class VsCodeFileHost implements FileHost {
   /** Dipanggil sebelum undo/redo agar ketikan yang tertunda ikut terkirim lebih dulu. */
   beforeHistory: () => void = () => {};
   private readonly waiting = new Map<number, (reply: Reply) => void>();
+  private readonly siblingListeners = new Set<() => void>();
+  readonly siblings: SiblingFiles;
 
   constructor(
     private readonly api: VsCodeApi,
     private readonly text: string,
     private readonly initialUiState: UiState | null,
-  ) {}
+    location: { fileName: string; folderName: string } = { fileName: '', folderName: '' },
+  ) {
+    this.siblings = {
+      fileName: location.fileName,
+      folderName: location.folderName,
+      read: async (name) => {
+        const reply = await this.request<Extract<Reply, { type: 'siblingsRead' }>>((requestId) => ({
+          type: 'readSiblings',
+          requestId,
+          names: [name],
+        }));
+        return reply.files[name] ?? null;
+      },
+      onChange: (cb) => {
+        this.siblingListeners.add(cb);
+        return { dispose: () => this.siblingListeners.delete(cb) };
+      },
+    };
+  }
+
+  /** Extension memberi tahu file saudara berubah. */
+  notifySiblings(): void {
+    for (const listener of [...this.siblingListeners]) listener();
+  }
 
   private post(message: WebviewMessage): void {
     this.api.postMessage(message);

@@ -13,6 +13,27 @@ import {
 } from './protocol';
 
 export const VIEW_TYPE = 'markpiw.editor';
+/** File spec yang saling ditelusuri (trace); perubahan pada file ini diteruskan ke panel saudara. */
+export const SPEC_FILE_NAMES = ['requirements.md', 'design.md', 'tasks.md'];
+/** Anchor yang diminta untuk panel yang baru dibuka dianggap usang setelah sekian ms. */
+const REVEAL_TTL_MS = 5000;
+const SIBLING_DEBOUNCE_MS = 200;
+
+function basename(uri: vscode.Uri): string {
+  return uri.path.slice(uri.path.lastIndexOf('/') + 1);
+}
+
+function dirname(uri: vscode.Uri): string {
+  return uri.path.slice(0, uri.path.lastIndexOf('/'));
+}
+
+function safeDecode(text: string): string {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return text;
+  }
+}
 /** Pilihan tema pengguna, berlaku untuk semua workspace (globalState). */
 const THEME_KEY = 'markpiw.theme';
 
@@ -23,12 +44,44 @@ export class MarkpiwSession {
   /** Versi & teks yang diharapkan dari edit yang baru dikirim (untuk mengenali echo). */
   private expected: { version: number; text: string } | null = null;
   readonly posted: ExtensionMessage[] = [];
+  private siblingTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Webview sudah mengirim `ready` (editor sudah atau sedang dipasang). */
+  ready = false;
 
   constructor(
     readonly document: vscode.TextDocument,
     private readonly panel: vscode.WebviewPanel,
     private readonly context: vscode.ExtensionContext,
   ) {}
+
+  /** True bila dokumen ini salah satu file spec (requirements/design/tasks). */
+  get isSpecFile(): boolean {
+    return SPEC_FILE_NAMES.includes(basename(this.document.uri).toLowerCase());
+  }
+
+  /** `uri` adalah file spec lain di folder yang sama dengan dokumen ini. */
+  isSibling(uri: vscode.Uri): boolean {
+    return (
+      uri.scheme === this.document.uri.scheme &&
+      uri.toString() !== this.document.uri.toString() &&
+      dirname(uri) === dirname(this.document.uri) &&
+      SPEC_FILE_NAMES.includes(basename(uri).toLowerCase())
+    );
+  }
+
+  /** Beri tahu webview bahwa file saudara berubah (digabung bila beruntun). */
+  siblingChanged(): void {
+    if (this.siblingTimer) clearTimeout(this.siblingTimer);
+    this.siblingTimer = setTimeout(() => {
+      this.siblingTimer = null;
+      this.post({ type: 'siblingsChanged' });
+    }, SIBLING_DEBOUNCE_MS);
+  }
+
+  dispose(): void {
+    if (this.siblingTimer) clearTimeout(this.siblingTimer);
+    this.siblingTimer = null;
+  }
 
   private get uiKey(): string {
     return `markpiw.ui:${this.document.uri.toString()}`;
@@ -62,6 +115,7 @@ export class MarkpiwSession {
   private async dispatch(message: WebviewMessage): Promise<void> {
     switch (message.type) {
       case 'ready':
+        this.ready = true;
         this.post({
           type: 'init',
           text: this.document.getText(),
@@ -69,6 +123,9 @@ export class MarkpiwSession {
           uiState: this.context.workspaceState.get(this.uiKey) ?? null,
           config: { assetsFolder: this.assetsFolder() },
           theme: this.context.globalState.get<'light' | 'dark'>(THEME_KEY) ?? null,
+          fileName: basename(this.document.uri),
+          folderName: basename(vscode.Uri.joinPath(this.document.uri, '..')),
+          reveal: MarkpiwEditorProvider.takeReveal(this.document.uri),
         });
         return;
       case 'edits':
@@ -97,6 +154,12 @@ export class MarkpiwSession {
       case 'redo':
         await vscode.commands.executeCommand(message.type);
         return;
+      case 'readSiblings': {
+        const files: Record<string, string | null> = {};
+        for (const name of message.names) files[name] = await this.readSibling(name);
+        this.post({ type: 'siblingsRead', requestId: message.requestId, files });
+        return;
+      }
       case 'setTheme':
         await this.context.globalState.update(THEME_KEY, message.theme);
         for (const other of MarkpiwEditorProvider.sessions.values())
@@ -210,6 +273,22 @@ export class MarkpiwSession {
     return this.panel.webview.asWebviewUri(target).toString();
   }
 
+  /** Isi file `name` di folder yang sama: dokumen terbuka (termasuk yang belum disimpan) atau disk. */
+  private async readSibling(name: string): Promise<string | null> {
+    if (name === '' || name.includes('/') || name.includes('\\') || name === '..') return null;
+    if (!/\.(md|markdown)$/i.test(name)) return null;
+    const uri = vscode.Uri.joinPath(this.document.uri, '..', name);
+    if (uri.toString() === this.document.uri.toString()) return null;
+    const open = vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri.toString());
+    if (open) return open.getText();
+    try {
+      const bytes = await vscode.workspace.fs.readFile(uri);
+      return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+    } catch {
+      return null;
+    }
+  }
+
   private async openLink(target: string): Promise<void> {
     if (/^(https?:|mailto:)/i.test(target)) {
       await vscode.env.openExternal(vscode.Uri.parse(target));
@@ -219,7 +298,16 @@ export class MarkpiwSession {
     const clean = decodeURIComponent(target.split(/[?#]/)[0] ?? '');
     if (!/\.(md|markdown)$/i.test(clean)) return;
     const uri = vscode.Uri.joinPath(this.document.uri, '..', clean);
+    const hash = target.indexOf('#');
+    const fragment = hash >= 0 ? safeDecode(target.slice(hash + 1)) : '';
+    // Panel baru menerima anchor lewat init; panel yang sudah terbuka lewat pesan reveal.
+    if (fragment) MarkpiwEditorProvider.requestReveal(uri, fragment);
     await vscode.commands.executeCommand('vscode.openWith', uri, VIEW_TYPE);
+    const existing = MarkpiwEditorProvider.sessions.get(uri.toString());
+    if (fragment && existing?.ready) {
+      MarkpiwEditorProvider.takeReveal(uri);
+      existing.post({ type: 'reveal', slug: fragment });
+    }
   }
 }
 
@@ -230,6 +318,19 @@ function nonce(): string {
 export class MarkpiwEditorProvider implements vscode.CustomTextEditorProvider {
   /** Sesi aktif per dokumen (test integrasi memakai ini lewat perintah internal). */
   static readonly sessions = new Map<string, MarkpiwSession>();
+  private static readonly reveals = new Map<string, { slug: string; at: number }>();
+
+  static requestReveal(uri: vscode.Uri, slug: string): void {
+    MarkpiwEditorProvider.reveals.set(uri.toString(), { slug, at: Date.now() });
+  }
+
+  /** Anchor yang diminta untuk dokumen ini (sekali pakai), atau null bila tidak ada/usang. */
+  static takeReveal(uri: vscode.Uri): string | null {
+    const key = uri.toString();
+    const found = MarkpiwEditorProvider.reveals.get(key);
+    MarkpiwEditorProvider.reveals.delete(key);
+    return found && Date.now() - found.at < REVEAL_TTL_MS ? found.slug : null;
+  }
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -243,13 +344,33 @@ export class MarkpiwEditorProvider implements vscode.CustomTextEditorProvider {
     panel.webview.options = { enableScripts: true, localResourceRoots: session.roots() };
     panel.webview.html = this.html(panel.webview);
 
-    const subscriptions = [
+    const subscriptions: vscode.Disposable[] = [
       panel.webview.onDidReceiveMessage((message) => void session.handle(message)),
       vscode.workspace.onDidChangeTextDocument((event) => {
         if (event.document.uri.toString() === key) session.onDocumentChanged(event);
+        else if (session.isSpecFile && session.isSibling(event.document.uri))
+          session.siblingChanged();
       }),
     ];
+    if (session.isSpecFile) {
+      // File spec saudara dibuat/dihapus/diubah di disk (git, editor lain, Explorer).
+      const watcher = vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(vscode.Uri.joinPath(document.uri, '..'), '*.md'),
+      );
+      const onFile = (uri: vscode.Uri) => {
+        if (session.isSibling(uri)) session.siblingChanged();
+      };
+      subscriptions.push(
+        watcher,
+        watcher.onDidCreate(onFile),
+        watcher.onDidChange(onFile),
+        watcher.onDidDelete(onFile),
+        // Perubahan yang belum disimpan dibuang (revert/tutup tanpa simpan): baca ulang dari disk.
+        vscode.workspace.onDidCloseTextDocument((closed) => onFile(closed.uri)),
+      );
+    }
     panel.onDidDispose(() => {
+      session.dispose();
       subscriptions.forEach((s) => s.dispose());
       if (MarkpiwEditorProvider.sessions.get(key) === session)
         MarkpiwEditorProvider.sessions.delete(key);

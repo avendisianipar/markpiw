@@ -10,6 +10,9 @@ describe('theme messages', () => {
     version: 1,
     uiState: null,
     config: { assetsFolder: 'assets' },
+    fileName: 'doc.md',
+    folderName: 'docs',
+    reveal: null,
   };
 
   it('init carries the saved theme, or null when never chosen', () => {

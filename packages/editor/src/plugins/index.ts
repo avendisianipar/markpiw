@@ -20,6 +20,7 @@ import { linkClicks } from './link';
 import { pastePlugin } from './paste';
 import { searchPlugin } from './search';
 import { slashPlugin } from './slash';
+import { tracePlugin } from './trace';
 
 export { slashKey } from './slash';
 
@@ -34,6 +35,7 @@ export function createPlugins(controller: EditorController): Plugin[] {
   plugins.push(
     pastePlugin(controller),
     linkClicks(controller),
+    tracePlugin((id) => controller.activateTrace(id)),
     placeholder(controller.strings.placeholder),
     trailingParagraph(),
     activeSelection(),

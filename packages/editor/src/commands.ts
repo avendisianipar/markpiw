@@ -31,6 +31,8 @@ export interface CommandContext {
   uploadStarted(): void;
   uploadFinished(): void;
   readonly imageSaveFailedMessage: string;
+  /** Lompat ke heading dengan anchor `slug` di dokumen ini; false bila tidak ada. */
+  revealHeading(slug: string): boolean;
 }
 
 export type MarkCommandName = 'strong' | 'em' | 'strike' | 'code';
@@ -309,7 +311,17 @@ export class EditorCommands {
     return true;
   }
 
+  /** Buka link lewat host; anchor `#slug` ke heading di dokumen ini ditangani editor sendiri. */
   openLink(href: string): void {
+    if (href.startsWith('#')) {
+      let slug = href.slice(1);
+      try {
+        slug = decodeURIComponent(slug);
+      } catch {
+        // biarkan apa adanya
+      }
+      if (this.ctx.revealHeading(slug)) return;
+    }
     if (isSafeHref(href)) this.ctx.host.openLink(href);
   }
 
