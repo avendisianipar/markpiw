@@ -307,6 +307,14 @@ try {
       for (const f of page.frames()) if (await f.$(selector).catch(() => null)) return f;
       return null;
     }, label);
+  /** Panel trace tertutup secara default di editor sempit (≤ 640px, mis. layar virtual CI). */
+  /** Buka panel trace bila tertutup; true bila dibuka di sini (panel bisa menimpa dokumen). */
+  const ensureTracePanel = async (frame) => {
+    if (await frame.$('.mp-trace')) return false;
+    await frame.click('.mp-spec-toggle');
+    await waitFor(() => frame.$('.mp-trace'), 'panel trace terbuka lewat tombol Trace');
+    return true;
+  };
 
   await test('spec: bar langkah, chip ID, panel trace, Mod+klik ke requirement', async () => {
     await openInMarkpiw('spec/tasks.md');
@@ -328,6 +336,7 @@ try {
     );
     await waitFor(() => spec.$('.mp-trace-id[data-trace-id="FR-1"]'), 'chip FR-1');
     await spec.click('.ProseMirror h3');
+    const opened = await ensureTracePanel(spec);
     await waitFor(
       async () => (await spec.textContent('.mp-trace'))?.includes('Tulis'),
       'panel trace menampilkan FR-1',
@@ -335,6 +344,8 @@ try {
     const coverage = await spec.textContent('.mp-spec-pill-button');
     expectTrue(coverage === 'Requirement tercakup 1/1', `cakupan: ${coverage}`);
     await page.screenshot({ path: join(shots, 'vscode-spec-tasks.png') });
+    // Panel yang menimpa dokumen (editor sempit) bisa menutupi chip: tutup dulu.
+    if (opened) await spec.click('.mp-trace-close');
     await spec.click('.mp-trace-id[data-trace-id="FR-1"]', {
       modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'],
     });
@@ -342,6 +353,7 @@ try {
       '.mp-spec-step[aria-current="page"] >> text=Requirements',
       'iframe requirements.md setelah Mod+klik',
     );
+    await ensureTracePanel(req);
     await waitFor(
       async () => (await req.textContent('.mp-trace-current'))?.includes('FR-1'),
       'kursor di FR-1',
